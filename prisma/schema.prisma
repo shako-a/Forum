@@ -1,0 +1,223 @@
+// Forum data model.
+// Docs: https://pris.ly/d/prisma-schema
+// Prisma 7 `prisma-client` generator → output to src/generated/prisma (gitignored).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+// Guest is an unauthenticated visitor and is therefore NOT stored.
+// Stored roles are the authenticated tiers.
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum AdPlacement {
+  TOP_PANEL
+  SIDEBAR
+}
+
+// ---------------------------------------------------------------------------
+// Users & profiles
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String     @id @default(cuid())
+  // Auth + contact (hidden from other users)
+  email        String     @unique
+  phone        String
+  passwordHash String
+  role         Role       @default(USER)
+  status       UserStatus @default(ACTIVE)
+
+  // Public-facing identity
+  forumName String @unique // "Name on the forum"
+
+  // Real name — mandatory, but the user may hide it from other users
+  firstName    String
+  lastName     String
+  hideRealName Boolean @default(false)
+
+  // Location
+  city  String?
+  state String
+
+  // Relations
+  posts               Post[]
+  replies             Reply[]
+  postVotes           PostVote[]
+  replyVotes          ReplyVote[]
+  moderatedCategories Category[]  @relation("CategoryModerators")
+
+  // Moderation bookkeeping (content this user hid, when acting as mod/admin)
+  hiddenPosts   Post[]  @relation("PostHiddenBy")
+  hiddenReplies Reply[] @relation("ReplyHiddenBy")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+}
+
+// ---------------------------------------------------------------------------
+// Categories
+// ---------------------------------------------------------------------------
+
+model Category {
+  id   String @id @default(cuid())
+  slug String @unique
+
+  // Localized names/descriptions (EN + KA). Admin-managed from the admin panel.
+  nameEn        String
+  nameKa        String
+  descriptionEn String?
+  descriptionKa String?
+
+  // Locked categories: name is visible to guests, content is gated behind login.
+  locked Boolean @default(false)
+
+  // Display order in sidebar / categories page
+  sortOrder Int @default(0)
+
+  posts      Post[]
+  moderators User[] @relation("CategoryModerators")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Posts
+// ---------------------------------------------------------------------------
+
+model Post {
+  id    String @id @default(cuid())
+  slug  String @unique
+  title String
+
+  // Rich text body stored as JSON (editor document) so it can hold media,
+  // links, lists, quotes, etc.
+  body Json
+
+  author     User     @relation(fields: [authorId], references: [id])
+  authorId   String
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
+
+  // Moderation: hidden (not deleted) content stays on the server; admins can see it.
+  hidden     Boolean   @default(false)
+  hiddenBy   User?     @relation("PostHiddenBy", fields: [hiddenById], references: [id])
+  hiddenById String?
+  hiddenAt   DateTime?
+
+  // Moderators can lock replies on a post.
+  repliesLocked Boolean @default(false)
+
+  replies Reply[]
+  votes   PostVote[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  lastActivity DateTime @default(now()) // for "most recently discussed"
+
+  @@index([categoryId, lastActivity])
+  @@index([hidden])
+}
+
+// ---------------------------------------------------------------------------
+// Replies (threaded comments)
+// ---------------------------------------------------------------------------
+
+model Reply {
+  id   String @id @default(cuid())
+  body Json
+
+  author   User   @relation(fields: [authorId], references: [id])
+  authorId String
+  post     Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId   String
+
+  // Self-relation for nested threads.
+  parent   Reply?  @relation("ReplyThread", fields: [parentId], references: [id])
+  parentId String?
+  children Reply[] @relation("ReplyThread")
+
+  hidden     Boolean   @default(false)
+  hiddenBy   User?     @relation("ReplyHiddenBy", fields: [hiddenById], references: [id])
+  hiddenById String?
+  hiddenAt   DateTime?
+
+  votes ReplyVote[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([postId])
+  @@index([parentId])
+}
+
+// ---------------------------------------------------------------------------
+// Votes (+ / -) on posts and replies
+// ---------------------------------------------------------------------------
+
+model PostVote {
+  id     String @id @default(cuid())
+  value  Int // +1 or -1
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
+}
+
+model ReplyVote {
+  id      String @id @default(cuid())
+  value   Int // +1 or -1
+  user    User   @relation(fields: [userId], references: [id])
+  userId  String
+  reply   Reply  @relation(fields: [replyId], references: [id], onDelete: Cascade)
+  replyId String
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, replyId])
+}
+
+// ---------------------------------------------------------------------------
+// Advertisement cards (managed by admins from the admin panel)
+// ---------------------------------------------------------------------------
+
+model AdCard {
+  id        String      @id @default(cuid())
+  titleEn   String
+  titleKa   String
+  imageUrl  String?
+  linkUrl   String?
+  placement AdPlacement @default(TOP_PANEL)
+  active    Boolean     @default(true)
+  sortOrder Int         @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([placement, active, sortOrder])
+}

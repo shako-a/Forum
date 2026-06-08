@@ -1,0 +1,99 @@
+{
+  "common": {
+    "appName": "Forum",
+    "search": "Search",
+    "askAi": "Ask AI",
+    "login": "Log in",
+    "register": "Register",
+    "logout": "Log out",
+    "create": "Create",
+    "downloadApp": "Get the app",
+    "seeAll": "… see all",
+    "loading": "Loading…",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "nav": {
+    "home": "Home",
+    "popular": "Popular",
+    "news": "News",
+    "categories": "Categories",
+    "resources": "Resources",
+    "suggestedTopics": "Suggested Topics"
+  },
+  "home": {
+    "popularTopics": "Popular topics",
+    "recommendations": "Recommendations",
+    "popularCommunities": "Popular communities",
+    "feedEmpty": "No posts yet. Be the first to create one.",
+    "createPost": "Create post"
+  },
+  "categories": {
+    "title": "Categories",
+    "locked": "Locked",
+    "lockedNotice": "This category is available to registered, logged-in members.",
+    "recentlyDiscussed": "Most recently discussed",
+    "names": {
+      "discussions": "Discussions",
+      "employment": "Employment",
+      "housing": "Housing",
+      "automobile": "Automobile & Carriers",
+      "legal": "Legal",
+      "marketplace": "Marketplace",
+      "assistance": "Assistance and Charity",
+      "services": "Services",
+      "networking": "Networking"
+    }
+  },
+  "post": {
+    "chooseCategory": "Choose a category",
+    "title": "Title",
+    "body": "Body",
+    "reply": "Reply",
+    "share": "Share",
+    "joinConversation": "Join the conversation",
+    "copyLink": "Copy link",
+    "repliesLocked": "Replies are locked on this post."
+  },
+  "auth": {
+    "loginTitle": "Log in",
+    "signupTitle": "Create your account",
+    "email": "Email",
+    "password": "Password",
+    "forumName": "Name on the forum",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "phone": "Phone number",
+    "city": "City",
+    "state": "State / Region",
+    "hideRealName": "Hide my real name from other members",
+    "submitLogin": "Log in",
+    "submitSignup": "Sign up",
+    "haveAccount": "Already have an account?",
+    "noAccount": "Don't have an account?",
+    "invalidCredentials": "Invalid email or password.",
+    "emailTaken": "An account with this email already exists.",
+    "forumNameTaken": "This forum name is taken."
+  },
+  "roles": {
+    "user": "User",
+    "moderator": "Moderator",
+    "admin": "Administrator"
+  },
+  "admin": {
+    "title": "Admin panel",
+    "dashboard": "Dashboard",
+    "categories": "Categories",
+    "adCards": "Advertisement cards",
+    "users": "Users",
+    "moderation": "Moderation",
+    "hiddenContent": "Hidden content",
+    "restricted": "You do not have permission to view this page."
+  },
+  "footer": {
+    "about": "About",
+    "rules": "Rules",
+    "privacy": "Privacy Policy",
+    "terms": "User Agreement"
+  }
+}

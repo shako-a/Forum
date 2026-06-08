@@ -1,0 +1,99 @@
+{
+  "common": {
+    "appName": "ფორუმი",
+    "search": "ძებნა",
+    "askAi": "ჰკითხე AI-ს",
+    "login": "შესვლა",
+    "register": "რეგისტრაცია",
+    "logout": "გასვლა",
+    "create": "შექმნა",
+    "downloadApp": "ჩამოტვირთე აპი",
+    "seeAll": "… ნახე ყველა",
+    "loading": "იტვირთება…",
+    "save": "შენახვა",
+    "cancel": "გაუქმება"
+  },
+  "nav": {
+    "home": "მთავარი",
+    "popular": "პოპულარული",
+    "news": "სიახლეები",
+    "categories": "კატეგორიები",
+    "resources": "რესურსები",
+    "suggestedTopics": "შემოთავაზებული თემები"
+  },
+  "home": {
+    "popularTopics": "პოპულარული თემები",
+    "recommendations": "რეკომენდაციები",
+    "popularCommunities": "პოპულარული საზოგადოებები",
+    "feedEmpty": "ჯერ პოსტები არ არის. იყავი პირველი, ვინც შექმნის.",
+    "createPost": "პოსტის შექმნა"
+  },
+  "categories": {
+    "title": "კატეგორიები",
+    "locked": "ჩაკეტილი",
+    "lockedNotice": "ეს კატეგორია ხელმისაწვდომია რეგისტრირებული, ავტორიზებული წევრებისთვის.",
+    "recentlyDiscussed": "ბოლოს განხილული",
+    "names": {
+      "discussions": "დისკუსიები",
+      "employment": "დასაქმება",
+      "housing": "საცხოვრებელი",
+      "automobile": "ავტომობილები და გადაზიდვები",
+      "legal": "იურიდიული",
+      "marketplace": "მარკეტი",
+      "assistance": "დახმარება და ქველმოქმედება",
+      "services": "სერვისები",
+      "networking": "ნეთვორქინგი"
+    }
+  },
+  "post": {
+    "chooseCategory": "აირჩიე კატეგორია",
+    "title": "სათაური",
+    "body": "ტექსტი",
+    "reply": "პასუხი",
+    "share": "გაზიარება",
+    "joinConversation": "შემოუერთდი საუბარს",
+    "copyLink": "ბმულის კოპირება",
+    "repliesLocked": "ამ პოსტზე პასუხები ჩაკეტილია."
+  },
+  "auth": {
+    "loginTitle": "შესვლა",
+    "signupTitle": "შექმენი ანგარიში",
+    "email": "ელ. ფოსტა",
+    "password": "პაროლი",
+    "forumName": "სახელი ფორუმზე",
+    "firstName": "სახელი",
+    "lastName": "გვარი",
+    "phone": "ტელეფონის ნომერი",
+    "city": "ქალაქი",
+    "state": "რეგიონი",
+    "hideRealName": "დამალე ჩემი ნამდვილი სახელი სხვა წევრებისგან",
+    "submitLogin": "შესვლა",
+    "submitSignup": "რეგისტრაცია",
+    "haveAccount": "უკვე გაქვს ანგარიში?",
+    "noAccount": "არ გაქვს ანგარიში?",
+    "invalidCredentials": "არასწორი ელ. ფოსტა ან პაროლი.",
+    "emailTaken": "ანგარიში ამ ელ. ფოსტით უკვე არსებობს.",
+    "forumNameTaken": "ეს სახელი დაკავებულია."
+  },
+  "roles": {
+    "user": "მომხმარებელი",
+    "moderator": "მოდერატორი",
+    "admin": "ადმინისტრატორი"
+  },
+  "admin": {
+    "title": "ადმინ პანელი",
+    "dashboard": "მთავარი დაფა",
+    "categories": "კატეგორიები",
+    "adCards": "სარეკლამო ბარათები",
+    "users": "მომხმარებლები",
+    "moderation": "მოდერაცია",
+    "hiddenContent": "დამალული კონტენტი",
+    "restricted": "ამ გვერდის ნახვის უფლება არ გაქვს."
+  },
+  "footer": {
+    "about": "ჩვენ შესახებ",
+    "rules": "წესები",
+    "privacy": "კონფიდენციალურობა",
+    "terms": "მომხმარებლის შეთანხმება"
+  }
+}
