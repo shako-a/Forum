@@ -2,7 +2,10 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { locales, localeNames, type Locale } from "@/i18n/config";
+import { locales, type Locale } from "@/i18n/config";
+
+// Short labels for the compact toggle.
+const SHORT: Record<Locale, string> = { en: "EN", ka: "ქარ" };
 
 export function LanguageSwitcher({ current }: { current: Locale }) {
   const pathname = usePathname();
@@ -20,7 +23,7 @@ export function LanguageSwitcher({ current }: { current: Locale }) {
   }
 
   return (
-    <div className="inline-flex items-center gap-1 rounded-md border border-black/10 dark:border-white/15 p-0.5 text-sm">
+    <div className="lang-toggle" role="group" aria-label="Language">
       {locales.map((loc) => (
         <button
           key={loc}
@@ -28,13 +31,10 @@ export function LanguageSwitcher({ current }: { current: Locale }) {
           disabled={pending}
           onClick={() => switchTo(loc)}
           aria-current={loc === current}
-          className={`rounded px-2 py-0.5 transition-colors ${
-            loc === current
-              ? "bg-foreground text-background"
-              : "hover:bg-black/5 dark:hover:bg-white/10"
-          }`}
+          className={loc === current ? "active" : undefined}
+          lang={loc === "ka" ? "ka" : undefined}
         >
-          {localeNames[loc]}
+          {SHORT[loc]}
         </button>
       ))}
     </div>

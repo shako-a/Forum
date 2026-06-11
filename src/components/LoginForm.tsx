@@ -3,56 +3,73 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { login } from "@/app/actions/auth";
+import { AuthBrand } from "@/components/AuthBrand";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 
-export function LoginForm({ locale, dict }: { locale: Locale; dict: Dictionary }) {
+export function LoginForm({
+  locale,
+  dict,
+  next,
+}: {
+  locale: Locale;
+  dict: Dictionary;
+  next?: string;
+}) {
   const t = dict.auth;
   const [state, action, pending] = useActionState(login, undefined);
-  const field =
-    "w-full rounded-md border border-black/15 dark:border-white/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-foreground/40";
 
   return (
-    <form action={action} className="flex w-full max-w-sm flex-col gap-3">
-      <input type="hidden" name="locale" value={locale} />
-      <h1 className="text-xl font-bold">{t.loginTitle}</h1>
+    <div className="auth-card">
+      <AuthBrand locale={locale} appName={dict.common.appName} />
+      <h1 className="auth-title">{t.loginTitle}</h1>
+      <p className="auth-sub">{dict.common.tagline}</p>
 
-      {state?.message && (
-        <p className="rounded-md bg-red-500/10 px-3 py-2 text-sm text-red-600">
-          {state.message}
-        </p>
-      )}
+      <form action={action}>
+        <input type="hidden" name="locale" value={locale} />
+        {next && <input type="hidden" name="next" value={next} />}
 
-      <label className="flex flex-col gap-1 text-sm">
-        {t.email}
-        <input name="email" type="email" autoComplete="email" className={field} required />
-      </label>
+        {state?.message && (
+          <p className="auth-alert" role="alert">
+            {state.message}
+          </p>
+        )}
 
-      <label className="flex flex-col gap-1 text-sm">
-        {t.password}
-        <input
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          className={field}
-          required
-        />
-      </label>
+        <div className="field">
+          <label htmlFor="email">
+            {t.email}
+            <span className="req">*</span>
+          </label>
+          <input id="email" name="email" type="email" autoComplete="email" className="input" required />
+        </div>
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="mt-1 rounded-md bg-foreground px-3 py-2 text-sm font-medium text-background disabled:opacity-60"
-      >
-        {t.submitLogin}
-      </button>
+        <div className="field">
+          <label htmlFor="password">
+            {t.password}
+            <span className="req">*</span>
+          </label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            className="input"
+            required
+          />
+        </div>
 
-      <p className="text-sm opacity-70">
+        <button type="submit" disabled={pending} className="btn btn-primary btn-full">
+          {t.submitLogin}
+        </button>
+      </form>
+
+      <p className="auth-foot">
         {t.noAccount}{" "}
-        <Link href={`/${locale}/signup`} className="font-medium underline">
-          {t.submitSignup}
-        </Link>
+        <Link href={`/${locale}/signup`}>{t.submitSignup}</Link>
       </p>
-    </form>
+      <Link href={`/${locale}`} className="auth-back">
+        ← {dict.common.appName}
+      </Link>
+    </div>
   );
 }

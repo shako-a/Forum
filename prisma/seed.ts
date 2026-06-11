@@ -53,6 +53,112 @@ async function main() {
   } else {
     console.log("Set SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD to create an admin user.");
   }
+
+  await seedDemoContent();
+}
+
+// Demo users + posts so the feed is populated for local development.
+// Only runs once (when there are no posts yet) so re-seeding is safe.
+async function seedDemoContent() {
+  if ((await db.post.count()) > 0) {
+    console.log("Posts already exist — skipping demo content.");
+    return;
+  }
+
+  const cats = await db.category.findMany({ select: { id: true, slug: true } });
+  const catId = Object.fromEntries(cats.map((c) => [c.slug, c.id])) as Record<string, string>;
+
+  const demoHash = await bcrypt.hash("demo1234", 10);
+  const demoUsers = [
+    { forumName: "Nino_B", firstName: "Nino", lastName: "B.", email: "nino@demo.local", phone: "+995", state: "Tbilisi", city: "Tbilisi" },
+    { forumName: "Levani_NJ", firstName: "Levani", lastName: "G.", email: "levani@demo.local", phone: "+1", state: "New Jersey", city: "Newark" },
+    { forumName: "GiorgiK", firstName: "Giorgi", lastName: "K.", email: "giorgi@demo.local", phone: "+1", state: "Pennsylvania", city: "Philadelphia" },
+  ];
+  const users: Record<string, string> = {};
+  for (const u of demoUsers) {
+    const created = await db.user.upsert({
+      where: { email: u.email },
+      update: {},
+      create: { ...u, passwordHash: demoHash, role: "USER" },
+      select: { id: true, forumName: true },
+    });
+    users[created.forumName] = created.id;
+  }
+
+  const hoursAgo = (h: number) => new Date(Date.now() - h * 60 * 60 * 1000);
+
+  const posts = [
+    {
+      slug: "newcomer-megathread-2026",
+      category: "legal",
+      author: "GiorgiK",
+      title: "2026 Newcomer Megathread: SSN, driver's license, bank account — step by step",
+      text: "Community-maintained guide for the first 90 days. Documents to prepare before you move, DMV rules by region, and which banks open accounts without credit history.",
+      hours: 48,
+    },
+    {
+      slug: "cdl-dispatch-companies-2026",
+      category: "automobile",
+      author: "Levani_NJ",
+      title: "CDL-A owner-operators: which dispatch companies actually pay on time in 2026?",
+      text: "Been running dry van for 2 years, switching dispatchers. Looking for real experiences with Georgian-owned dispatch services — rates, hidden fees, detention pay.",
+      hours: 3,
+    },
+    {
+      slug: "room-for-rent-bensonhurst",
+      category: "housing",
+      author: "Nino_B",
+      title: "ოთახი ქირავდება — კომუნალური ჩათვლით, მეტროსთან ახლოს",
+      text: "$950 თვეში, ავეჯით. მეტროდან 5 წუთი. მშვიდი მეზობლები, შემოდინება მარტიდან.",
+      hours: 5,
+    },
+    {
+      slug: "georgian-food-spots-by-city",
+      category: "discussions",
+      author: "Nino_B",
+      title: "Found a bakery that makes real shoti puri — thread of Georgian food spots by city 🥖",
+      text: "Drop your city and the closest place for khachapuri, churchkhela, or proper bread. I'll compile everything into a map this weekend.",
+      hours: 9,
+    },
+    {
+      slug: "hiring-hvac-helper",
+      category: "employment",
+      author: "GiorgiK",
+      title: "Hiring: HVAC helper, no experience needed — will train, $22/hr to start",
+      text: "Small Georgian-owned company. Basic English is enough, we work in pairs. Legal work authorization required. DM or comment below.",
+      hours: 12,
+    },
+  ];
+
+  for (const p of posts) {
+    if (!catId[p.category]) continue;
+    const post = await db.post.create({
+      data: {
+        slug: p.slug,
+        title: p.title,
+        body: { version: 1, text: p.text },
+        categoryId: catId[p.category],
+        authorId: users[p.author],
+        lastActivity: hoursAgo(p.hours),
+        createdAt: hoursAgo(p.hours),
+      },
+      select: { id: true },
+    });
+
+    // A couple of votes + replies so counts are non-zero.
+    const voterIds = Object.values(users);
+    for (const uid of voterIds) {
+      await db.postVote.create({ data: { postId: post.id, userId: uid, value: 1 } });
+    }
+    await db.reply.create({
+      data: {
+        postId: post.id,
+        authorId: voterIds[0],
+        body: { version: 1, text: "Thanks for sharing — following this." },
+      },
+    });
+  }
+  console.log(`Seeded ${posts.length} demo posts with ${demoUsers.length} demo users.`);
 }
 
 main()

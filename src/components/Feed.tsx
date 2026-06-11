@@ -1,59 +1,71 @@
 import Link from "next/link";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
-import { categoryName } from "@/i18n/localize";
+import { PostList, type FeedPost } from "@/components/PostList";
 
-// Shape of the posts produced by getHomeData (with author/category/_count includes).
-export type FeedPost = {
-  id: string;
-  slug: string;
-  title: string;
-  author: { forumName: string };
-  category: { nameEn: string; nameKa: string; slug: string };
-  _count: { replies: number; votes: number };
-};
+export type { FeedPost };
 
 export function Feed({
   locale,
   dict,
+  user,
   posts,
 }: {
   locale: Locale;
   dict: Dictionary;
+  user: { forumName: string } | null;
   posts: FeedPost[];
 }) {
-  if (posts.length === 0) {
-    return (
-      <div className="rounded-lg border border-dashed border-black/15 dark:border-white/15 p-10 text-center text-sm opacity-60">
-        {dict.home.feedEmpty}
-      </div>
-    );
-  }
+  const initial = user ? user.forumName.charAt(0).toUpperCase() : "✦";
+  const composerHref = user ? `/${locale}/create` : `/${locale}/login`;
 
   return (
-    <div className="flex flex-col gap-3">
-      {posts.map((post) => (
-        <article
-          key={post.id}
-          className="rounded-lg border border-black/10 dark:border-white/10 p-4 hover:border-foreground/30"
+    <main className="feed">
+      {/* Composer */}
+      <div className="composer">
+        <span className="avatar" style={{ background: "var(--blue)" }}>
+          {initial}
+        </span>
+        <Link
+          href={composerHref}
+          style={{
+            flex: 1,
+            border: "1px solid var(--line)",
+            background: "var(--bg)",
+            borderRadius: 999,
+            padding: "10px 16px",
+            color: "var(--muted)",
+          }}
         >
-          <div className="mb-1 flex items-center gap-2 text-xs opacity-60">
-            <Link href={`/${locale}/c/${post.category.slug}`} className="hover:underline">
-              {categoryName(post.category, locale)}
-            </Link>
-            <span>•</span>
-            <span>{post.author.forumName}</span>
-          </div>
-          <Link href={`/${locale}/p/${post.slug}`}>
-            <h3 className="text-base font-semibold hover:underline">{post.title}</h3>
-          </Link>
-          <div className="mt-2 flex gap-4 text-xs opacity-60">
-            <span>▲ {post._count.votes}</span>
-            <span>💬 {post._count.replies}</span>
-            <span>{dict.post.share}</span>
-          </div>
-        </article>
-      ))}
-    </div>
+          {dict.feed.composerPlaceholder}
+        </Link>
+        <Link href={composerHref} className="btn btn-primary">
+          {dict.common.post}
+        </Link>
+      </div>
+
+      {/* Tabs + city filter */}
+      <div className="feed-tabs">
+        <button className="tab active">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 3c1 4-3 5-3 9a3 3 0 006 0c0-1.5-.7-2.5-.7-2.5S17 11 17 14a5 5 0 01-10 0c0-5 5-7 5-11z" />
+          </svg>
+          {dict.feed.tabHot}
+        </button>
+        <button className="tab">{dict.feed.tabNew}</button>
+        <button className="tab">{dict.feed.tabTop}</button>
+        <span className="spacer" />
+        <select aria-label="City" defaultValue="">
+          <option value="">{dict.feed.allCities}</option>
+          <option>New York / NJ</option>
+          <option>Tbilisi</option>
+          <option>London</option>
+          <option>Los Angeles</option>
+        </select>
+      </div>
+
+      {/* Posts */}
+      <PostList locale={locale} dict={dict} posts={posts} />
+    </main>
   );
 }

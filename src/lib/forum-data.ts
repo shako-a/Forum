@@ -50,3 +50,55 @@ export async function getHomeData(viewerIsAuthed: boolean) {
     };
   }
 }
+
+const POST_CARD_INCLUDE = {
+  author: { select: { forumName: true } },
+  category: true,
+  _count: { select: { replies: true, votes: true } },
+} as const;
+
+// A single category page: the category plus its posts (most recent first).
+// Locked categories return `gated: true` with no posts for guests.
+export async function getCategoryPage(slug: string, viewerIsAuthed: boolean) {
+  const category = await db.category.findUnique({ where: { slug } });
+  if (!category) return null;
+
+  if (category.locked && !viewerIsAuthed) {
+    return { category, posts: [], gated: true };
+  }
+
+  const posts = await db.post.findMany({
+    where: { categoryId: category.id, hidden: false },
+    orderBy: { lastActivity: "desc" },
+    take: 50,
+    include: POST_CARD_INCLUDE,
+  });
+  return { category, posts, gated: false };
+}
+
+// The categories overview: every category with its 3 most recently discussed
+// posts. Locked categories show no posts to guests (names stay visible).
+export async function getCategoriesIndex(viewerIsAuthed: boolean) {
+  try {
+    const categories = await db.category.findMany({
+      orderBy: { sortOrder: "asc" },
+      include: {
+        posts: {
+          where: { hidden: false },
+          orderBy: { lastActivity: "desc" },
+          take: 3,
+          select: { id: true, slug: true, title: true, lastActivity: true },
+        },
+        _count: { select: { posts: true } },
+      },
+    });
+
+    return categories.map((c) => ({
+      ...c,
+      posts: c.locked && !viewerIsAuthed ? [] : c.posts,
+    }));
+  } catch (error) {
+    console.error("getCategoriesIndex failed:", error);
+    return [];
+  }
+}

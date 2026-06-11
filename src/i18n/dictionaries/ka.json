@@ -1,37 +1,67 @@
 {
   "common": {
-    "appName": "ფორუმი",
-    "search": "ძებნა",
+    "appName": "GeoGlobally",
+    "tagline": "ქართველები მთელ მსოფლიოში",
+    "search": "მოძებნე პოსტები, სამსახური, საცხოვრებელი…",
     "askAi": "ჰკითხე AI-ს",
     "login": "შესვლა",
-    "register": "რეგისტრაცია",
+    "register": "შემოგვიერთდი",
     "logout": "გასვლა",
     "create": "შექმნა",
-    "downloadApp": "ჩამოტვირთე აპი",
+    "post": "გამოქვეყნება",
+    "save": "შენახვა",
+    "share": "გაზიარება",
+    "join": "გაწევრიანება",
+    "getApp": "ჩამოტვირთე აპი",
     "seeAll": "… ნახე ყველა",
     "loading": "იტვირთება…",
-    "save": "შენახვა",
     "cancel": "გაუქმება"
   },
   "nav": {
     "home": "მთავარი",
     "popular": "პოპულარული",
     "news": "სიახლეები",
+    "communities": "თემები",
     "categories": "კატეგორიები",
     "resources": "რესურსები",
+    "newcomerGuide": "ახალმოსულის გზამკვლევი",
+    "immigrationGlossary": "საიმიგრაციო ლექსიკონი",
+    "communityRules": "საზოგადოების წესები",
     "suggestedTopics": "შემოთავაზებული თემები"
+  },
+  "feed": {
+    "composerPlaceholder": "დაიწყე საუბარი…",
+    "tabHot": "ცხელი",
+    "tabNew": "ახალი",
+    "tabTop": "ტოპ",
+    "allCities": "ყველა ქალაქი"
   },
   "home": {
     "popularTopics": "პოპულარული თემები",
     "recommendations": "რეკომენდაციები",
-    "popularCommunities": "პოპულარული საზოგადოებები",
+    "popularCommunities": "პოპულარული თემები",
     "feedEmpty": "ჯერ პოსტები არ არის. იყავი პირველი, ვინც შექმნის.",
-    "createPost": "პოსტის შექმნა"
+    "createPost": "პოსტის შექმნა",
+    "welcomeTitle": "კეთილი იყოს შენი დაბრუნება, სადაც არ უნდა იყო",
+    "welcomeBody": "GeoGlobally არის ქართველების საზოგადოების ფორუმი მთელ მსოფლიოში — სამსახური, საცხოვრებელი, იურიდიული დახმარება და ადგილი, სადაც ქართულად ისაუბრებ.",
+    "createAccount": "ანგარიშის შექმნა",
+    "members": "წევრი",
+    "online": "ონლაინ",
+    "countries": "ქვეყანა",
+    "appCardTitle": "GeoGlobally შენს ჯიბეში",
+    "appCardBody": "მიიღე მყისიერი შეტყობინებები ახალ სამსახურსა და საცხოვრებელზე შენს ქალაქში. iOS და Android.",
+    "appStore": "App Store",
+    "googlePlay": "Google Play",
+    "translateToEnglish": "თარგმნე ინგლისურად",
+    "pinned": "მიმაგრებული",
+    "comments": "კომენტარი"
   },
   "categories": {
     "title": "კატეგორიები",
     "locked": "ჩაკეტილი",
     "lockedNotice": "ეს კატეგორია ხელმისაწვდომია რეგისტრირებული, ავტორიზებული წევრებისთვის.",
+    "membersOnly": "მხოლოდ წევრებისთვის",
+    "loginToView": "შესვლა სანახავად",
     "recentlyDiscussed": "ბოლოს განხილული",
     "names": {
       "discussions": "დისკუსიები",
@@ -67,6 +97,7 @@
     "city": "ქალაქი",
     "state": "რეგიონი",
     "hideRealName": "დამალე ჩემი ნამდვილი სახელი სხვა წევრებისგან",
+    "passwordHint": "მინიმუმ 8 სიმბოლო, ასო და ციფრი.",
     "submitLogin": "შესვლა",
     "submitSignup": "რეგისტრაცია",
     "haveAccount": "უკვე გაქვს ანგარიში?",
@@ -92,8 +123,18 @@
   },
   "footer": {
     "about": "ჩვენ შესახებ",
-    "rules": "წესები",
+    "rules": "საზოგადოების წესები",
+    "moderators": "მოდერატორები",
     "privacy": "კონფიდენციალურობა",
-    "terms": "მომხმარებლის შეთანხმება"
+    "contact": "კონტაქტი",
+    "terms": "მომხმარებლის შეთანხმება",
+    "copyright": "© 2026 GeoGlobally · შექმნილია თბილისსა და მსოფლიოს შორის"
+  },
+  "bottomNav": {
+    "home": "მთავარი",
+    "search": "ძებნა",
+    "inbox": "შეტყობინებები",
+    "profile": "პროფილი",
+    "create": "პოსტის შექმნა"
   }
 }

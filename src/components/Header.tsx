@@ -17,72 +17,77 @@ export function Header({
 }) {
   const t = dict.common;
   return (
-    <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-black/10 dark:border-white/10 bg-background/90 px-4 py-2 backdrop-blur">
+    <header className="header">
       {/* Logo */}
-      <Link href={`/${locale}`} className="text-lg font-bold tracking-tight">
-        {t.appName}
+      <Link className="logo" href={`/${locale}`} aria-label={`${t.appName} home`}>
+        <span className="logo-mark" aria-hidden="true">
+          {/* Bolnisi-style cross */}
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M12 4v16M4 12h16" stroke="#fff" strokeWidth="3.4" strokeLinecap="round" />
+            <path
+              d="M6 6.5h2M16 6.5h2M6 17.5h2M16 17.5h2"
+              stroke="#fff"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              opacity=".85"
+            />
+          </svg>
+        </span>
+        <span className="logo-text">
+          <span className="word">
+            Geo<span className="ge">Globally</span>
+          </span>
+          <span className="logo-sub word">{t.tagline}</span>
+        </span>
       </Link>
 
-      {/* Search / Ask AI */}
-      <div className="mx-auto flex w-full max-w-xl items-center gap-2">
-        <input
-          type="search"
-          placeholder={t.search}
-          className="w-full rounded-full border border-black/15 dark:border-white/15 bg-transparent px-4 py-1.5 text-sm outline-none focus:border-foreground/40"
-        />
-        <button
-          type="button"
-          className="shrink-0 rounded-full border border-black/15 dark:border-white/15 px-3 py-1.5 text-sm hover:bg-black/5 dark:hover:bg-white/10"
+      {/* Search */}
+      <div className="search" role="search">
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
         >
-          {t.askAi}
-        </button>
+          <circle cx="11" cy="11" r="7" />
+          <path d="M20 20l-3.5-3.5" />
+        </svg>
+        <input type="text" placeholder={t.search} />
       </div>
 
-      <LanguageSwitcher current={locale} />
+      <div className="header-actions">
+        <button type="button" className="ask-ai">
+          <span className="spark">✦</span> {t.askAi}
+        </button>
 
-      {/* Auth area */}
-      {user ? (
-        <div className="flex items-center gap-2">
-          <Link
-            href={`/${locale}/create`}
-            className="rounded-full bg-foreground px-3 py-1.5 text-sm font-medium text-background"
-          >
-            {t.create}
-          </Link>
-          <span className="hidden text-sm sm:inline">{user.forumName}</span>
-          <form action={logout}>
-            <input type="hidden" name="locale" value={locale} />
-            <button
-              type="submit"
-              className="rounded-full border border-black/15 dark:border-white/15 px-3 py-1.5 text-sm hover:bg-black/5 dark:hover:bg-white/10"
-            >
-              {t.logout}
-            </button>
-          </form>
-        </div>
-      ) : (
-        <div className="flex items-center gap-2">
-          <Link
-            href={`/${locale}/login`}
-            className="rounded-full border border-black/15 dark:border-white/15 px-3 py-1.5 text-sm hover:bg-black/5 dark:hover:bg-white/10"
-          >
-            {t.login}
-          </Link>
-          <Link
-            href={`/${locale}/signup`}
-            className="rounded-full bg-foreground px-3 py-1.5 text-sm font-medium text-background"
-          >
-            {t.register}
-          </Link>
-          {/* Website-only app download button */}
-          <button
-            type="button"
-            className="hidden rounded-full border border-black/15 dark:border-white/15 px-3 py-1.5 text-sm hover:bg-black/5 dark:hover:bg-white/10 md:inline"
-          >
-            {t.downloadApp}
-          </button>
-        </div>
-      )}
+        <LanguageSwitcher current={locale} />
+
+        {user ? (
+          <>
+            <Link href={`/${locale}/create`} className="btn btn-primary">
+              {t.create}
+            </Link>
+            <form action={logout}>
+              <input type="hidden" name="locale" value={locale} />
+              <button type="submit" className="btn btn-ghost login">
+                {t.logout}
+              </button>
+            </form>
+          </>
+        ) : (
+          <>
+            <Link href={`/${locale}/login`} className="btn btn-ghost login">
+              {t.login}
+            </Link>
+            <Link href={`/${locale}/signup`} className="btn btn-primary">
+              {t.register}
+            </Link>
+          </>
+        )}
+      </div>
     </header>
   );
 }

@@ -1,37 +1,67 @@
 {
   "common": {
-    "appName": "Forum",
-    "search": "Search",
+    "appName": "GeoGlobally",
+    "tagline": "Georgians, worldwide",
+    "search": "Search posts, jobs, housing…",
     "askAi": "Ask AI",
     "login": "Log in",
-    "register": "Register",
+    "register": "Join",
     "logout": "Log out",
     "create": "Create",
-    "downloadApp": "Get the app",
+    "post": "Post",
+    "save": "Save",
+    "share": "Share",
+    "join": "Join",
+    "getApp": "Get the app",
     "seeAll": "… see all",
     "loading": "Loading…",
-    "save": "Save",
     "cancel": "Cancel"
   },
   "nav": {
     "home": "Home",
     "popular": "Popular",
     "news": "News",
+    "communities": "Communities",
     "categories": "Categories",
     "resources": "Resources",
+    "newcomerGuide": "Newcomer guide",
+    "immigrationGlossary": "Immigration glossary",
+    "communityRules": "Community rules",
     "suggestedTopics": "Suggested Topics"
+  },
+  "feed": {
+    "composerPlaceholder": "Start a discussion…",
+    "tabHot": "Hot",
+    "tabNew": "New",
+    "tabTop": "Top",
+    "allCities": "All cities"
   },
   "home": {
     "popularTopics": "Popular topics",
     "recommendations": "Recommendations",
     "popularCommunities": "Popular communities",
     "feedEmpty": "No posts yet. Be the first to create one.",
-    "createPost": "Create post"
+    "createPost": "Create post",
+    "welcomeTitle": "Welcome home, wherever you are",
+    "welcomeBody": "GeoGlobally is the community forum for Georgians around the world — jobs, housing, legal help, and a place to speak Georgian.",
+    "createAccount": "Create account",
+    "members": "members",
+    "online": "online",
+    "countries": "countries",
+    "appCardTitle": "GeoGlobally in your pocket",
+    "appCardBody": "Get instant alerts for new jobs and housing in your city. iOS & Android.",
+    "appStore": "App Store",
+    "googlePlay": "Google Play",
+    "translateToEnglish": "Translate to English",
+    "pinned": "Pinned",
+    "comments": "comments"
   },
   "categories": {
     "title": "Categories",
     "locked": "Locked",
     "lockedNotice": "This category is available to registered, logged-in members.",
+    "membersOnly": "Members only",
+    "loginToView": "Log in to view",
     "recentlyDiscussed": "Most recently discussed",
     "names": {
       "discussions": "Discussions",
@@ -67,6 +97,7 @@
     "city": "City",
     "state": "State / Region",
     "hideRealName": "Hide my real name from other members",
+    "passwordHint": "At least 8 characters, with a letter and a number.",
     "submitLogin": "Log in",
     "submitSignup": "Sign up",
     "haveAccount": "Already have an account?",
@@ -92,8 +123,18 @@
   },
   "footer": {
     "about": "About",
-    "rules": "Rules",
-    "privacy": "Privacy Policy",
-    "terms": "User Agreement"
+    "rules": "Community rules",
+    "moderators": "Moderators",
+    "privacy": "Privacy",
+    "contact": "Contact",
+    "terms": "User Agreement",
+    "copyright": "© 2026 GeoGlobally · Made between Tbilisi and the world"
+  },
+  "bottomNav": {
+    "home": "Home",
+    "search": "Search",
+    "inbox": "Inbox",
+    "profile": "Profile",
+    "create": "Create post"
   }
 }

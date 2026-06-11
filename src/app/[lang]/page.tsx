@@ -6,8 +6,8 @@ import { getHomeData } from "@/lib/forum-data";
 import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { RightSidebar } from "@/components/RightSidebar";
-import { TopPanel } from "@/components/TopPanel";
 import { Feed } from "@/components/Feed";
+import { BottomNav } from "@/components/BottomNav";
 
 // Per-request: depends on the viewer's session and live forum data.
 export const dynamic = "force-dynamic";
@@ -18,23 +18,23 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
 
   const [dict, user] = await Promise.all([getDictionary(lang), getCurrentUser()]);
   const data = await getHomeData(Boolean(user));
+  const headerUser = user ? { forumName: user.forumName } : null;
 
   return (
     <>
-      <Header locale={lang} dict={dict} user={user} />
-      <div className="flex flex-1">
+      <Header locale={lang} dict={dict} user={headerUser} />
+      <div className="shell">
         <LeftSidebar locale={lang} dict={dict} categories={data.categories} />
-        <main className="min-w-0 flex-1 p-4">
-          <TopPanel locale={lang} dict={dict} ads={data.topAds} />
-          <Feed locale={lang} dict={dict} posts={data.posts} />
-        </main>
+        <Feed locale={lang} dict={dict} user={headerUser} posts={data.posts} />
         <RightSidebar
           locale={lang}
           dict={dict}
+          user={headerUser}
           categories={data.categories}
           ads={data.sidebarAds}
         />
       </div>
+      <BottomNav locale={lang} dict={dict} user={headerUser} />
     </>
   );
 }

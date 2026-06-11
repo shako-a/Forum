@@ -6,10 +6,16 @@ import { db } from "@/lib/db";
 import { createSession, deleteSession } from "@/lib/session";
 import { SignupFormSchema, LoginFormSchema, type FormState } from "@/lib/definitions";
 import { defaultLocale, isLocale } from "@/i18n/config";
+import { postAuthDestination } from "@/lib/redirects";
 
 function localeFrom(formData: FormData): string {
   const raw = String(formData.get("locale") ?? "");
   return isLocale(raw) ? raw : defaultLocale;
+}
+
+function nextFrom(formData: FormData): string | undefined {
+  const raw = formData.get("next");
+  return typeof raw === "string" ? raw : undefined;
 }
 
 export async function signup(_state: FormState, formData: FormData): Promise<FormState> {
@@ -48,7 +54,7 @@ export async function signup(_state: FormState, formData: FormData): Promise<For
   });
 
   await createSession(user.id, user.role);
-  redirect(`/${locale}`);
+  redirect(postAuthDestination(nextFrom(formData), locale));
 }
 
 export async function login(_state: FormState, formData: FormData): Promise<FormState> {
@@ -73,7 +79,7 @@ export async function login(_state: FormState, formData: FormData): Promise<Form
   }
 
   await createSession(user.id, user.role);
-  redirect(`/${locale}`);
+  redirect(postAuthDestination(nextFrom(formData), locale));
 }
 
 export async function logout(formData: FormData): Promise<void> {

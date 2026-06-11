@@ -1,0 +1,136 @@
+// Helpers for working with the ProseMirror/Tiptap JSON we store in Post.body.
+// We render to HTML ourselves from a strict whitelist (no untrusted HTML is ever
+// emitted), which keeps post rendering safe from XSS.
+
+type PMMark = { type?: string; attrs?: Record<string, unknown> };
+type PMNode = {
+  type?: string;
+  text?: string;
+  content?: PMNode[];
+  marks?: PMMark[];
+  attrs?: Record<string, unknown>;
+};
+
+function escapeHtml(s: string): string {
+  return s
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+// Only allow safe URL schemes (blocks javascript:, data:, etc.).
+function safeUrl(url: unknown): string | null {
+  if (typeof url !== "string") return null;
+  const trimmed = url.trim();
+  if (/^https?:\/\//i.test(trimmed) || /^mailto:/i.test(trimmed) || trimmed.startsWith("/")) {
+    return trimmed;
+  }
+  return null;
+}
+
+function applyMarks(text: string, marks?: PMMark[]): string {
+  let html = escapeHtml(text);
+  for (const mark of marks ?? []) {
+    switch (mark.type) {
+      case "bold":
+        html = `<strong>${html}</strong>`;
+        break;
+      case "italic":
+        html = `<em>${html}</em>`;
+        break;
+      case "strike":
+        html = `<s>${html}</s>`;
+        break;
+      case "underline":
+        html = `<u>${html}</u>`;
+        break;
+      case "code":
+        html = `<code>${html}</code>`;
+        break;
+      case "link": {
+        const href = safeUrl(mark.attrs?.href);
+        if (href) html = `<a href="${escapeHtml(href)}" rel="nofollow noopener" target="_blank">${html}</a>`;
+        break;
+      }
+    }
+  }
+  return html;
+}
+
+function renderNode(node: PMNode): string {
+  switch (node.type) {
+    case "doc":
+      return (node.content ?? []).map(renderNode).join("");
+    case "paragraph":
+      return `<p>${(node.content ?? []).map(renderNode).join("")}</p>`;
+    case "heading": {
+      const level = Math.min(Math.max(Number(node.attrs?.level) || 2, 1), 3);
+      const inner = (node.content ?? []).map(renderNode).join("");
+      return `<h${level}>${inner}</h${level}>`;
+    }
+    case "text":
+      return applyMarks(node.text ?? "", node.marks);
+    case "bulletList":
+      return `<ul>${(node.content ?? []).map(renderNode).join("")}</ul>`;
+    case "orderedList":
+      return `<ol>${(node.content ?? []).map(renderNode).join("")}</ol>`;
+    case "listItem":
+      return `<li>${(node.content ?? []).map(renderNode).join("")}</li>`;
+    case "blockquote":
+      return `<blockquote>${(node.content ?? []).map(renderNode).join("")}</blockquote>`;
+    case "codeBlock":
+      return `<pre><code>${(node.content ?? []).map(renderNode).join("")}</code></pre>`;
+    case "horizontalRule":
+      return "<hr/>";
+    case "hardBreak":
+      return "<br/>";
+    case "image": {
+      const src = safeUrl(node.attrs?.src);
+      if (!src) return "";
+      const alt = escapeHtml(String(node.attrs?.alt ?? ""));
+      return `<img src="${escapeHtml(src)}" alt="${alt}" loading="lazy"/>`;
+    }
+    default:
+      // Unknown node: render any children, ignore the wrapper.
+      return (node.content ?? []).map(renderNode).join("");
+  }
+}
+
+export function pmToHtml(doc: unknown): string {
+  if (!doc || typeof doc !== "object") return "";
+  return renderNode(doc as PMNode);
+}
+
+const BLOCK_TYPES = new Set([
+  "paragraph",
+  "heading",
+  "blockquote",
+  "listItem",
+  "codeBlock",
+  "horizontalRule",
+]);
+
+export function pmPlainText(doc: unknown): string {
+  const parts: string[] = [];
+  const walk = (n: PMNode) => {
+    if (!n || typeof n !== "object") return;
+    if (typeof n.text === "string") parts.push(n.text);
+    if (Array.isArray(n.content)) n.content.forEach(walk);
+    if (n.type && BLOCK_TYPES.has(n.type)) parts.push(" ");
+  };
+  walk(doc as PMNode);
+  return parts.join("").replace(/\s+/g, " ").trim();
+}
+
+function hasImage(doc: PMNode): boolean {
+  if (!doc || typeof doc !== "object") return false;
+  if (doc.type === "image") return true;
+  return (doc.content ?? []).some(hasImage);
+}
+
+export function pmHasContent(doc: unknown): boolean {
+  if (!doc || typeof doc !== "object") return false;
+  return pmPlainText(doc).length > 0 || hasImage(doc as PMNode);
+}
