@@ -23,7 +23,7 @@ export default async function CategoryPage({ params }: PageProps<"/[lang]/c/[slu
 
   const [allCategories, data] = await Promise.all([
     db.category.findMany({ orderBy: { sortOrder: "asc" } }),
-    getCategoryPage(slug, Boolean(user)),
+    getCategoryPage(slug, user ? { id: user.id } : null),
   ]);
   if (!data) notFound();
 
@@ -75,7 +75,13 @@ export default async function CategoryPage({ params }: PageProps<"/[lang]/c/[slu
               </Link>
             </div>
           ) : (
-            <PostList locale={lang} dict={dict} posts={posts} />
+            <PostList
+              locale={lang}
+              dict={dict}
+              posts={posts}
+              canVote={!!user}
+              loginHref={`/${lang}/login?next=/${lang}/c/${category.slug}`}
+            />
           )}
         </main>
 

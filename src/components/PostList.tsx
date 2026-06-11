@@ -4,6 +4,7 @@ import type { Locale } from "@/i18n/config";
 import { categoryName } from "@/i18n/localize";
 import { categoryStyle } from "@/lib/category-style";
 import { timeAgo, postExcerpt } from "@/lib/format";
+import { Vote } from "@/components/Vote";
 
 // Shape of the posts produced by the home/category loaders.
 export type FeedPost = {
@@ -11,6 +12,8 @@ export type FeedPost = {
   slug: string;
   title: string;
   body: unknown;
+  score: number;
+  myVote: number;
   lastActivity: Date;
   author: { forumName: string };
   category: { nameEn: string; nameKa: string; slug: string };
@@ -20,25 +23,19 @@ export type FeedPost = {
 const GEORGIAN = /[Ⴀ-ჿ]/;
 const RED_CHIP = new Set(["employment", "legal"]);
 
-function VoteRail({ count }: { count: number }) {
-  return (
-    <div className="vote-rail">
-      <button className="vote-btn" aria-label="Upvote">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 19V5M5 12l7-7 7 7" />
-        </svg>
-      </button>
-      <span className="vote-count">{count}</span>
-      <button className="vote-btn down" aria-label="Downvote">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 5v14M19 12l-7 7-7-7" />
-        </svg>
-      </button>
-    </div>
-  );
-}
-
-function PostCard({ locale, dict, post }: { locale: Locale; dict: Dictionary; post: FeedPost }) {
+function PostCard({
+  locale,
+  dict,
+  post,
+  canVote,
+  loginHref,
+}: {
+  locale: Locale;
+  dict: Dictionary;
+  post: FeedPost;
+  canVote: boolean;
+  loginHref: string;
+}) {
   const style = categoryStyle(post.category.slug);
   const chipClass = RED_CHIP.has(post.category.slug) ? "chip chip-red" : "chip chip-blue";
   const excerpt = postExcerpt(post.body);
@@ -46,7 +43,15 @@ function PostCard({ locale, dict, post }: { locale: Locale; dict: Dictionary; po
 
   return (
     <article className="post">
-      <VoteRail count={post._count.votes} />
+      <Vote
+        id={post.id}
+        kind="post"
+        initialScore={post.score}
+        initialVote={post.myVote}
+        canVote={canVote}
+        loginHref={loginHref}
+        orientation="vertical"
+      />
       <div className="post-body">
         <div className="post-meta">
           <Link href={`/${locale}/c/${post.category.slug}`} className={chipClass}>
@@ -93,11 +98,15 @@ export function PostList({
   locale,
   dict,
   posts,
+  canVote,
+  loginHref,
   emptyMessage,
 }: {
   locale: Locale;
   dict: Dictionary;
   posts: FeedPost[];
+  canVote: boolean;
+  loginHref: string;
   emptyMessage?: string;
 }) {
   if (posts.length === 0) {
@@ -110,7 +119,14 @@ export function PostList({
   return (
     <>
       {posts.map((post) => (
-        <PostCard key={post.id} locale={locale} dict={dict} post={post} />
+        <PostCard
+          key={post.id}
+          locale={locale}
+          dict={dict}
+          post={post}
+          canVote={canVote}
+          loginHref={loginHref}
+        />
       ))}
     </>
   );

@@ -31,5 +31,6 @@ export type FormState =
   | {
       errors?: Record<string, string[] | undefined>;
       message?: string;
+      ok?: boolean;
     }
   | undefined;

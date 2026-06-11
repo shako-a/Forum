@@ -21,7 +21,7 @@ function escapeHtml(s: string): string {
 }
 
 // Only allow safe URL schemes (blocks javascript:, data:, etc.).
-function safeUrl(url: unknown): string | null {
+export function safeUrl(url: unknown): string | null {
   if (typeof url !== "string") return null;
   const trimmed = url.trim();
   if (/^https?:\/\//i.test(trimmed) || /^mailto:/i.test(trimmed) || trimmed.startsWith("/")) {
@@ -133,4 +133,54 @@ function hasImage(doc: PMNode): boolean {
 export function pmHasContent(doc: unknown): boolean {
   if (!doc || typeof doc !== "object") return false;
   return pmPlainText(doc).length > 0 || hasImage(doc as PMNode);
+}
+
+// First image src in a document (used to prefill the reply edit form).
+export function pmFirstImage(doc: unknown): string | null {
+  let found: string | null = null;
+  const walk = (n: PMNode) => {
+    if (found || !n || typeof n !== "object") return;
+    if (n.type === "image" && typeof n.attrs?.src === "string") {
+      found = n.attrs.src as string;
+      return;
+    }
+    (n.content ?? []).forEach(walk);
+  };
+  walk(doc as PMNode);
+  return found;
+}
+
+// Build a ProseMirror document from plain text (used for text replies). Blank
+// lines split paragraphs; single newlines become hard breaks.
+export function textToPmDoc(text: string): PMNode {
+  const inline = (para: string): PMNode[] => {
+    const out: PMNode[] = [];
+    para.split("\n").forEach((line, i) => {
+      if (i > 0) out.push({ type: "hardBreak" });
+      if (line) out.push({ type: "text", text: line });
+    });
+    return out;
+  };
+
+  const paragraphs = text
+    .replace(/\r\n/g, "\n")
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  return {
+    type: "doc",
+    content: (paragraphs.length ? paragraphs : [""]).map((p) => ({
+      type: "paragraph",
+      content: inline(p),
+    })),
+  };
+}
+
+// Reply document: plain text plus an optional (sanitized) image at the end.
+export function buildReplyDoc(text: string, imageUrl?: string | null): PMNode {
+  const doc = textToPmDoc(text);
+  const url = imageUrl ? safeUrl(imageUrl) : null;
+  if (url) (doc.content as PMNode[]).push({ type: "image", attrs: { src: url } });
+  return doc;
 }

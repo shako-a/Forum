@@ -129,6 +129,9 @@ model Post {
   // Moderators can lock replies on a post.
   repliesLocked Boolean @default(false)
 
+  // Denormalized net vote score (sum of PostVote.value), kept in sync on vote.
+  score Int @default(0)
+
   replies Reply[]
   votes   PostVote[]
 
@@ -162,6 +165,13 @@ model Reply {
   hiddenBy   User?     @relation("ReplyHiddenBy", fields: [hiddenById], references: [id])
   hiddenById String?
   hiddenAt   DateTime?
+
+  // Author-deleted replies that still have children become tombstones (the
+  // sub-thread is preserved); leaf replies are hard-deleted instead.
+  deletedAt DateTime?
+
+  // Denormalized net vote score (sum of ReplyVote.value).
+  score Int @default(0)
 
   votes ReplyVote[]
 

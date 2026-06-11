@@ -1088,6 +1088,175 @@ button {
   border-color: var(--blue);
 }
 
+/* ============================================================
+   REPLIES / COMMENTS
+   ============================================================ */
+.reply {
+  padding-top: 14px;
+}
+.reply-thread {
+  border-left: 2px solid var(--line);
+  margin-left: 14px;
+  padding-left: 14px;
+}
+.reply-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.reply-head .author {
+  font-weight: 700;
+  color: var(--ink);
+}
+.reply-head .hidden-tag {
+  color: var(--red);
+  font-style: italic;
+}
+.reply-head .deleted-tag {
+  color: var(--muted);
+  font-style: italic;
+}
+.reply-body {
+  font-size: 14px;
+}
+.reply-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+.reply-composer {
+  margin-top: 8px;
+}
+.reply-textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 14px;
+  resize: vertical;
+  outline: none;
+}
+.reply-textarea:focus {
+  border-color: var(--blue);
+}
+.reply-composer-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* Inline (horizontal) vote control for replies */
+.vote-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.vote-inline .vote-count {
+  min-width: 18px;
+  text-align: center;
+}
+.vote-inline .vote-btn {
+  width: 26px;
+  height: 24px;
+}
+
+/* Collapse toggle for nested replies */
+.thread-toggle {
+  border: none;
+  background: transparent;
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 0 6px;
+}
+.thread-toggle:hover {
+  text-decoration: underline;
+}
+
+/* Reply sort selector */
+.reply-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.reply-sort select {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  background: var(--paper);
+  color: var(--ink);
+  outline: none;
+}
+
+/* Image attached to a reply (composer preview + rendered) */
+.reply-image-preview {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+.reply-image-preview img {
+  max-width: 220px;
+  max-height: 160px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  object-fit: cover;
+}
+
+/* ============================================================
+   SHARE MENU
+   ============================================================ */
+.share-wrap {
+  position: relative;
+  display: inline-block;
+}
+.share-menu {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 150px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: var(--shadow-hover);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+}
+.share-menu button {
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.share-menu button:hover {
+  background: var(--bg);
+  color: var(--ink);
+}
+.share-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+}
+
 /* ---------- mobile bottom nav ---------- */
 .bottom-nav {
   display: none;

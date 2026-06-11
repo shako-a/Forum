@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "Post" ADD COLUMN     "score" INTEGER NOT NULL DEFAULT 0;
+
+-- AlterTable
+ALTER TABLE "Reply" ADD COLUMN     "score" INTEGER NOT NULL DEFAULT 0;

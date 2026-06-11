@@ -17,7 +17,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
   if (!isLocale(lang)) notFound();
 
   const [dict, user] = await Promise.all([getDictionary(lang), getCurrentUser()]);
-  const data = await getHomeData(Boolean(user));
+  const data = await getHomeData(user ? { id: user.id } : null);
   const headerUser = user ? { forumName: user.forumName } : null;
 
   return (

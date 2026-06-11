@@ -65,7 +65,13 @@ export function Feed({
       </div>
 
       {/* Posts */}
-      <PostList locale={locale} dict={dict} posts={posts} />
+      <PostList
+        locale={locale}
+        dict={dict}
+        posts={posts}
+        canVote={!!user}
+        loginHref={`/${locale}/login`}
+      />
     </main>
   );
 }
