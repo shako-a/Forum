@@ -20,6 +20,36 @@ const CATEGORIES = [
   { slug: "networking", nameEn: "Networking", nameKa: "ნეთვორქინგი", locked: true },
 ];
 
+// TOP_PANEL advertisement cards shown in the home horizontal panel. Stable ids
+// so re-seeding upserts in place (never duplicates) and every machine renders
+// the same panel. Edit/recolor/reorder these later via /admin/ad-cards.
+const AD_CARDS = [
+  {
+    id: "seed_ad_top_1",
+    titleEn: "Discover Georgian Wine Country",
+    titleKa: "აღმოაჩინე ქართული ღვინის მხარე",
+    imageUrl: "https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=600&q=70",
+    linkUrl: "https://example.com/wine",
+    titleColor: "#ffffff",
+  },
+  {
+    id: "seed_ad_top_2",
+    titleEn: "Tbilisi Tech Meetup 2026",
+    titleKa: "თბილისის ტექ შეხვედრა 2026",
+    imageUrl: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=70",
+    linkUrl: "https://example.com/meetup",
+    titleColor: "#ffffff",
+  },
+  {
+    id: "seed_ad_top_3",
+    titleEn: "Learn Georgian Online",
+    titleKa: "ისწავლე ქართული ონლაინ",
+    imageUrl: "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=600&q=70",
+    linkUrl: "https://example.com/learn",
+    titleColor: "#ffffff",
+  },
+];
+
 async function main() {
   for (let i = 0; i < CATEGORIES.length; i++) {
     const c = CATEGORIES[i];
@@ -30,6 +60,16 @@ async function main() {
     });
   }
   console.log(`Seeded ${CATEGORIES.length} categories.`);
+
+  for (let i = 0; i < AD_CARDS.length; i++) {
+    const a = AD_CARDS[i];
+    await db.adCard.upsert({
+      where: { id: a.id },
+      update: { ...a, placement: "TOP_PANEL", active: true, sortOrder: i + 1 },
+      create: { ...a, placement: "TOP_PANEL", active: true, sortOrder: i + 1 },
+    });
+  }
+  console.log(`Seeded ${AD_CARDS.length} TOP_PANEL ad cards.`);
 
   // Optional bootstrap admin via env vars.
   const adminEmail = process.env.SEED_ADMIN_EMAIL;
