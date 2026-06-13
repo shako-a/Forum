@@ -64,3 +64,42 @@ export async function requireRole(locale: string, min: Role) {
   if (!roleAtLeast(user.role, min)) redirect(`/${locale}`);
   return user;
 }
+
+/**
+ * Server-side guard for mutating Server Actions (which are reachable via direct
+ * POST, not just the UI). Returns the active user if they hold at least `min`,
+ * otherwise null — the caller decides how to bail (return error / no-op).
+ */
+export async function authorize(min: Role) {
+  const user = await getCurrentUser();
+  if (!user || !roleAtLeast(user.role, min)) return null;
+  return user;
+}
+
+/**
+ * Category-scoped moderation check (spec: moderators are assigned categories).
+ * Admins can moderate everywhere; a MODERATOR only in categories they're
+ * assigned to via `Category.moderators`; everyone else never. Memoized per
+ * request keyed by user + category.
+ */
+export async function canModerateCategory(
+  user: { id: string; role: Role },
+  categoryId: string,
+): Promise<boolean> {
+  if (roleAtLeast(user.role, "ADMIN")) return true;
+  if (user.role !== "MODERATOR") return false;
+  const assigned = await db.category.findFirst({
+    where: { id: categoryId, moderators: { some: { id: user.id } } },
+    select: { id: true },
+  });
+  return !!assigned;
+}
+
+/** The set of category ids a user moderates (empty for non-moderators / admins handled by caller). */
+export async function getModeratedCategoryIds(userId: string): Promise<string[]> {
+  const cats = await db.category.findMany({
+    where: { moderators: { some: { id: userId } } },
+    select: { id: true },
+  });
+  return cats.map((c) => c.id);
+}

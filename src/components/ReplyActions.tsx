@@ -6,6 +6,7 @@ import { ReplyComposer } from "@/components/ReplyComposer";
 import { ReplyEditForm } from "@/components/ReplyEditForm";
 import { ShareMenu } from "@/components/ShareMenu";
 import { deleteReply } from "@/app/actions/replies";
+import { setReplyHidden } from "@/app/actions/moderation";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 
@@ -19,6 +20,8 @@ export function ReplyActions({
   canVote,
   canReply,
   canEdit,
+  canModerate,
+  hidden,
   editText,
   editImage,
   loginHref,
@@ -34,6 +37,8 @@ export function ReplyActions({
   canVote: boolean;
   canReply: boolean;
   canEdit: boolean;
+  canModerate: boolean;
+  hidden: boolean;
   editText: string;
   editImage: string | null;
   loginHref: string;
@@ -42,12 +47,18 @@ export function ReplyActions({
 }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [, startTransition] = useTransition();
+  const [pending, startTransition] = useTransition();
 
   function onDelete() {
     if (!window.confirm(dict.post.confirmDelete)) return;
     startTransition(() => {
       void deleteReply(replyId, locale, slug);
+    });
+  }
+
+  function onToggleHidden() {
+    startTransition(() => {
+      void setReplyHidden(replyId, !hidden, locale, slug);
     });
   }
 
@@ -80,6 +91,11 @@ export function ReplyActions({
               {dict.post.delete}
             </button>
           </>
+        )}
+        {canModerate && (
+          <button type="button" className="action mod-action" onClick={onToggleHidden} disabled={pending}>
+            🛡 {hidden ? dict.mod.show : dict.mod.hide}
+          </button>
         )}
       </div>
 

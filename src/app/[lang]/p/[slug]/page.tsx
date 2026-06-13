@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
-import { getCurrentUser, roleAtLeast } from "@/lib/dal";
+import { getCurrentUser } from "@/lib/dal";
 import { getPostView } from "@/lib/forum-data";
 import { categoryName } from "@/i18n/localize";
 import { categoryStyle } from "@/lib/category-style";
@@ -13,6 +13,7 @@ import { Vote } from "@/components/Vote";
 import { ShareMenu } from "@/components/ShareMenu";
 import { ReplyComposer } from "@/components/ReplyComposer";
 import { ReplyThread } from "@/components/ReplyThread";
+import { PostModBar } from "@/components/PostModBar";
 import { ReplySort, type ReplySortKey } from "@/components/ReplySort";
 
 export const dynamic = "force-dynamic";
@@ -29,17 +30,16 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
   const data = await getPostView(slug, viewer, sort);
   if (!data) notFound();
 
-  const { post, postMyVote, replyCount, roots } = data;
+  const { post, canModerate, postMyVote, replyCount, roots } = data;
 
-  // Hidden posts: moderators/admins only.
-  if (post.hidden && !(user && roleAtLeast(user.role, "MODERATOR"))) notFound();
+  // Hidden posts: only moderators of this category (or admins) may view them.
+  if (post.hidden && !canModerate) notFound();
   // Locked category: gated for guests.
   if (post.category.locked && !user) redirect(`/${lang}/login?next=/${lang}/p/${slug}`);
 
   const style = categoryStyle(post.category.slug);
   const html = pmToHtml(post.body);
-  const isMod = !!user && roleAtLeast(user.role, "MODERATOR");
-  const canReply = !!user && (!post.repliesLocked || isMod);
+  const canReply = !!user && (!post.repliesLocked || canModerate);
   const loginHref = `/${lang}/login?next=/${lang}/p/${slug}`;
   const headerUser = user ? { forumName: user.forumName } : null;
 
@@ -84,6 +84,20 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
             </span>
             <ShareMenu title={post.title} dict={dict} />
           </div>
+
+          {canModerate && (
+            <PostModBar
+              postId={post.id}
+              locale={lang}
+              slug={slug}
+              hidden={post.hidden}
+              repliesLocked={post.repliesLocked}
+              dict={dict}
+            />
+          )}
+          {post.hidden && (
+            <p className="mod-hidden-note">🛡 {dict.mod.hiddenTag}</p>
+          )}
         </article>
 
         {/* Replies */}
@@ -99,7 +113,7 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
             <div className="card card-pad" style={{ marginBottom: 16 }}>
               <Link href={loginHref}>{dict.post.loginToReply}</Link>
             </div>
-          ) : post.repliesLocked && !isMod ? (
+          ) : post.repliesLocked && !canModerate ? (
             <p style={{ color: "var(--muted)", fontSize: 14, marginBottom: 16 }}>
               🔒 {dict.post.repliesLocked}
             </p>
@@ -117,7 +131,7 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
             dict={dict}
             canVote={!!user}
             canReply={canReply}
-            canModerate={isMod}
+            canModerate={canModerate}
             loginHref={loginHref}
             shareTitle={post.title}
           />

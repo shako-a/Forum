@@ -34,3 +34,48 @@ export type FormState =
       ok?: boolean;
     }
   | undefined;
+
+// Turn a ZodError into { field: messages[] } without depending on a specific
+// zod minor-version flatten signature. Shared by all form-handling actions.
+export function zodErrors(error: {
+  issues: { path: PropertyKey[]; message: string }[];
+}): Record<string, string[]> {
+  const out: Record<string, string[]> = {};
+  for (const issue of error.issues) {
+    const key = String(issue.path[0] ?? "form");
+    (out[key] ??= []).push(issue.message);
+  }
+  return out;
+}
+
+// --- Admin: categories ---------------------------------------------------
+// `slug` is optional on input — the action derives one from nameEn when blank.
+export const CategorySchema = z.object({
+  nameEn: z.string().min(1, { error: "English name is required." }).trim(),
+  nameKa: z.string().min(1, { error: "Georgian name is required." }).trim(),
+  slug: z
+    .string()
+    .regex(/^[a-z0-9-]*$/, { error: "Slug may only contain lowercase letters, numbers, and hyphens." })
+    .trim()
+    .optional(),
+  descriptionEn: z.string().trim().optional(),
+  descriptionKa: z.string().trim().optional(),
+  locked: z.boolean().optional(),
+  sortOrder: z.coerce.number().int().optional(),
+});
+
+// --- Admin: advertisement cards -----------------------------------------
+const optionalUrl = z
+  .url({ error: "Enter a valid URL (including https://)." })
+  .or(z.literal(""))
+  .optional();
+
+export const AdCardSchema = z.object({
+  titleEn: z.string().min(1, { error: "English title is required." }).trim(),
+  titleKa: z.string().min(1, { error: "Georgian title is required." }).trim(),
+  imageUrl: optionalUrl,
+  linkUrl: optionalUrl,
+  placement: z.enum(["TOP_PANEL", "SIDEBAR"]),
+  active: z.boolean().optional(),
+  sortOrder: z.coerce.number().int().optional(),
+});

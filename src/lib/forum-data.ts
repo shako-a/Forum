@@ -1,7 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { pmToHtml, pmPlainText, pmFirstImage } from "@/lib/prosemirror";
-import { roleAtLeast } from "@/lib/dal";
+import { canModerateCategory } from "@/lib/dal";
 import type { Role } from "@/generated/prisma/client";
 
 // These loaders degrade gracefully: if the database isn't reachable yet
@@ -159,9 +159,11 @@ export async function getPostView(
   });
   if (!post) return null;
 
-  const isMod = viewer ? roleAtLeast(viewer.role, "MODERATOR") : false;
+  // Category-scoped: only a moderator of this post's category (or an admin) may
+  // see hidden replies and wield moderation controls.
+  const canModerate = viewer ? await canModerateCategory(viewer, post.categoryId) : false;
   const replies = await db.reply.findMany({
-    where: { postId: post.id, ...(isMod ? {} : { hidden: false }) },
+    where: { postId: post.id, ...(canModerate ? {} : { hidden: false }) },
     orderBy: { createdAt: "asc" },
     include: { author: { select: { forumName: true } } },
   });
@@ -225,5 +227,5 @@ export async function getPostView(
   };
   sortTree(roots);
 
-  return { post, postMyVote, replyCount: replies.length, roots };
+  return { post, canModerate, postMyVote, replyCount: replies.length, roots };
 }

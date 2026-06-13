@@ -59,6 +59,8 @@ function ReplyNode({ node, common }: { node: ThreadReply; common: Common }) {
         canVote={canVote}
         canReply={canReply}
         canEdit={node.isOwn || canModerate}
+        canModerate={canModerate}
+        hidden={node.hidden}
         editText={node.editableText}
         editImage={node.imageUrl}
         loginHref={loginHref}

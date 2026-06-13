@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { Prisma } from "@/generated/prisma/client";
-import { getCurrentUser, roleAtLeast } from "@/lib/dal";
+import { getCurrentUser, canModerateCategory } from "@/lib/dal";
 import { defaultLocale, isLocale } from "@/i18n/config";
 import { buildReplyDoc, safeUrl } from "@/lib/prosemirror";
 import type { FormState } from "@/lib/definitions";
@@ -28,12 +28,12 @@ export async function createReply(_state: FormState, formData: FormData): Promis
 
   const post = await db.post.findUnique({
     where: { id: postId },
-    select: { id: true, repliesLocked: true },
+    select: { id: true, repliesLocked: true, categoryId: true },
   });
   if (!post) return { message: "Post not found." };
 
-  // Moderators can still reply to a locked thread.
-  if (post.repliesLocked && !roleAtLeast(user.role, "MODERATOR")) {
+  // Moderators of this category (and admins) can still reply to a locked thread.
+  if (post.repliesLocked && !(await canModerateCategory(user, post.categoryId))) {
     return { message: "Replies are locked on this post." };
   }
 
@@ -76,11 +76,12 @@ export async function editReply(_state: FormState, formData: FormData): Promise<
 
   const reply = await db.reply.findUnique({
     where: { id: replyId },
-    select: { authorId: true, deletedAt: true },
+    select: { authorId: true, deletedAt: true, post: { select: { categoryId: true } } },
   });
   if (!reply || reply.deletedAt) return { message: "Reply not found." };
 
-  const canEdit = reply.authorId === user.id || roleAtLeast(user.role, "MODERATOR");
+  const canEdit =
+    reply.authorId === user.id || (await canModerateCategory(user, reply.post.categoryId));
   if (!canEdit) return { message: "You can only edit your own replies." };
 
   await db.reply.update({
@@ -100,11 +101,17 @@ export async function deleteReply(replyId: string, locale: string, slug: string)
 
   const reply = await db.reply.findUnique({
     where: { id: replyId },
-    select: { authorId: true, deletedAt: true, _count: { select: { children: true } } },
+    select: {
+      authorId: true,
+      deletedAt: true,
+      post: { select: { categoryId: true } },
+      _count: { select: { children: true } },
+    },
   });
   if (!reply || reply.deletedAt) return;
 
-  const canDelete = reply.authorId === user.id || roleAtLeast(user.role, "MODERATOR");
+  const canDelete =
+    reply.authorId === user.id || (await canModerateCategory(user, reply.post.categoryId));
   if (!canDelete) return;
 
   if (reply._count.children > 0) {
