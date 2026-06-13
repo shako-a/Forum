@@ -54,7 +54,8 @@
     "googlePlay": "Google Play",
     "translateToEnglish": "Translate to English",
     "pinned": "Pinned",
-    "comments": "comments"
+    "comments": "comments",
+    "sponsored": "Sponsored"
   },
   "categories": {
     "title": "Categories",
@@ -181,6 +182,7 @@
     "active": "Active",
     "newAdCard": "New ad card",
     "editAdCard": "Edit ad card",
+    "titleColor": "Title color",
     "role": "Role",
     "status": "Status",
     "archive": "Archive",

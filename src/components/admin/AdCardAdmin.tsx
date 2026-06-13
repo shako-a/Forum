@@ -8,6 +8,7 @@ export type AdminAdCard = {
   id: string;
   titleEn: string;
   titleKa: string;
+  titleColor: string;
   imageUrl: string | null;
   linkUrl: string | null;
   placement: "TOP_PANEL" | "SIDEBAR";
@@ -79,6 +80,15 @@ function AdCardForm({
         <div className="field">
           <label>{t.sortOrder}</label>
           <input name="sortOrder" type="number" className="input" defaultValue={card?.sortOrder ?? 0} />
+        </div>
+        <div className="field admin-color-field">
+          <label>{t.titleColor}</label>
+          <input
+            name="titleColor"
+            type="color"
+            className="input admin-color-input"
+            defaultValue={card?.titleColor ?? "#ffffff"}
+          />
         </div>
       </div>
 

@@ -220,6 +220,9 @@ model AdCard {
   id        String      @id @default(cuid())
   titleEn   String
   titleKa   String
+  // Hex color for the title overlaid on the card image — admin-editable so the
+  // title stays legible against whatever image is used.
+  titleColor String     @default("#ffffff")
   imageUrl  String?
   linkUrl   String?
   placement AdPlacement @default(TOP_PANEL)

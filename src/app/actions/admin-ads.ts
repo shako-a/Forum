@@ -12,6 +12,7 @@ function parseForm(formData: FormData) {
   return AdCardSchema.safeParse({
     titleEn: formData.get("titleEn"),
     titleKa: formData.get("titleKa"),
+    titleColor: (formData.get("titleColor") as string) || undefined,
     imageUrl: (formData.get("imageUrl") as string) ?? "",
     linkUrl: (formData.get("linkUrl") as string) ?? "",
     placement: formData.get("placement"),
@@ -25,12 +26,14 @@ export async function createAdCard(_state: FormState, formData: FormData): Promi
 
   const parsed = parseForm(formData);
   if (!parsed.success) return { errors: zodErrors(parsed.error) };
-  const { titleEn, titleKa, imageUrl, linkUrl, placement, active, sortOrder } = parsed.data;
+  const { titleEn, titleKa, titleColor, imageUrl, linkUrl, placement, active, sortOrder } =
+    parsed.data;
 
   await db.adCard.create({
     data: {
       titleEn,
       titleKa,
+      titleColor: titleColor ?? "#ffffff",
       imageUrl: imageUrl || null,
       linkUrl: linkUrl || null,
       placement,
@@ -52,13 +55,15 @@ export async function updateAdCard(_state: FormState, formData: FormData): Promi
 
   const parsed = parseForm(formData);
   if (!parsed.success) return { errors: zodErrors(parsed.error) };
-  const { titleEn, titleKa, imageUrl, linkUrl, placement, active, sortOrder } = parsed.data;
+  const { titleEn, titleKa, titleColor, imageUrl, linkUrl, placement, active, sortOrder } =
+    parsed.data;
 
   await db.adCard.update({
     where: { id },
     data: {
       titleEn,
       titleKa,
+      titleColor: titleColor ?? "#ffffff",
       imageUrl: imageUrl || null,
       linkUrl: linkUrl || null,
       placement,

@@ -7,6 +7,7 @@ import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { RightSidebar } from "@/components/RightSidebar";
 import { Feed } from "@/components/Feed";
+import { TopPanel } from "@/components/TopPanel";
 import { BottomNav } from "@/components/BottomNav";
 
 // Per-request: depends on the viewer's session and live forum data.
@@ -20,12 +21,18 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
   const data = await getHomeData(user ? { id: user.id } : null);
   const headerUser = user ? { forumName: user.forumName } : null;
 
+  // Popular topics for the top panel: highest-scoring visible posts.
+  const popular = [...data.posts].sort((a, b) => b.score - a.score).slice(0, 8);
+
   return (
     <>
       <Header locale={lang} dict={dict} user={headerUser} />
       <div className="shell">
         <LeftSidebar locale={lang} dict={dict} categories={data.categories} />
-        <Feed locale={lang} dict={dict} user={headerUser} posts={data.posts} />
+        <div className="center-col">
+          <TopPanel locale={lang} dict={dict} popular={popular} ads={data.topAds} />
+          <Feed locale={lang} dict={dict} user={headerUser} posts={data.posts} />
+        </div>
         <RightSidebar
           locale={lang}
           dict={dict}

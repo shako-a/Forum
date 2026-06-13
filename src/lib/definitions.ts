@@ -73,6 +73,10 @@ const optionalUrl = z
 export const AdCardSchema = z.object({
   titleEn: z.string().min(1, { error: "English title is required." }).trim(),
   titleKa: z.string().min(1, { error: "Georgian title is required." }).trim(),
+  titleColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, { error: "Pick a color." })
+    .optional(),
   imageUrl: optionalUrl,
   linkUrl: optionalUrl,
   placement: z.enum(["TOP_PANEL", "SIDEBAR"]),

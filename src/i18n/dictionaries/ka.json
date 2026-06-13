@@ -54,7 +54,8 @@
     "googlePlay": "Google Play",
     "translateToEnglish": "თარგმნე ინგლისურად",
     "pinned": "მიმაგრებული",
-    "comments": "კომენტარი"
+    "comments": "კომენტარი",
+    "sponsored": "რეკლამა"
   },
   "categories": {
     "title": "კატეგორიები",
@@ -181,6 +182,7 @@
     "active": "აქტიური",
     "newAdCard": "ახალი სარეკლამო ბარათი",
     "editAdCard": "სარეკლამო ბარათის რედაქტირება",
+    "titleColor": "სათაურის ფერი",
     "role": "როლი",
     "status": "სტატუსი",
     "archive": "დაარქივება",
