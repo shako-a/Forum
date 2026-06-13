@@ -65,10 +65,16 @@ export const CategorySchema = z.object({
 });
 
 // --- Admin: advertisement cards -----------------------------------------
-const optionalUrl = z
-  .url({ error: "Enter a valid URL (including https://)." })
-  .or(z.literal(""))
-  .optional();
+// Accepts a full URL, a protocol-less host (we prepend https://), or empty.
+const optionalUrl = z.preprocess(
+  (v) => {
+    if (typeof v !== "string") return v;
+    const s = v.trim();
+    if (s === "" || /^(https?:|data:)/i.test(s)) return s;
+    return `https://${s}`;
+  },
+  z.url({ error: "Enter a valid URL." }).or(z.literal("")).optional(),
+);
 
 export const AdCardSchema = z.object({
   titleEn: z.string().min(1, { error: "English title is required." }).trim(),
