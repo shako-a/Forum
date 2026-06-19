@@ -68,5 +68,5 @@ jobs:
 databases:
   - name: forum-db
     engine: PG
-    version: "16"
+    version: "17"
     production: false
