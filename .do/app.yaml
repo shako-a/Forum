@@ -1,0 +1,72 @@
+# DigitalOcean App Platform spec for GeoGlobally.
+#
+# Import with:  doctl apps create --spec .do/app.yaml
+# Update with:  doctl apps update <APP_ID> --spec .do/app.yaml
+#
+# Adjust `repo`, `region`, instance sizes, and DB plan to taste — values here are
+# a sensible starting point. Slugs occasionally change; the DO UI will tell you
+# if one is invalid.
+
+name: geoglobally
+region: fra # Frankfurt — close to the EU-heavy Georgian diaspora
+
+# ---------------------------------------------------------------------------
+# Web service: the Next.js standalone server (Dockerfile CMD = node server.js)
+# ---------------------------------------------------------------------------
+services:
+  - name: web
+    dockerfile_path: Dockerfile
+    source_dir: /
+    github:
+      repo: shako-a/Forum
+      branch: main
+      deploy_on_push: true
+    http_port: 8080
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-1gb
+    health_check:
+      http_path: /en # returns 200 (the bare "/" 307-redirects to /<locale>)
+    envs:
+      - key: NODE_ENV
+        scope: RUN_TIME
+        value: production
+      # Signs session JWTs. Set as an encrypted secret in the DO dashboard.
+      - key: SESSION_SECRET
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_WITH_openssl_rand_base64_32
+      # App runtime should use the POOLED connection (PgBouncer) once you add a
+      # connection pool to the DB. Until then this direct binding works.
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        value: ${forum-db.DATABASE_URL}
+
+# ---------------------------------------------------------------------------
+# Pre-deploy job: apply migrations before the new version goes live.
+# Runs from /migrate (isolated Prisma CLI). Uses the DIRECT connection.
+# ---------------------------------------------------------------------------
+jobs:
+  - name: migrate
+    kind: PRE_DEPLOY
+    dockerfile_path: Dockerfile
+    source_dir: /
+    github:
+      repo: shako-a/Forum
+      branch: main
+    run_command: cd /migrate && npx prisma migrate deploy
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    envs:
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        value: ${forum-db.DATABASE_URL}
+
+# ---------------------------------------------------------------------------
+# Managed PostgreSQL. `production: false` is the cheap dev DB to start; flip to
+# a production cluster (with a standby node) before real traffic + Stripe money.
+# ---------------------------------------------------------------------------
+databases:
+  - name: forum-db
+    engine: PG
+    version: "16"
+    production: false
