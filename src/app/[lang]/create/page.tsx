@@ -28,7 +28,7 @@ export default async function CreatePostPage({ params, searchParams }: PageProps
 
   return (
     <>
-      <Header locale={lang} dict={dict} user={{ forumName: user.forumName }} />
+      <Header locale={lang} dict={dict} user={{ forumName: user.forumName, isDonor: user.isDonor }} />
       <main className="create-wrap">
         <CreatePostForm
           locale={lang}

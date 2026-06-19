@@ -31,6 +31,7 @@ const AD_CARDS = [
     imageUrl: "https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=600&q=70",
     linkUrl: "https://example.com/wine",
     titleColor: "#ffffff",
+    position: 2, // 1-based slot in the Popular Topics row
   },
   {
     id: "seed_ad_top_2",
@@ -39,6 +40,7 @@ const AD_CARDS = [
     imageUrl: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=70",
     linkUrl: "https://example.com/meetup",
     titleColor: "#ffffff",
+    position: 4,
   },
   {
     id: "seed_ad_top_3",
@@ -47,6 +49,7 @@ const AD_CARDS = [
     imageUrl: "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=600&q=70",
     linkUrl: "https://example.com/learn",
     titleColor: "#ffffff",
+    position: 6,
   },
 ];
 
@@ -61,12 +64,12 @@ async function main() {
   }
   console.log(`Seeded ${CATEGORIES.length} categories.`);
 
-  for (let i = 0; i < AD_CARDS.length; i++) {
-    const a = AD_CARDS[i];
+  for (const { position, ...a } of AD_CARDS) {
+    // `position` maps to the AdCard.sortOrder column (its 1-based slot in the row).
     await db.adCard.upsert({
       where: { id: a.id },
-      update: { ...a, placement: "TOP_PANEL", active: true, sortOrder: i + 1 },
-      create: { ...a, placement: "TOP_PANEL", active: true, sortOrder: i + 1 },
+      update: { ...a, placement: "TOP_PANEL", active: true, sortOrder: position },
+      create: { ...a, placement: "TOP_PANEL", active: true, sortOrder: position },
     });
   }
   console.log(`Seeded ${AD_CARDS.length} TOP_PANEL ad cards.`);
@@ -110,7 +113,7 @@ async function seedDemoContent() {
 
   const demoHash = await bcrypt.hash("demo1234", 10);
   const demoUsers = [
-    { forumName: "Nino_B", firstName: "Nino", lastName: "B.", email: "nino@demo.local", phone: "+995", state: "Tbilisi", city: "Tbilisi" },
+    { forumName: "Nino_B", firstName: "Nino", lastName: "B.", email: "nino@demo.local", phone: "+995", state: "Tbilisi", city: "Tbilisi", isDonor: true },
     { forumName: "Levani_NJ", firstName: "Levani", lastName: "G.", email: "levani@demo.local", phone: "+1", state: "New Jersey", city: "Newark" },
     { forumName: "GiorgiK", firstName: "Giorgi", lastName: "K.", email: "giorgi@demo.local", phone: "+1", state: "Pennsylvania", city: "Philadelphia" },
   ];

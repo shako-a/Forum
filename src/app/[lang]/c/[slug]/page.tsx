@@ -19,7 +19,7 @@ export default async function CategoryPage({ params }: PageProps<"/[lang]/c/[slu
   if (!isLocale(lang)) notFound();
 
   const [dict, user] = await Promise.all([getDictionary(lang), getCurrentUser()]);
-  const headerUser = user ? { forumName: user.forumName } : null;
+  const headerUser = user ? { forumName: user.forumName, isDonor: user.isDonor } : null;
 
   const [allCategories, data] = await Promise.all([
     db.category.findMany({ orderBy: { sortOrder: "asc" } }),

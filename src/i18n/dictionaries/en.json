@@ -4,6 +4,7 @@
     "tagline": "Georgians, worldwide",
     "search": "Search posts, jobs, housing…",
     "askAi": "Ask AI",
+    "askAiDonorOnly": "Ask AI is a Donor perk — become a Donor to unlock it.",
     "login": "Log in",
     "register": "Join",
     "logout": "Log out",
@@ -138,6 +139,36 @@
     "moderator": "Moderator",
     "admin": "Administrator"
   },
+  "profile": {
+    "memberSince": "Member since",
+    "posts": "posts",
+    "postsBy": "Posts by {name}",
+    "editProfile": "Edit profile",
+    "viewProfile": "View profile",
+    "empty": "No posts yet.",
+    "emptyOwn": "You haven't posted yet.",
+    "accountTitle": "Account settings",
+    "accountSub": "Update your profile. Your email and phone are never shown to other members.",
+    "save": "Save changes",
+    "saved": "Your profile has been updated.",
+    "phoneHint": "Hidden from other members.",
+    "donorBadge": "Donor"
+  },
+  "donate": {
+    "title": "Become a Donor",
+    "subtitle": "Support GeoGlobally and unlock Donor perks.",
+    "perkAskAi": "Use Ask AI — instant answers about jobs, housing, and life abroad",
+    "perkSupport": "Help keep the community running",
+    "perkBadge": "A Donor badge on your profile",
+    "alreadyDonor": "You're a Donor — thank you! 💛",
+    "ctaComingSoon": "Donations coming soon",
+    "loginPrompt": "Log in to become a Donor.",
+    "contactPrompt": "Online checkout is coming soon. In the meantime, contact an admin to become a Donor."
+  },
+  "ask": {
+    "donorAccess": "Donor access",
+    "comingSoon": "Ask AI is coming soon. As a Donor, you'll be first to use it."
+  },
   "admin": {
     "title": "Admin panel",
     "dashboard": "Dashboard",
@@ -163,6 +194,8 @@
     "descriptionEn": "Description (English)",
     "descriptionKa": "Description (Georgian)",
     "sortOrder": "Order",
+    "position": "Position",
+    "positionHint": "Top panel: 1 = first slot in the Popular Topics row, 2 = second, and so on. 0 = after the topics. (Sidebar ads just use it as display order.)",
     "locked": "Locked",
     "lockedHint": "Locked categories show their name to guests but gate content behind login.",
     "newCategory": "New category",
@@ -185,6 +218,8 @@
     "titleColor": "Title color",
     "role": "Role",
     "status": "Status",
+    "donor": "Donor",
+    "donorHint": "Toggle the paid Donor tier (grants Ask AI access).",
     "archive": "Archive",
     "restore": "Restore",
     "archived": "Archived",

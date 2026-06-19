@@ -323,6 +323,21 @@ button {
   color: var(--muted);
   margin-top: auto;
 }
+/* locked topic teaser (guest viewing a locked category) */
+.pop-card-locked {
+  border-style: dashed;
+}
+.pop-card-locked .pop-title {
+  color: var(--muted);
+}
+.pop-lock {
+  margin-left: 4px;
+  font-size: 10px;
+}
+.pop-meta-locked {
+  font-weight: 600;
+  color: var(--blue);
+}
 /* ad card: image fills the whole box, title overlaid in the admin-chosen color */
 .ad-card-top.ad-has-image {
   position: relative;
@@ -347,6 +362,199 @@ button {
   bottom: 0;
   padding: 12px 14px;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+/* ---------- user profile + account ---------- */
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.profile-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 28px;
+  color: #fff;
+}
+.profile-id {
+  flex: 1;
+  min-width: 0;
+}
+.profile-name {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.role-badge {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 12%, transparent);
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+.donor-badge {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #9a6a00;
+  background: color-mix(in srgb, #f5b301 22%, transparent);
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+
+/* "Ask AI" gated state (non-Donors) */
+.ask-ai-locked {
+  opacity: 0.75;
+}
+.ask-ai-lock {
+  margin-left: 4px;
+  font-size: 10px;
+}
+
+/* ---------- Donor: donate + ask pages ---------- */
+.donate-hero,
+.ask-hero {
+  text-align: center;
+  max-width: 460px;
+  margin: 0 auto;
+  padding: 28px;
+}
+.donate-badge,
+.ask-spark {
+  font-size: 40px;
+  line-height: 1;
+}
+.donate-title,
+.ask-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  margin-top: 10px;
+}
+.donate-sub {
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 6px;
+}
+.donate-perks {
+  list-style: none;
+  text-align: left;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 20px auto;
+  font-size: 14px;
+}
+.donate-already {
+  font-weight: 700;
+  color: #9a6a00;
+  margin-top: 16px;
+}
+.donate-note {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 12px;
+}
+.ask-donor-tag {
+  font-weight: 700;
+  color: #9a6a00;
+  margin-top: 8px;
+}
+.ask-soon {
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 10px;
+}
+.profile-realname {
+  font-size: 14px;
+  color: var(--ink);
+  margin-top: 2px;
+}
+.profile-meta {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.profile-section-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  margin: 18px 2px 4px;
+}
+.account-head {
+  margin-bottom: 4px;
+}
+.account-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+}
+.account-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.account-form {
+  margin-top: 12px;
+}
+.account-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+.auth-ok {
+  background: color-mix(in srgb, #2e8b57 14%, transparent);
+  color: #1e6b40;
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+/* header profile link */
+.header-profile {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 160px;
+}
+.header-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 13px;
+  color: #fff;
+  background: var(--blue);
+}
+.header-profile-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ---------- left nav ---------- */

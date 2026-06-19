@@ -46,6 +46,11 @@ model User {
   role         Role       @default(USER)
   status       UserStatus @default(ACTIVE)
 
+  // Paid "Donor" tier — orthogonal to role (any user can be a Donor). Grants
+  // access to perks like the "Ask AI" feature. Admin-granted for now; will be
+  // driven by Stripe subscriptions later.
+  isDonor      Boolean    @default(false)
+
   // Public-facing identity
   forumName String @unique // "Name on the forum"
 

@@ -78,8 +78,9 @@ function AdCardForm({
           </select>
         </div>
         <div className="field">
-          <label>{t.sortOrder}</label>
-          <input name="sortOrder" type="number" className="input" defaultValue={card?.sortOrder ?? 0} />
+          <label>{t.position}</label>
+          <input name="sortOrder" type="number" min={0} className="input" defaultValue={card?.sortOrder ?? 0} />
+          <p className="field-hint">{t.positionHint}</p>
         </div>
         <div className="field admin-color-field">
           <label>{t.titleColor}</label>

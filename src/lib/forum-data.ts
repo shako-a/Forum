@@ -43,18 +43,52 @@ export async function getHomeData(viewer: { id: string } | null) {
       : posts.filter((p) => !p.category.locked);
     const postsWithVotes = await attachMyVotes(visiblePosts, viewer?.id ?? null);
 
-    return { categories, posts: postsWithVotes, topAds, sidebarAds, dbReady: true };
+    // The Popular Topics bar shows *all* top topics (highest score) to everyone,
+    // so the row stays full and the ad positions line up. Locked-category topics
+    // are marked `gated` for guests: shown as a teaser, but not openable.
+    const popular: PopularTopic[] = [...posts]
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8)
+      .map((p) => ({
+        id: p.id,
+        slug: p.slug,
+        title: p.title,
+        score: p.score,
+        category: {
+          slug: p.category.slug,
+          nameEn: p.category.nameEn,
+          nameKa: p.category.nameKa,
+          locked: p.category.locked,
+        },
+        _count: { replies: p._count.replies },
+        gated: !viewerIsAuthed && p.category.locked,
+      }));
+
+    return { categories, posts: postsWithVotes, popular, topAds, sidebarAds, dbReady: true };
   } catch (error) {
     console.error("getHomeData failed (is the database running & migrated?):", error);
     return {
       categories: [],
       posts: [],
+      popular: [],
       topAds: [],
       sidebarAds: [],
       dbReady: false,
     };
   }
 }
+
+// A card in the Popular Topics bar. `gated` = locked category shown to a guest:
+// render the title as a teaser but route clicks to login instead of the post.
+export type PopularTopic = {
+  id: string;
+  slug: string;
+  title: string;
+  score: number;
+  category: { slug: string; nameEn: string; nameKa: string; locked: boolean };
+  _count: { replies: number };
+  gated: boolean;
+};
 
 const POST_CARD_INCLUDE = {
   author: { select: { forumName: true } },
@@ -95,6 +129,43 @@ export async function getCategoryPage(slug: string, viewer: { id: string } | nul
   });
   const posts = await attachMyVotes(found, viewer?.id ?? null);
   return { category, posts, gated: false };
+}
+
+// A public user profile: the user's public-facing fields plus their visible
+// posts (newest first). Returns null when no active user owns that forum name.
+// Phone/email are deliberately never selected — they're hidden from other users.
+export async function getUserProfile(forumName: string, viewer: { id: string } | null) {
+  const profile = await db.user.findUnique({
+    where: { forumName },
+    select: {
+      id: true,
+      forumName: true,
+      firstName: true,
+      lastName: true,
+      hideRealName: true,
+      city: true,
+      state: true,
+      role: true,
+      status: true,
+      isDonor: true,
+      createdAt: true,
+      _count: { select: { posts: true } },
+    },
+  });
+  if (!profile || profile.status !== "ACTIVE") return null;
+
+  const found = await db.post.findMany({
+    where: { authorId: profile.id, hidden: false },
+    orderBy: { lastActivity: "desc" },
+    take: 50,
+    include: POST_CARD_INCLUDE,
+  });
+
+  // Guests don't see posts in locked categories (parity with the home feed).
+  const visible = viewer ? found : found.filter((p) => !p.category.locked);
+  const posts = await attachMyVotes(visible, viewer?.id ?? null);
+
+  return { profile, posts };
 }
 
 // The categories overview: every category with its 3 most recently discussed

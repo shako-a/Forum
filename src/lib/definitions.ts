@@ -27,6 +27,22 @@ export const LoginFormSchema = z.object({
   password: z.string().min(1, { error: "Password is required." }),
 });
 
+// Account settings: the editable profile fields (same mandatory set as sign-up,
+// minus the password — changing the password is a separate flow).
+export const ProfileFormSchema = z.object({
+  email: z.email({ error: "Please enter a valid email." }).trim(),
+  forumName: z
+    .string()
+    .min(2, { error: "Name on the forum must be at least 2 characters." })
+    .trim(),
+  firstName: z.string().min(1, { error: "First name is required." }).trim(),
+  lastName: z.string().min(1, { error: "Last name is required." }).trim(),
+  phone: z.string().min(3, { error: "Phone number is required." }).trim(),
+  state: z.string().min(1, { error: "State / region is required." }).trim(),
+  city: z.string().trim().optional(),
+  hideRealName: z.boolean().optional(),
+});
+
 export type FormState =
   | {
       errors?: Record<string, string[] | undefined>;

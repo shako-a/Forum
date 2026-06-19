@@ -4,7 +4,7 @@ import { logout } from "@/app/actions/auth";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 
-type HeaderUser = { forumName: string } | null;
+type HeaderUser = { forumName: string; isDonor: boolean } | null;
 
 export function Header({
   locale,
@@ -16,6 +16,14 @@ export function Header({
   user: HeaderUser;
 }) {
   const t = dict.common;
+  // "Ask AI" is a Donor perk. Guests → login; logged-in non-Donors → the Donor
+  // upgrade page; Donors → the Ask AI feature.
+  const askAiHref = !user
+    ? `/${locale}/login?next=/${locale}/ask`
+    : user.isDonor
+      ? `/${locale}/ask`
+      : `/${locale}/donate`;
+  const askAiLocked = !user || !user.isDonor;
   return (
     <header className="header">
       {/* Logo */}
@@ -59,9 +67,14 @@ export function Header({
       </div>
 
       <div className="header-actions">
-        <button type="button" className="ask-ai">
+        <Link
+          href={askAiHref}
+          className={`ask-ai${askAiLocked ? " ask-ai-locked" : ""}`}
+          title={askAiLocked ? t.askAiDonorOnly : undefined}
+        >
           <span className="spark">✦</span> {t.askAi}
-        </button>
+          {askAiLocked && <span className="ask-ai-lock" aria-hidden="true">🔒</span>}
+        </Link>
 
         <LanguageSwitcher current={locale} />
 
@@ -69,6 +82,16 @@ export function Header({
           <>
             <Link href={`/${locale}/create`} className="btn btn-primary">
               {t.create}
+            </Link>
+            <Link
+              href={`/${locale}/u/${user.forumName}`}
+              className="header-profile"
+              title={user.forumName}
+            >
+              <span className="header-avatar" aria-hidden="true">
+                {user.forumName.charAt(0).toUpperCase()}
+              </span>
+              <span className="header-profile-name">{user.forumName}</span>
             </Link>
             <form action={logout}>
               <input type="hidden" name="locale" value={locale} />

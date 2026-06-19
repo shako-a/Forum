@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { setUserRole, setUserStatus } from "@/app/actions/admin-users";
+import { setUserRole, setUserStatus, setUserDonor } from "@/app/actions/admin-users";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Role, UserStatus } from "@/generated/prisma/client";
 
@@ -11,6 +11,7 @@ export type AdminUser = {
   email: string;
   role: Role;
   status: UserStatus;
+  isDonor: boolean;
 };
 
 function UserRow({
@@ -53,6 +54,17 @@ function UserRow({
           {archived ? t.archived : t.active}
         </span>
       </td>
+      <td className="py-2">
+        <button
+          type="button"
+          className="action"
+          disabled={pending}
+          title={t.donorHint}
+          onClick={() => startTransition(() => void setUserDonor(user.id, !user.isDonor))}
+        >
+          {user.isDonor ? "💛 " + t.donor : "— " + t.donor}
+        </button>
+      </td>
       <td className="py-2 text-right">
         <button
           type="button"
@@ -92,6 +104,7 @@ export function UserAdmin({
             <th className="py-2">{dict.auth.email}</th>
             <th className="py-2">{t.role}</th>
             <th className="py-2">{t.status}</th>
+            <th className="py-2">{t.donor}</th>
             <th className="py-2 text-right">{t.actions}</th>
           </tr>
         </thead>
@@ -101,7 +114,7 @@ export function UserAdmin({
           ))}
           {users.length === 0 && (
             <tr>
-              <td colSpan={5} className="py-6 text-center opacity-50">{t.empty}</td>
+              <td colSpan={6} className="py-6 text-center opacity-50">{t.empty}</td>
             </tr>
           )}
         </tbody>

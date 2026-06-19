@@ -43,6 +43,7 @@ export const getCurrentUser = cache(async () => {
       state: true,
       role: true,
       status: true,
+      isDonor: true,
     },
   });
 

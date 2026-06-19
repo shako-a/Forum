@@ -38,3 +38,13 @@ export async function setUserStatus(userId: string, status: UserStatus): Promise
   await db.user.update({ where: { id: userId }, data: { status } });
   revalidatePath("/[lang]/admin/users", "page");
 }
+
+// Grant/revoke the paid "Donor" tier. Self is allowed (no lockout risk), so an
+// admin can grant themselves Donor. Stripe will drive this automatically later.
+export async function setUserDonor(userId: string, isDonor: boolean): Promise<void> {
+  const actor = await authorize("ADMIN");
+  if (!actor) return;
+
+  await db.user.update({ where: { id: userId }, data: { isDonor } });
+  revalidatePath("/[lang]/admin/users", "page");
+}

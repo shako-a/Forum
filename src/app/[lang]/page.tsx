@@ -19,10 +19,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
 
   const [dict, user] = await Promise.all([getDictionary(lang), getCurrentUser()]);
   const data = await getHomeData(user ? { id: user.id } : null);
-  const headerUser = user ? { forumName: user.forumName } : null;
-
-  // Popular topics for the top panel: highest-scoring visible posts.
-  const popular = [...data.posts].sort((a, b) => b.score - a.score).slice(0, 8);
+  const headerUser = user ? { forumName: user.forumName, isDonor: user.isDonor } : null;
 
   return (
     <>
@@ -30,7 +27,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
       <div className="shell">
         <LeftSidebar locale={lang} dict={dict} categories={data.categories} />
         <div className="center-col">
-          <TopPanel locale={lang} dict={dict} popular={popular} ads={data.topAds} />
+          <TopPanel locale={lang} dict={dict} popular={data.popular} ads={data.topAds} />
           <Feed locale={lang} dict={dict} user={headerUser} posts={data.posts} />
         </div>
         <RightSidebar

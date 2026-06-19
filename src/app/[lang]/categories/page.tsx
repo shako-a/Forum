@@ -17,7 +17,7 @@ export default async function CategoriesPage({ params }: PageProps<"/[lang]/cate
   if (!isLocale(lang)) notFound();
 
   const [dict, user] = await Promise.all([getDictionary(lang), getCurrentUser()]);
-  const headerUser = user ? { forumName: user.forumName } : null;
+  const headerUser = user ? { forumName: user.forumName, isDonor: user.isDonor } : null;
   const categories = await getCategoriesIndex(Boolean(user));
 
   return (

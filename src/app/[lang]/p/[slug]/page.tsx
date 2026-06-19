@@ -41,7 +41,7 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
   const html = pmToHtml(post.body);
   const canReply = !!user && (!post.repliesLocked || canModerate);
   const loginHref = `/${lang}/login?next=/${lang}/p/${slug}`;
-  const headerUser = user ? { forumName: user.forumName } : null;
+  const headerUser = user ? { forumName: user.forumName, isDonor: user.isDonor } : null;
 
   return (
     <>
