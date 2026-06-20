@@ -53,7 +53,9 @@ jobs:
     github:
       repo: shako-a/Forum
       branch: main
-    run_command: cd /migrate && npx prisma migrate deploy
+    # Dockerfile components run the command via exec (no shell), so wrap it in
+    # `sh -c` to get `cd` + `&&`.
+    run_command: 'sh -c "cd /migrate && npx prisma migrate deploy"'
     instance_count: 1
     instance_size_slug: apps-s-1vcpu-0.5gb
     envs:

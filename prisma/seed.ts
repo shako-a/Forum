@@ -97,7 +97,14 @@ async function main() {
     console.log("Set SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD to create an admin user.");
   }
 
-  await seedDemoContent();
+  // Demo users/posts are for local development only. They include accounts with
+  // a known password, so they must NOT land in production: opt in with
+  // SEED_DEMO=true. The local .env can set it; production simply omits it.
+  if (process.env.SEED_DEMO === "true") {
+    await seedDemoContent();
+  } else {
+    console.log("Skipping demo content (set SEED_DEMO=true to include demo users + posts).");
+  }
 }
 
 // Demo users + posts so the feed is populated for local development.
