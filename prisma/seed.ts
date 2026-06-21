@@ -1,10 +1,10 @@
 import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "../src/generated/prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { createPgAdapter } from "../src/lib/pg-adapter";
 
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
-const db = new PrismaClient({ adapter });
+// Same SSL-aware adapter as the app, so seeding works against managed Postgres.
+const db = new PrismaClient({ adapter: createPgAdapter() });
 
 // Categories from the spec. `locked` categories show their name to guests but
 // gate content behind login.
