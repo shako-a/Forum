@@ -1,21 +1,22 @@
-# DigitalOcean App Platform spec for GeoGlobally.
+# DigitalOcean App Platform spec for GeoGlobally (app name: shark-app).
 #
-# Import with:  doctl apps create --spec .do/app.yaml
-# Update with:  doctl apps update <APP_ID> --spec .do/app.yaml
+# This mirrors the live app's topology. The authoritative spec lives in DO;
+# keep this file in sync as a reference / for re-creation.
+#   Update live:  doctl apps update <APP_ID> --spec .do/app.yaml
+#   Recreate:     doctl apps create --spec .do/app.yaml
 #
-# Adjust `repo`, `region`, instance sizes, and DB plan to taste — values here are
-# a sensible starting point. Slugs occasionally change; the DO UI will tell you
-# if one is invalid.
+# Note: SESSION_SECRET below is a placeholder — the real value is set as an
+# encrypted env var in the DO dashboard, not committed here.
 
-name: geoglobally
-region: fra # Frankfurt — close to the EU-heavy Georgian diaspora
+name: shark-app
+region: nyc # live region (US — sizeable US Georgian audience)
 
 # ---------------------------------------------------------------------------
 # Web service: the Next.js standalone server (Dockerfile CMD = node server.js)
 # ---------------------------------------------------------------------------
 services:
-  - name: web
-    dockerfile_path: Dockerfile
+  - name: forum
+    dockerfile_path: /Dockerfile
     source_dir: /
     github:
       repo: shako-a/Forum
@@ -35,37 +36,36 @@ services:
         scope: RUN_TIME
         type: SECRET
         value: REPLACE_WITH_openssl_rand_base64_32
-      # App runtime should use the POOLED connection (PgBouncer) once you add a
-      # connection pool to the DB. Until then this direct binding works.
+      # SSL handling for the managed cert lives in src/lib/pg-adapter.ts. Switch
+      # to the POOLED (PgBouncer) connection once a pool is added to the DB.
       - key: DATABASE_URL
         scope: RUN_TIME
         value: ${forum-db.DATABASE_URL}
 
 # ---------------------------------------------------------------------------
-# Pre-deploy job: apply migrations before the new version goes live.
-# Runs from /migrate (isolated Prisma CLI). Uses the DIRECT connection.
+# Pre-deploy job: apply migrations before each new version goes live.
+# Runs from /migrate (isolated Prisma CLI). `sh -c` because Dockerfile
+# components exec the command without a shell.
 # ---------------------------------------------------------------------------
 jobs:
   - name: migrate
     kind: PRE_DEPLOY
-    dockerfile_path: Dockerfile
+    dockerfile_path: /Dockerfile
     source_dir: /
     github:
       repo: shako-a/Forum
       branch: main
-    # Dockerfile components run the command via exec (no shell), so wrap it in
-    # `sh -c` to get `cd` + `&&`.
     run_command: 'sh -c "cd /migrate && npx prisma migrate deploy"'
     instance_count: 1
-    instance_size_slug: apps-s-1vcpu-0.5gb
+    instance_size_slug: apps-s-1vcpu-1gb
     envs:
       - key: DATABASE_URL
         scope: RUN_TIME
         value: ${forum-db.DATABASE_URL}
 
 # ---------------------------------------------------------------------------
-# Managed PostgreSQL. `production: false` is the cheap dev DB to start; flip to
-# a production cluster (with a standby node) before real traffic + Stripe money.
+# Managed PostgreSQL. `production: false` is the dev DB. Convert to a managed
+# cluster (with a standby node) + connection pooling before real traffic.
 # ---------------------------------------------------------------------------
 databases:
   - name: forum-db
