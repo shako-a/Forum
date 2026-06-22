@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { toHeaderUser } from "@/lib/header-user";
 import Link from "next/link";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
@@ -17,7 +18,7 @@ export default async function CategoriesPage({ params }: PageProps<"/[lang]/cate
   if (!isLocale(lang)) notFound();
 
   const [dict, user] = await Promise.all([getDictionary(lang), getCurrentUser()]);
-  const headerUser = user ? { forumName: user.forumName, isDonor: user.isDonor } : null;
+  const headerUser = toHeaderUser(user);
   const categories = await getCategoriesIndex(Boolean(user));
 
   return (

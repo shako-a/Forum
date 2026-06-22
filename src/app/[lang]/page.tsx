@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { toHeaderUser } from "@/lib/header-user";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { getCurrentUser } from "@/lib/dal";
@@ -19,7 +20,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
 
   const [dict, user] = await Promise.all([getDictionary(lang), getCurrentUser()]);
   const data = await getHomeData(user ? { id: user.id } : null);
-  const headerUser = user ? { forumName: user.forumName, isDonor: user.isDonor } : null;
+  const headerUser = toHeaderUser(user);
 
   return (
     <>

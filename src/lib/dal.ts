@@ -44,12 +44,23 @@ export const getCurrentUser = cache(async () => {
       role: true,
       status: true,
       isDonor: true,
+      canAccessAdmin: true,
     },
   });
 
   if (!user || user.status !== "ACTIVE") return null;
   return user;
 });
+
+/**
+ * Who may open the admin panel: admins always; a moderator only if granted
+ * per-moderator admin access; everyone else never. (Moderators get a
+ * moderation-only view — section-level gating lives in the admin routes.)
+ */
+export function canAccessAdminPanel(user: { role: Role; canAccessAdmin: boolean }): boolean {
+  if (user.role === "ADMIN") return true;
+  return user.role === "MODERATOR" && user.canAccessAdmin;
+}
 
 /** Require an authenticated, active user. Redirects guests to login. */
 export async function requireUser(locale: string) {
@@ -63,6 +74,14 @@ export async function requireRole(locale: string, min: Role) {
   const user = await getCurrentUser();
   if (!user) redirect(`/${locale}/login`);
   if (!roleAtLeast(user.role, min)) redirect(`/${locale}`);
+  return user;
+}
+
+/** Require admin-panel access (admin, or moderator with the per-mod grant). */
+export async function requireAdminPanel(locale: string) {
+  const user = await getCurrentUser();
+  if (!user) redirect(`/${locale}/login`);
+  if (!canAccessAdminPanel(user)) redirect(`/${locale}`);
   return user;
 }
 

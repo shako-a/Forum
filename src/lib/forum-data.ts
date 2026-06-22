@@ -149,6 +149,10 @@ export async function getUserProfile(forumName: string, viewer: { id: string } |
       status: true,
       isDonor: true,
       createdAt: true,
+      labels: {
+        select: { nameEn: true, nameKa: true, color: true, background: true, font: true, bold: true },
+        orderBy: { sortOrder: "asc" },
+      },
       _count: { select: { posts: true } },
     },
   });

@@ -51,6 +51,10 @@ model User {
   // driven by Stripe subscriptions later.
   isDonor      Boolean    @default(false)
 
+  // Per-moderator grant: lets this moderator open the (moderation-only) admin
+  // panel. Admins always have access; plain users never do, regardless of flag.
+  canAccessAdmin Boolean  @default(false)
+
   // Public-facing identity
   forumName String @unique // "Name on the forum"
 
@@ -69,6 +73,7 @@ model User {
   postVotes           PostVote[]
   replyVotes          ReplyVote[]
   moderatedCategories Category[]  @relation("CategoryModerators")
+  labels              Label[]     @relation("UserLabels")
 
   // Moderation bookkeeping (content this user hid, when acting as mod/admin)
   hiddenPosts   Post[]  @relation("PostHiddenBy")
@@ -238,4 +243,31 @@ model AdCard {
   updatedAt DateTime @updatedAt
 
   @@index([placement, active, sortOrder])
+}
+
+// ---------------------------------------------------------------------------
+// Labels — admin-created badges that can be assigned to users. The built-in
+// "Donor" badge is NOT a Label (it's derived from User.isDonor); these are the
+// extra, fully customizable labels admins manage here.
+// ---------------------------------------------------------------------------
+
+model Label {
+  id     String @id @default(cuid())
+  nameEn String
+  nameKa String
+
+  // Badge styling, admin-controlled.
+  color      String  @default("#1f4e9c") // text/foreground
+  background String  @default("#eaf1fb") // badge background
+  font       String  @default("body") // "body" | "display"
+  bold       Boolean @default(true)
+
+  sortOrder Int @default(0)
+
+  users User[] @relation("UserLabels")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
 }

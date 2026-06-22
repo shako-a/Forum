@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { toHeaderUser } from "@/lib/header-user";
 import Link from "next/link";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
@@ -8,6 +9,7 @@ import { getUserProfile } from "@/lib/forum-data";
 import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { PostList } from "@/components/PostList";
+import { LabelBadge } from "@/components/LabelBadge";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +26,7 @@ export default async function ProfilePage({ params }: PageProps<"/[lang]/u/[foru
 
   const decodedName = decodeURIComponent(forumName);
   const [dict, user] = await Promise.all([getDictionary(lang), getCurrentUser()]);
-  const headerUser = user ? { forumName: user.forumName, isDonor: user.isDonor } : null;
+  const headerUser = toHeaderUser(user);
 
   const [allCategories, data] = await Promise.all([
     db.category.findMany({ orderBy: { sortOrder: "asc" } }),
@@ -63,6 +65,9 @@ export default async function ProfilePage({ params }: PageProps<"/[lang]/u/[foru
                 {profile.forumName}
                 {roleLabel && <span className="role-badge">{roleLabel}</span>}
                 {profile.isDonor && <span className="donor-badge">💛 {t.donorBadge}</span>}
+                {profile.labels.map((l, i) => (
+                  <LabelBadge key={i} label={l} locale={lang} />
+                ))}
               </h1>
               {showRealName && (
                 <p className="profile-realname">

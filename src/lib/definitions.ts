@@ -105,3 +105,15 @@ export const AdCardSchema = z.object({
   active: z.boolean().optional(),
   sortOrder: z.coerce.number().int().optional(),
 });
+
+// --- Admin: labels (custom user badges) ---------------------------------
+const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, { error: "Pick a color." });
+export const LabelSchema = z.object({
+  nameEn: z.string().min(1, { error: "English name is required." }).trim(),
+  nameKa: z.string().min(1, { error: "Georgian name is required." }).trim(),
+  color: hexColor.optional(),
+  background: hexColor.optional(),
+  font: z.enum(["body", "display"]).optional(),
+  bold: z.boolean().optional(),
+  sortOrder: z.coerce.number().int().optional(),
+});

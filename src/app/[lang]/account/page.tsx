@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { toHeaderUser } from "@/lib/header-user";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { requireUser } from "@/lib/dal";
@@ -38,7 +39,7 @@ export default async function AccountPage({ params }: PageProps<"/[lang]/account
 
   return (
     <>
-      <Header locale={lang} dict={dict} user={{ forumName: user.forumName, isDonor: user.isDonor }} />
+      <Header locale={lang} dict={dict} user={toHeaderUser(user)} />
       <div className="shell">
         <LeftSidebar locale={lang} dict={dict} categories={allCategories} />
         <main className="feed">

@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { toHeaderUser } from "@/lib/header-user";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { getCurrentUser } from "@/lib/dal";
@@ -28,7 +29,7 @@ export default async function CreatePostPage({ params, searchParams }: PageProps
 
   return (
     <>
-      <Header locale={lang} dict={dict} user={{ forumName: user.forumName, isDonor: user.isDonor }} />
+      <Header locale={lang} dict={dict} user={toHeaderUser(user)} />
       <main className="create-wrap">
         <CreatePostForm
           locale={lang}

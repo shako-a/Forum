@@ -193,7 +193,7 @@ export function CategoryAdmin({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{t.categories}</h1>
+        <h1 className="admin-h1">{t.categories}</h1>
         {!creating && (
           <button type="button" className="btn btn-primary" onClick={() => setCreating(true)}>
             + {t.newCategory}

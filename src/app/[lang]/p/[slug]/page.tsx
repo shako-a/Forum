@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { toHeaderUser } from "@/lib/header-user";
 import Link from "next/link";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
@@ -41,7 +42,7 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
   const html = pmToHtml(post.body);
   const canReply = !!user && (!post.repliesLocked || canModerate);
   const loginHref = `/${lang}/login?next=/${lang}/p/${slug}`;
-  const headerUser = user ? { forumName: user.forumName, isDonor: user.isDonor } : null;
+  const headerUser = toHeaderUser(user);
 
   return (
     <>

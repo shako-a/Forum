@@ -3,8 +3,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { logout } from "@/app/actions/auth";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
-
-type HeaderUser = { forumName: string; isDonor: boolean } | null;
+import type { HeaderUser } from "@/lib/header-user";
 
 export function Header({
   locale,
@@ -24,6 +23,10 @@ export function Header({
       ? `/${locale}/ask`
       : `/${locale}/donate`;
   const askAiLocked = !user || !user.isDonor;
+  // Admin-panel button: admins always; moderators only when granted; never for
+  // plain users or guests.
+  const showAdmin =
+    !!user && (user.role === "ADMIN" || (user.role === "MODERATOR" && user.canAccessAdmin));
   return (
     <header className="header">
       {/* Logo */}
@@ -80,6 +83,11 @@ export function Header({
 
         {user ? (
           <>
+            {showAdmin && (
+              <Link href={`/${locale}/admin`} className="btn btn-ghost header-admin">
+                <span aria-hidden="true">🛡</span> {t.admin}
+              </Link>
+            )}
             <Link href={`/${locale}/create`} className="btn btn-primary">
               {t.create}
             </Link>

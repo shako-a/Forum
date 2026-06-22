@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useTransition } from "react";
-import { setUserRole, setUserStatus, setUserDonor } from "@/app/actions/admin-users";
+import { setUserRole, setUserStatus, setUserDonor, setUserAdminAccess } from "@/app/actions/admin-users";
 import type { Dictionary } from "@/i18n/dictionaries";
+import type { Locale } from "@/i18n/config";
 import type { Role, UserStatus } from "@/generated/prisma/client";
 
 export type AdminUser = {
@@ -12,29 +14,34 @@ export type AdminUser = {
   role: Role;
   status: UserStatus;
   isDonor: boolean;
+  canAccessAdmin: boolean;
 };
 
 function UserRow({
   user,
   isSelf,
   dict,
+  locale,
 }: {
   user: AdminUser;
   isSelf: boolean;
   dict: Dictionary;
+  locale: Locale;
 }) {
   const t = dict.admin;
   const [pending, startTransition] = useTransition();
   const archived = user.status === "ARCHIVED";
 
   return (
-    <tr className="border-b border-black/5 dark:border-white/5">
-      <td className="py-2">
-        {user.forumName}
-        {isSelf && <span className="opacity-40"> (you)</span>}
+    <tr>
+      <td>
+        <Link href={`/${locale}/admin/users/${user.id}`} className="admin-user-link">
+          {user.forumName}
+        </Link>
+        {isSelf && <span className="muted-sm"> (you)</span>}
       </td>
-      <td className="py-2 opacity-60">{user.email}</td>
-      <td className="py-2">
+      <td style={{ color: "var(--muted)" }}>{user.email}</td>
+      <td>
         <select
           className="input admin-inline-select"
           value={user.role}
@@ -49,12 +56,12 @@ function UserRow({
           <option value="ADMIN">{dict.roles.admin}</option>
         </select>
       </td>
-      <td className="py-2">
+      <td>
         <span className={archived ? "opacity-50" : ""}>
           {archived ? t.archived : t.active}
         </span>
       </td>
-      <td className="py-2">
+      <td>
         <button
           type="button"
           className="action"
@@ -65,7 +72,24 @@ function UserRow({
           {user.isDonor ? "💛 " + t.donor : "— " + t.donor}
         </button>
       </td>
-      <td className="py-2 text-right">
+      <td>
+        {user.role === "ADMIN" ? (
+          <span className="opacity-50" title={t.adminAccessHint}>🛡 {t.always}</span>
+        ) : user.role === "MODERATOR" ? (
+          <button
+            type="button"
+            className="action"
+            disabled={pending}
+            title={t.adminAccessHint}
+            onClick={() => startTransition(() => void setUserAdminAccess(user.id, !user.canAccessAdmin))}
+          >
+            {user.canAccessAdmin ? "🛡 " + t.adminAccess : "— " + t.adminAccess}
+          </button>
+        ) : (
+          <span className="opacity-30">—</span>
+        )}
+      </td>
+      <td style={{ textAlign: "right" }}>
         <button
           type="button"
           className="action mod-action"
@@ -88,33 +112,38 @@ export function UserAdmin({
   dict,
   users,
   currentUserId,
+  locale,
 }: {
   dict: Dictionary;
   users: AdminUser[];
   currentUserId: string;
+  locale: Locale;
 }) {
   const t = dict.admin;
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-bold">{t.users}</h1>
-      <table className="w-full border-collapse text-sm">
+      <h1 className="admin-h1">{t.users}</h1>
+      <table className="admin-table">
         <thead>
-          <tr className="border-b border-black/10 dark:border-white/10 text-left opacity-60">
-            <th className="py-2">{dict.auth.forumName}</th>
-            <th className="py-2">{dict.auth.email}</th>
-            <th className="py-2">{t.role}</th>
-            <th className="py-2">{t.status}</th>
-            <th className="py-2">{t.donor}</th>
-            <th className="py-2 text-right">{t.actions}</th>
+          <tr>
+            <th>{dict.auth.forumName}</th>
+            <th>{dict.auth.email}</th>
+            <th>{t.role}</th>
+            <th>{t.status}</th>
+            <th>{t.donor}</th>
+            <th>{t.adminAccess}</th>
+            <th style={{ textAlign: "right" }}>{t.actions}</th>
           </tr>
         </thead>
         <tbody>
           {users.map((u) => (
-            <UserRow key={u.id} user={u} isSelf={u.id === currentUserId} dict={dict} />
+            <UserRow key={u.id} user={u} isSelf={u.id === currentUserId} dict={dict} locale={locale} />
           ))}
           {users.length === 0 && (
             <tr>
-              <td colSpan={6} className="py-6 text-center opacity-50">{t.empty}</td>
+              <td colSpan={7} style={{ textAlign: "center", color: "var(--muted)", padding: 24 }}>
+                {t.empty}
+              </td>
             </tr>
           )}
         </tbody>

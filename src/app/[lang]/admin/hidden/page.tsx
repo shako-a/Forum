@@ -2,21 +2,34 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
+import { getCurrentUser, getModeratedCategoryIds } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { UnhideButton } from "@/components/admin/UnhideButton";
 
-// Hidden content stays on the server; admins review (and can restore) what
-// moderators removed.
+// Hidden content stays on the server. Admins review everything; a moderator
+// only sees hidden content in the categories they moderate. (Layout already
+// gated this route to admins + granted moderators.)
 export default async function AdminHiddenPage({ params }: PageProps<"/[lang]/admin/hidden">) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
   const dict = await getDictionary(lang);
   const t = dict.admin;
 
+  const me = await getCurrentUser();
+  const isAdmin = me?.role === "ADMIN";
+  const modCatIds = isAdmin || !me ? [] : await getModeratedCategoryIds(me.id);
+  // Admins: all hidden. Moderators: only their categories' hidden content.
+  const postWhere = isAdmin
+    ? { hidden: true }
+    : { hidden: true, categoryId: { in: modCatIds } };
+  const replyWhere = isAdmin
+    ? { hidden: true }
+    : { hidden: true, post: { categoryId: { in: modCatIds } } };
+
   const [posts, replies] = await Promise.all([
     db.post
       .findMany({
-        where: { hidden: true },
+        where: postWhere,
         orderBy: { hiddenAt: "desc" },
         select: {
           id: true,
@@ -30,7 +43,7 @@ export default async function AdminHiddenPage({ params }: PageProps<"/[lang]/adm
       .catch(() => []),
     db.reply
       .findMany({
-        where: { hidden: true },
+        where: replyWhere,
         orderBy: { hiddenAt: "desc" },
         select: {
           id: true,
@@ -45,7 +58,7 @@ export default async function AdminHiddenPage({ params }: PageProps<"/[lang]/adm
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">{t.hiddenContent}</h1>
+      <h1 className="admin-h1">{t.hiddenContent}</h1>
 
       <section>
         <h2 className="mb-2 text-sm font-semibold opacity-70">{t.posts}</h2>

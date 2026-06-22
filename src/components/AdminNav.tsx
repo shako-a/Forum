@@ -1,32 +1,55 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 
-export function AdminNav({ locale, dict }: { locale: Locale; dict: Dictionary }) {
+export function AdminNav({
+  locale,
+  dict,
+  isAdmin,
+}: {
+  locale: Locale;
+  dict: Dictionary;
+  isAdmin: boolean;
+}) {
+  const pathname = usePathname();
   const t = dict.admin;
   const base = `/${locale}/admin`;
-  const items = [
-    { href: base, label: t.dashboard },
-    { href: `${base}/categories`, label: t.categories },
-    { href: `${base}/ad-cards`, label: t.adCards },
-    { href: `${base}/users`, label: t.users },
-    { href: `${base}/hidden`, label: t.hiddenContent },
-  ];
+
+  // Moderators get a moderation-only panel (Hidden content); admins see all.
+  const items = isAdmin
+    ? [
+        { href: base, label: t.dashboard, icon: "📊" },
+        { href: `${base}/categories`, label: t.categories, icon: "🗂" },
+        { href: `${base}/ad-cards`, label: t.adCards, icon: "📢" },
+        { href: `${base}/labels`, label: t.labels, icon: "🏷" },
+        { href: `${base}/users`, label: t.users, icon: "👥" },
+        { href: `${base}/hidden`, label: t.hiddenContent, icon: "🙈" },
+      ]
+    : [{ href: `${base}/hidden`, label: t.hiddenContent, icon: "🙈" }];
+
   return (
-    <nav className="flex w-56 shrink-0 flex-col gap-1 border-r border-black/10 dark:border-white/10 p-3 text-sm">
-      <div className="px-3 pb-2 font-semibold">{t.title}</div>
-      {items.map((item) => (
-        <Link
-          key={item.href}
-          href={item.href}
-          className="rounded-md px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/10"
-        >
-          {item.label}
-        </Link>
-      ))}
-      <Link href={`/${locale}`} className="mt-auto rounded-md px-3 py-1.5 text-xs opacity-60 hover:bg-black/5 dark:hover:bg-white/10">
-        ← {dict.common.appName}
-      </Link>
+    <nav className="admin-nav">
+      {items.map((item) => {
+        const active =
+          pathname === item.href ||
+          (item.href !== base && pathname.startsWith(item.href));
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`admin-nav-link${active ? " active" : ""}`}
+            aria-current={active ? "page" : undefined}
+          >
+            <span className="admin-nav-ico" aria-hidden="true">
+              {item.icon}
+            </span>
+            {item.label}
+          </Link>
+        );
+      })}
     </nav>
   );
 }
