@@ -32,6 +32,13 @@ ENV NODE_ENV=production \
     PORT=8080 \
     HOSTNAME=0.0.0.0
 
+# Prisma's migration engine (the PRE_DEPLOY `migrate` job runs here) needs
+# libssl/openssl present, which the slim image lacks. Install it so migrations
+# apply cleanly without the "failed to detect libssl" warning.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends openssl \
+ && rm -rf /var/lib/apt/lists/*
+
 # Run as a non-root user.
 RUN addgroup --system --gid 1001 nodejs \
  && adduser --system --uid 1001 nextjs
