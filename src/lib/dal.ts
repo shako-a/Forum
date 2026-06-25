@@ -44,6 +44,7 @@ export const getCurrentUser = cache(async () => {
       role: true,
       status: true,
       isDonor: true,
+      isPro: true,
       canAccessAdmin: true,
       isOwner: true,
     },

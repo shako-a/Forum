@@ -415,6 +415,16 @@ button {
   border-radius: 999px;
   padding: 3px 9px;
 }
+.pro-badge {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #1f4e9c;
+  background: color-mix(in srgb, #1f4e9c 14%, transparent);
+  border-radius: 999px;
+  padding: 3px 9px;
+}
 
 /* "Ask AI" gated state (non-Donors) */
 .ask-ai-locked {
@@ -906,6 +916,22 @@ button {
   background: var(--bg);
   color: var(--ink);
 }
+/* Paid-tier toggles get their own thin, set-apart boxes in the user editor. */
+.tier-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.tier-box {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: #fffdf3;
+}
+.tier-box .checkbox-row {
+  margin: 0;
+}
+
 /* Saved post: bookmark fills with the brand color and stays highlighted. */
 .save-btn.saved,
 .save-btn.saved:hover {
@@ -2290,4 +2316,351 @@ button {
     transition: none !important;
     animation: none !important;
   }
+}
+
+/* ============================ Business accounts ============================ */
+.btn-sm {
+  padding: 5px 12px;
+  font-size: 12.5px;
+}
+.btn-danger {
+  background: var(--red);
+  color: #fff;
+}
+.btn-danger:hover {
+  filter: brightness(0.94);
+}
+
+.biz-dir-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.biz-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.biz-filters .input {
+  flex: 1;
+}
+.biz-filters select.input {
+  flex: 0 0 auto;
+  min-width: 160px;
+}
+
+.biz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.biz-card {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+a.biz-card:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+.biz-card-logo,
+.biz-profile-logo {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  overflow: hidden;
+}
+.biz-card-logo img,
+.biz-profile-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.biz-card-body {
+  min-width: 0;
+  flex: 1;
+}
+.biz-card-name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.biz-card-tagline {
+  color: var(--ink-2);
+  font-size: 13px;
+  margin: 2px 0;
+}
+.biz-card-meta {
+  color: var(--muted);
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 3px 0;
+}
+.biz-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.biz-verified {
+  color: #1f9d55;
+  font-weight: 800;
+}
+.biz-featured {
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #9a6a00;
+  background: color-mix(in srgb, #f5b301 22%, transparent);
+  border-radius: 999px;
+  padding: 2px 7px;
+}
+
+/* Stars */
+.stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+.stars-on {
+  color: #f5b301;
+  letter-spacing: 1px;
+}
+.stars-off {
+  color: var(--line);
+}
+.stars-count {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* Profile */
+.biz-profile-head {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.biz-profile-logo {
+  width: 72px;
+  height: 72px;
+  font-size: 34px;
+}
+.biz-profile-id {
+  flex: 1;
+  min-width: 0;
+}
+.biz-profile-name {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.biz-profile-tagline {
+  color: var(--ink-2);
+  margin: 4px 0;
+}
+.biz-manage {
+  flex: 0 0 auto;
+}
+.biz-contact {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.biz-contact-item {
+  color: var(--blue);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.biz-section {
+  margin-bottom: 12px;
+}
+.biz-section-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.biz-description {
+  white-space: pre-wrap;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+.biz-empty {
+  color: var(--muted);
+}
+
+/* Jobs */
+.biz-job {
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+.biz-job:first-of-type {
+  border-top: none;
+}
+.biz-job-title {
+  font-weight: 700;
+  font-size: 14.5px;
+}
+.biz-job-desc {
+  color: var(--ink-2);
+  font-size: 13.5px;
+  white-space: pre-wrap;
+  margin: 3px 0;
+}
+.biz-job-loc {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.biz-job-board-item {
+  margin-bottom: 10px;
+}
+.biz-job-board-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.biz-job-board-logo {
+  font-size: 22px;
+}
+.biz-job-company {
+  color: var(--blue);
+  font-size: 13px;
+  font-weight: 600;
+}
+.biz-job-board-time {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+}
+.biz-job-manage-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+}
+.biz-job-manage {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+/* Reviews */
+.biz-review-mine {
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 14px;
+}
+.biz-review-prompt {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.biz-review-login {
+  margin-bottom: 12px;
+}
+.review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.review-stars-pick {
+  display: flex;
+  gap: 2px;
+}
+.star-pick {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--line);
+  padding: 0;
+}
+.star-pick.on {
+  color: #f5b301;
+}
+.review-form .btn,
+.job-form .btn {
+  align-self: flex-start;
+}
+.job-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.biz-review-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.biz-review {
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.biz-review-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.biz-review-author {
+  font-weight: 700;
+  font-size: 13.5px;
+}
+.biz-review-time {
+  color: var(--muted);
+  font-size: 12px;
+  margin-left: auto;
+}
+.biz-review-body {
+  color: var(--ink-2);
+  font-size: 13.5px;
+  margin-top: 4px;
+  white-space: pre-wrap;
+}
+
+/* Pro gate + danger zone */
+.biz-gate {
+  text-align: center;
+  padding: 32px;
+}
+.biz-gate-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.biz-gate-sub {
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+.biz-danger {
+  border-color: color-mix(in srgb, var(--red) 30%, var(--line));
 }

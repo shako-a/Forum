@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { signup } from "@/app/actions/auth";
 import { AuthBrand } from "@/components/AuthBrand";
+import { StateSelect } from "@/components/StateSelect";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 
@@ -97,7 +98,14 @@ export function SignupForm({
 
         <div className="field-row">
           <Field name="city" label={t.city} required={false} autoComplete="address-level2" />
-          <Field name="state" label={t.state} autoComplete="address-level1" />
+          <StateSelect
+            name="state"
+            label={t.state}
+            locale={locale}
+            usGroupLabel={t.usStates}
+            error={err?.state}
+            geolocate
+          />
         </div>
 
         <button type="submit" disabled={pending} className="btn btn-primary btn-full">

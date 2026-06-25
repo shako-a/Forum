@@ -10,6 +10,7 @@ import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { PostList } from "@/components/PostList";
 import { LabelBadge } from "@/components/LabelBadge";
+import { stateLabel } from "@/lib/us-states";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +44,7 @@ export default async function ProfilePage({ params }: PageProps<"/[lang]/u/[foru
   const memberSince = new Intl.DateTimeFormat(lang, { month: "long", year: "numeric" }).format(
     new Date(profile.createdAt),
   );
-  const location = [profile.city, profile.state].filter(Boolean).join(", ");
+  const location = [profile.city, stateLabel(profile.state, lang)].filter(Boolean).join(", ");
 
   return (
     <>
@@ -65,6 +66,7 @@ export default async function ProfilePage({ params }: PageProps<"/[lang]/u/[foru
                 {profile.forumName}
                 {roleLabel && <span className="role-badge">{roleLabel}</span>}
                 {profile.isDonor && <span className="donor-badge">💛 {t.donorBadge}</span>}
+                {profile.isPro && <span className="pro-badge">💼 {t.proBadge}</span>}
                 {profile.labels.map((l, i) => (
                   <LabelBadge key={i} label={l} locale={lang} />
                 ))}

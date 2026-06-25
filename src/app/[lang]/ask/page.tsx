@@ -3,6 +3,7 @@ import { toHeaderUser } from "@/lib/header-user";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { getCurrentUser } from "@/lib/dal";
+import { hasAiAccess } from "@/lib/perks";
 import { db } from "@/lib/db";
 import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
@@ -20,7 +21,7 @@ export default async function AskPage({ params }: PageProps<"/[lang]/ask">) {
 
   const user = await getCurrentUser();
   if (!user) redirect(`/${lang}/login?next=/${lang}/ask`);
-  if (!user.isDonor) redirect(`/${lang}/donate`);
+  if (!hasAiAccess(user)) redirect(`/${lang}/donate`);
 
   const dict = await getDictionary(lang);
   const allCategories = await db.category.findMany({ orderBy: { sortOrder: "asc" } });

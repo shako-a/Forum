@@ -26,6 +26,7 @@ export function AdminNav({
         { href: `${base}/ad-cards`, label: t.adCards, icon: "📢" },
         { href: `${base}/labels`, label: t.labels, icon: "🏷" },
         { href: `${base}/users`, label: t.users, icon: "👥" },
+        { href: `${base}/businesses`, label: dict.business.directory, icon: "💼" },
         { href: `${base}/hidden`, label: t.hiddenContent, icon: "🙈" },
       ]
     : [{ href: `${base}/hidden`, label: t.hiddenContent, icon: "🙈" }];

@@ -4,6 +4,7 @@ import { logout } from "@/app/actions/auth";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import type { HeaderUser } from "@/lib/header-user";
+import { hasAiAccess } from "@/lib/perks";
 
 export function Header({
   locale,
@@ -15,14 +16,15 @@ export function Header({
   user: HeaderUser;
 }) {
   const t = dict.common;
-  // "Ask AI" is a Donor perk. Guests → login; logged-in non-Donors → the Donor
-  // upgrade page; Donors → the Ask AI feature.
+  // "Ask AI" is a paid perk (Donor or Professional). Guests → login; logged-in
+  // users without a paid tier → the upgrade page; paid → the Ask AI feature.
+  const aiAccess = hasAiAccess(user);
   const askAiHref = !user
     ? `/${locale}/login?next=/${locale}/ask`
-    : user.isDonor
+    : aiAccess
       ? `/${locale}/ask`
       : `/${locale}/donate`;
-  const askAiLocked = !user || !user.isDonor;
+  const askAiLocked = !aiAccess;
   // Admin-panel button: admins always; moderators only when granted; never for
   // plain users or guests.
   const showAdmin =

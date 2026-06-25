@@ -195,6 +195,7 @@ export async function getUserProfile(forumName: string, viewer: { id: string } |
       role: true,
       status: true,
       isDonor: true,
+      isPro: true,
       createdAt: true,
       labels: {
         select: { nameEn: true, nameKa: true, color: true, background: true, font: true, bold: true },

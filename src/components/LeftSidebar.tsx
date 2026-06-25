@@ -38,6 +38,18 @@ export function LeftSidebar({
         </svg>
         {nav.news}
       </Link>
+      <Link href={`/${locale}/business`} className="nav-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 9h18M5 9V5h14v4M4 9v11h16V9M9 13h6" />
+        </svg>
+        {nav.directory}
+      </Link>
+      <Link href={`/${locale}/jobs`} className="nav-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 7h16v13H4zM9 7V4h6v3" />
+        </svg>
+        {nav.jobs}
+      </Link>
 
       <div className="group-label">{nav.communities}</div>
       {categories.map((c) => {

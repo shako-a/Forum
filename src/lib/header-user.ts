@@ -4,18 +4,20 @@ import type { Role } from "@/generated/prisma/client";
 export type HeaderUser = {
   forumName: string;
   isDonor: boolean;
+  isPro: boolean;
   role: Role;
   canAccessAdmin: boolean;
 } | null;
 
 // Build it from a loaded user (getCurrentUser result) or null for guests.
 export function toHeaderUser(
-  user: { forumName: string; isDonor: boolean; role: Role; canAccessAdmin: boolean } | null,
+  user: { forumName: string; isDonor: boolean; isPro: boolean; role: Role; canAccessAdmin: boolean } | null,
 ): HeaderUser {
   return user
     ? {
         forumName: user.forumName,
         isDonor: user.isDonor,
+        isPro: user.isPro,
         role: user.role,
         canAccessAdmin: user.canAccessAdmin,
       }

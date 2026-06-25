@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { isBusinessCategory } from "@/lib/business-categories";
 
 // Sign-up: mirrors the required profile fields from the spec.
 // First/last name + forum name + phone + email + state are mandatory; city optional.
@@ -17,7 +18,7 @@ export const SignupFormSchema = z.object({
   firstName: z.string().min(1, { error: "First name is required." }).trim(),
   lastName: z.string().min(1, { error: "Last name is required." }).trim(),
   phone: z.string().min(3, { error: "Phone number is required." }).trim(),
-  state: z.string().min(1, { error: "State / region is required." }).trim(),
+  state: z.string().min(1, { error: "State is required." }).trim(),
   city: z.string().trim().optional(),
   hideRealName: z.boolean().optional(),
 });
@@ -38,7 +39,7 @@ export const ProfileFormSchema = z.object({
   firstName: z.string().min(1, { error: "First name is required." }).trim(),
   lastName: z.string().min(1, { error: "Last name is required." }).trim(),
   phone: z.string().min(3, { error: "Phone number is required." }).trim(),
-  state: z.string().min(1, { error: "State / region is required." }).trim(),
+  state: z.string().min(1, { error: "State is required." }).trim(),
   city: z.string().trim().optional(),
   hideRealName: z.boolean().optional(),
 });
@@ -116,4 +117,30 @@ export const LabelSchema = z.object({
   font: z.enum(["body", "display"]).optional(),
   bold: z.boolean().optional(),
   sortOrder: z.coerce.number().int().optional(),
+});
+
+// --- Business accounts ---------------------------------------------------
+export const BusinessSchema = z.object({
+  name: z.string().min(1, { error: "Business name is required." }).trim(),
+  category: z.string().refine(isBusinessCategory, { error: "Pick a category." }),
+  tagline: z.string().trim().max(140, { error: "Keep the tagline under 140 characters." }).optional(),
+  description: z.string().trim().max(4000).optional(),
+  state: z.string().min(1, { error: "State / Country is required." }).trim(),
+  city: z.string().trim().optional(),
+  website: optionalUrl,
+  email: z.email({ error: "Enter a valid email." }).or(z.literal("")).optional(),
+  phone: z.string().trim().optional(),
+  logoUrl: optionalUrl,
+});
+
+export const JobSchema = z.object({
+  title: z.string().min(1, { error: "Job title is required." }).trim(),
+  description: z.string().min(1, { error: "Job description is required." }).trim().max(4000),
+  city: z.string().trim().optional(),
+  state: z.string().trim().optional(),
+});
+
+export const ReviewSchema = z.object({
+  rating: z.coerce.number().int().min(1, { error: "Pick a rating." }).max(5),
+  body: z.string().trim().max(2000).optional(),
 });

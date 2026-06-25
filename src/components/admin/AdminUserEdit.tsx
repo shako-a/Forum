@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { adminUpdateUser } from "@/app/actions/admin-users";
 import { LabelBadge, type BadgeLabel } from "@/components/LabelBadge";
+import { StateSelect } from "@/components/StateSelect";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import type { Role, UserStatus } from "@/generated/prisma/client";
@@ -23,6 +24,7 @@ export type AdminUserDetail = {
   role: Role;
   status: UserStatus;
   isDonor: boolean;
+  isPro: boolean;
   canAccessAdmin: boolean;
   createdAt: string; // ISO
   postCount: number;
@@ -124,6 +126,7 @@ export function AdminUserEdit({
             {user.forumName}
             <span className="role-badge">{roleLabel}</span>
             {user.isDonor && <span className="donor-badge">💛 {dict.profile.donorBadge}</span>}
+            {user.isPro && <span className="pro-badge">💼 {dict.profile.proBadge}</span>}
             {user.role === "MODERATOR" && user.canAccessAdmin && (
               <span className="role-badge">🛡 {t.adminAccess}</span>
             )}
@@ -185,13 +188,30 @@ export function AdminUserEdit({
 
         <div className="field-row">
           <Field name="city" label={ta.city} required={false} defaultValue={user.city ?? ""} />
-          <Field name="state" label={ta.state} defaultValue={user.state} />
+          <StateSelect
+            name="state"
+            label={ta.state}
+            locale={locale}
+            defaultValue={user.state}
+            usGroupLabel={ta.usStates}
+            error={err?.state}
+          />
         </div>
 
-        <label className="checkbox-row" title={t.donorHint}>
-          <input type="checkbox" name="isDonor" defaultChecked={user.isDonor} />
-          💛 {t.donor}
-        </label>
+        <div className="tier-grid">
+          <div className="tier-box">
+            <label className="checkbox-row" title={t.donorHint}>
+              <input type="checkbox" name="isDonor" defaultChecked={user.isDonor} />
+              💛 {t.donor}
+            </label>
+          </div>
+          <div className="tier-box">
+            <label className="checkbox-row" title={t.proHint}>
+              <input type="checkbox" name="isPro" defaultChecked={user.isPro} />
+              💼 {t.pro}
+            </label>
+          </div>
+        </div>
 
         {labels.length > 0 && (
           <div className="field">

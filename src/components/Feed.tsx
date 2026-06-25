@@ -63,7 +63,6 @@ export function Feed({
         <select aria-label="City" defaultValue="">
           <option value="">{dict.feed.allCities}</option>
           <option>New York / NJ</option>
-          <option>Tbilisi</option>
           <option>London</option>
           <option>Los Angeles</option>
         </select>

@@ -55,6 +55,10 @@ model User {
   // driven by Stripe subscriptions later.
   isDonor      Boolean    @default(false)
 
+  // Paid "Professional" (პრო) tier — also subscription-based. Grants the same
+  // AI access as Donor, plus the ability to register a business account.
+  isPro        Boolean    @default(false)
+
   // Per-moderator grant: lets this moderator open the (moderation-only) admin
   // panel. Admins always have access; plain users never do, regardless of flag.
   canAccessAdmin Boolean  @default(false)
@@ -79,6 +83,8 @@ model User {
   moderatedCategories Category[]  @relation("CategoryModerators")
   labels              Label[]     @relation("UserLabels")
   savedPosts          SavedPost[]
+  businesses          Business[]       @relation("BusinessOwner")
+  businessReviews     BusinessReview[]
 
   // Moderation bookkeeping (content this user hid, when acting as mod/admin)
   hiddenPosts   Post[]  @relation("PostHiddenBy")
@@ -304,6 +310,87 @@ model SavedPost {
 
   @@id([userId, postId])
   @@index([userId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Business accounts — registered by Professional-tier users. One Pro user can
+// own many businesses. Surfaced in a public directory; supports reviews and
+// job postings; admins can verify and feature them.
+// ---------------------------------------------------------------------------
+
+model Business {
+  id    String @id @default(cuid())
+  slug  String @unique
+  owner User   @relation("BusinessOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String
+
+  name        String
+  tagline     String? // short one-liner
+  description String? // longer plain-text blurb
+  category    String // key from the curated business-categories list
+  logoUrl     String?
+
+  // Location — reuses the State/Country picker values (US state abbr, "US", "GE").
+  city  String?
+  state String
+
+  // Contact
+  website String?
+  email   String?
+  phone   String?
+
+  // Admin-controlled flags
+  verified Boolean @default(false) // admin-verified authentic business
+  featured Boolean @default(false) // promoted: pinned to top of the directory
+
+  // Denormalized rating aggregate (kept in sync on review writes).
+  ratingCount Int @default(0)
+  ratingSum   Int @default(0)
+
+  reviews BusinessReview[]
+  jobs    JobPosting[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+  @@index([state])
+  @@index([featured])
+}
+
+model BusinessReview {
+  id         String   @id @default(cuid())
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId String
+  author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId   String
+
+  rating Int // 1..5
+  body   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([businessId, authorId]) // one review per user per business
+  @@index([businessId])
+}
+
+model JobPosting {
+  id         String   @id @default(cuid())
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId String
+
+  title       String
+  description String
+  city        String?
+  state       String?
+  active      Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, createdAt])
+  @@index([businessId])
 }
 
 model SiteSetting {

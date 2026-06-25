@@ -50,6 +50,15 @@ export async function setUserDonor(userId: string, isDonor: boolean): Promise<vo
   revalidatePath("/[lang]/admin/users", "page");
 }
 
+// Grant/revoke the paid "Professional" tier. Stripe will drive this later.
+export async function setUserPro(userId: string, isPro: boolean): Promise<void> {
+  const actor = await authorize("ADMIN");
+  if (!actor) return;
+
+  await db.user.update({ where: { id: userId }, data: { isPro } });
+  revalidatePath("/[lang]/admin/users", "page");
+}
+
 // Grant/revoke a moderator's access to the (moderation-only) admin panel. Only
 // meaningful for moderators — admins always have access, plain users never do.
 export async function setUserAdminAccess(userId: string, canAccessAdmin: boolean): Promise<void> {
@@ -83,6 +92,7 @@ export async function adminUpdateUser(_state: FormState, formData: FormData): Pr
 
   const { email, forumName, city, ...rest } = parsed.data;
   const isDonor = formData.get("isDonor") === "on"; // tier toggle, edited inline here
+  const isPro = formData.get("isPro") === "on"; // tier toggle, edited inline here
   const labelIds = formData.getAll("labelIds").map(String); // custom labels assigned to this user
 
   // Unique fields — ignore the row being edited.
@@ -102,6 +112,7 @@ export async function adminUpdateUser(_state: FormState, formData: FormData): Pr
       forumName,
       city: city ?? null,
       isDonor,
+      isPro,
       ...rest,
       labels: { set: labelIds.map((id) => ({ id })) }, // replace assignments
     },

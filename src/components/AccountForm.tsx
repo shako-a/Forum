@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { updateProfile } from "@/app/actions/profile";
+import { StateSelect } from "@/components/StateSelect";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 
@@ -107,7 +108,15 @@ export function AccountForm({
           autoComplete="address-level2"
           defaultValue={values.city}
         />
-        <Field name="state" label={t.state} autoComplete="address-level1" defaultValue={values.state} />
+        <StateSelect
+          name="state"
+          label={t.state}
+          locale={locale}
+          defaultValue={values.state}
+          usGroupLabel={t.usStates}
+          error={err?.state}
+          geolocate
+        />
       </div>
 
       <div className="account-actions">
