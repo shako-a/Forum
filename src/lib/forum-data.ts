@@ -1,7 +1,9 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { pmToHtml, pmPlainText, pmFirstImage } from "@/lib/prosemirror";
-import { canModerateCategory } from "@/lib/dal";
+import { canModerateCategory, canRevealAnonymous } from "@/lib/dal";
+import { resolveAuthor, type DisplayAuthor } from "@/lib/anon";
+import type { Locale } from "@/i18n/config";
 import type { Role } from "@/generated/prisma/client";
 
 // These loaders degrade gracefully: if the database isn't reachable yet
@@ -75,6 +77,34 @@ export async function getHomeData(viewer: { id: string } | null) {
       sidebarAds: [],
       dbReady: false,
     };
+  }
+}
+
+// Forum-wide counters for the sidebar welcome card. "online" has no real-time
+// presence system, so it's approximated as members active (posted or replied)
+// in the last 24h — a real, honest figure. Degrades to zeros if the DB is down.
+export async function getForumStats() {
+  try {
+    const activeSince = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const [members, topics, recentPosters, recentRepliers] = await Promise.all([
+      db.user.count(),
+      db.post.count(),
+      db.post.findMany({
+        where: { createdAt: { gte: activeSince } },
+        select: { authorId: true },
+        distinct: ["authorId"],
+      }),
+      db.reply.findMany({
+        where: { createdAt: { gte: activeSince } },
+        select: { authorId: true },
+        distinct: ["authorId"],
+      }),
+    ]);
+    const online = new Set([...recentPosters, ...recentRepliers].map((r) => r.authorId)).size;
+    return { members, online, topics };
+  } catch (error) {
+    console.error("getForumStats failed:", error);
+    return { members: 0, online: 0, topics: 0 };
   }
 }
 
@@ -159,7 +189,8 @@ export async function getUserProfile(forumName: string, viewer: { id: string } |
   if (!profile || profile.status !== "ACTIVE") return null;
 
   const found = await db.post.findMany({
-    where: { authorId: profile.id, hidden: false },
+    // Exclude the user's anonymous posts — listing them here would de-anonymize.
+    where: { authorId: profile.id, hidden: false, anonAlias: null },
     orderBy: { lastActivity: "desc" },
     take: 50,
     include: POST_CARD_INCLUDE,
@@ -202,7 +233,7 @@ export async function getCategoriesIndex(viewerIsAuthed: boolean) {
 export type ThreadReply = {
   id: string;
   parentId: string | null;
-  authorName: string;
+  author: DisplayAuthor;
   bodyHtml: string;
   createdAt: Date;
   score: number;
@@ -221,8 +252,9 @@ export type ReplySort = "best" | "new" | "old";
 // locked category) is decided by the caller from the returned `post`.
 export async function getPostView(
   slug: string,
-  viewer: { id: string; role: Role } | null,
+  viewer: { id: string; role: Role; isOwner: boolean } | null,
   sort: ReplySort = "best",
+  locale: Locale = "en",
 ) {
   const post = await db.post.findUnique({
     where: { slug },
@@ -237,6 +269,8 @@ export async function getPostView(
   // Category-scoped: only a moderator of this post's category (or an admin) may
   // see hidden replies and wield moderation controls.
   const canModerate = viewer ? await canModerateCategory(viewer, post.categoryId) : false;
+  // Owner (and staff if the owner allows) can see the real author behind anon.
+  const canReveal = await canRevealAnonymous(viewer);
   const replies = await db.reply.findMany({
     where: { postId: post.id, ...(canModerate ? {} : { hidden: false }) },
     orderBy: { createdAt: "asc" },
@@ -268,7 +302,11 @@ export async function getPostView(
     nodes.set(r.id, {
       id: r.id,
       parentId: r.parentId,
-      authorName: deleted ? "" : r.author.forumName,
+      author: resolveAuthor(
+        locale,
+        { authorId: r.authorId, forumName: r.author.forumName, anonAlias: r.anonAlias },
+        canReveal,
+      ),
       bodyHtml: deleted ? "" : pmToHtml(r.body),
       createdAt: r.createdAt,
       score: r.score,
@@ -302,5 +340,5 @@ export async function getPostView(
   };
   sortTree(roots);
 
-  return { post, canModerate, postMyVote, replyCount: replies.length, roots };
+  return { post, canModerate, canReveal, postMyVote, replyCount: replies.length, roots };
 }

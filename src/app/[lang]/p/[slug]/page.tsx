@@ -5,11 +5,13 @@ import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { getCurrentUser } from "@/lib/dal";
 import { getPostView } from "@/lib/forum-data";
+import { resolveAuthor, aliasOptions } from "@/lib/anon";
 import { categoryName } from "@/i18n/localize";
 import { categoryStyle } from "@/lib/category-style";
 import { timeAgo } from "@/lib/format";
 import { pmToHtml } from "@/lib/prosemirror";
 import { Header } from "@/components/Header";
+import { AuthorTag } from "@/components/AuthorTag";
 import { Vote } from "@/components/Vote";
 import { ShareMenu } from "@/components/ShareMenu";
 import { ReplyComposer } from "@/components/ReplyComposer";
@@ -27,11 +29,18 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
   const sort: ReplySortKey = sp.sort === "new" || sp.sort === "old" ? sp.sort : "best";
 
   const [dict, user] = await Promise.all([getDictionary(lang), getCurrentUser()]);
-  const viewer = user ? { id: user.id, role: user.role } : null;
-  const data = await getPostView(slug, viewer, sort);
+  const viewer = user ? { id: user.id, role: user.role, isOwner: user.isOwner } : null;
+  const data = await getPostView(slug, viewer, sort, lang);
   if (!data) notFound();
 
-  const { post, canModerate, postMyVote, replyCount, roots } = data;
+  const { post, canModerate, canReveal, postMyVote, replyCount, roots } = data;
+  const postAuthor = resolveAuthor(
+    lang,
+    { authorId: post.authorId, forumName: post.author.forumName, anonAlias: post.anonAlias },
+    canReveal,
+  );
+  const replyRealName = user?.forumName ?? "";
+  const replyAliases = user ? aliasOptions(user.id) : [];
 
   // Hidden posts: only moderators of this category (or admins) may view them.
   if (post.hidden && !canModerate) notFound();
@@ -55,9 +64,14 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
               {categoryName(post.category, lang)}
             </Link>
             <span className="sep">·</span>
-            by <Link href={`/${lang}/u/${post.author.forumName}`}>{post.author.forumName}</Link>
+            by <AuthorTag author={postAuthor} />
             <span className="sep">·</span>
             {timeAgo(new Date(post.createdAt), lang)}
+            {post.quickPosted && (
+              <span className="quick-flag" title={dict.feed.quickPostNote}>
+                ⚠ {dict.feed.mayBeMoved}
+              </span>
+            )}
           </div>
 
           <h1 className="post-title" style={{ fontSize: 26, marginBottom: 16 }}>
@@ -120,7 +134,14 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
             </p>
           ) : (
             <div style={{ marginBottom: 18 }}>
-              <ReplyComposer locale={lang} slug={slug} postId={post.id} dict={dict} />
+              <ReplyComposer
+                locale={lang}
+                slug={slug}
+                postId={post.id}
+                dict={dict}
+                realName={replyRealName}
+                aliases={replyAliases}
+              />
             </div>
           )}
 
@@ -135,6 +156,8 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
             canModerate={canModerate}
             loginHref={loginHref}
             shareTitle={post.title}
+            realName={replyRealName}
+            aliases={replyAliases}
           />
         </section>
       </main>

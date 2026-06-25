@@ -2,8 +2,9 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
-import { getCurrentUser } from "@/lib/dal";
+import { getCurrentUser, getSiteSettings } from "@/lib/dal";
 import { db } from "@/lib/db";
+import { AnonRevealToggle } from "@/components/admin/AnonRevealToggle";
 
 async function safeCount(fn: () => Promise<number>) {
   try {
@@ -24,6 +25,7 @@ export default async function AdminDashboard({ params }: PageProps<"/[lang]/admi
 
   const dict = await getDictionary(lang);
   const t = dict.admin;
+  const settings = await getSiteSettings();
 
   const [users, categories, posts, hidden, ads] = await Promise.all([
     safeCount(() => db.user.count()),
@@ -56,6 +58,14 @@ export default async function AdminDashboard({ params }: PageProps<"/[lang]/admi
           </Link>
         ))}
       </div>
+
+      {me.isOwner && (
+        <section className="card card-pad" style={{ marginTop: 22, maxWidth: 540 }}>
+          <h2 className="admin-h1" style={{ fontSize: 16 }}>{t.ownerSettings}</h2>
+          <AnonRevealToggle enabled={settings.revealAnonymousToStaff} dict={dict} />
+          <p className="muted-sm" style={{ marginTop: 8 }}>{t.revealAnonHint}</p>
+        </section>
+      )}
     </div>
   );
 }

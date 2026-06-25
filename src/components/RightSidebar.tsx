@@ -3,9 +3,15 @@ import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import { categoryName, adTitle } from "@/i18n/localize";
 import { categoryStyle } from "@/lib/category-style";
+import { getForumStats } from "@/lib/forum-data";
 import type { Category, AdCard } from "@/generated/prisma/client";
 
-export function RightSidebar({
+// Compact count: 4 → "4", 12400 → "12.4k".
+function fmtCount(n: number): string {
+  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${n}`;
+}
+
+export async function RightSidebar({
   locale,
   dict,
   user,
@@ -18,6 +24,7 @@ export function RightSidebar({
   categories: Category[];
   ads: AdCard[];
 }) {
+  const stats = await getForumStats();
   return (
     <aside className="rail">
       {/* Welcome / hero card */}
@@ -32,9 +39,9 @@ export function RightSidebar({
             </Link>
           )}
           <div className="stat-row" style={{ marginTop: user ? 0 : 16 }}>
-            <div className="stat"><b>12.4k</b><span>{dict.home.members}</span></div>
-            <div className="stat"><b>1.8k</b><span>{dict.home.online}</span></div>
-            <div className="stat"><b>46</b><span>{dict.home.countries}</span></div>
+            <div className="stat"><b>{fmtCount(stats.members)}</b><span>{dict.home.members}</span></div>
+            <div className="stat"><b>{fmtCount(stats.online)}</b><span>{dict.home.online}</span></div>
+            <div className="stat"><b>{fmtCount(stats.topics)}</b><span>{dict.home.topics}</span></div>
           </div>
         </div>
       </div>
@@ -43,7 +50,7 @@ export function RightSidebar({
       <div className="card card-pad">
         <h3>{dict.home.popularCommunities}</h3>
         <div className="comm-list">
-          {categories.slice(0, 6).map((c) => {
+          {categories.slice(0, 4).map((c) => {
             const style = categoryStyle(c.slug);
             return (
               <Link key={c.id} href={`/${locale}/c/${c.slug}`} className="comm">

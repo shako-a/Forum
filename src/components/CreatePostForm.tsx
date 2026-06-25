@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { createPost } from "@/app/actions/posts";
 import { RichTextEditor } from "@/components/RichTextEditor";
+import { IdentityPicker, type AliasOption } from "@/components/IdentityPicker";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 
@@ -13,11 +14,15 @@ export function CreatePostForm({
   dict,
   categories,
   defaultCategoryId,
+  realName,
+  aliases,
 }: {
   locale: Locale;
   dict: Dictionary;
   categories: Cat[];
   defaultCategoryId?: string;
+  realName: string;
+  aliases: AliasOption[];
 }) {
   const [state, action, pending] = useActionState(createPost, undefined);
   const err = state?.errors;
@@ -28,6 +33,11 @@ export function CreatePostForm({
       <h1 className="auth-title" style={{ textAlign: "left", marginBottom: 18 }}>
         {dict.home.createPost}
       </h1>
+
+      <div className="field">
+        <label>{dict.post.postingAs}</label>
+        <IdentityPicker realName={realName} aliases={aliases} dict={dict} />
+      </div>
 
       <div className="field">
         <label htmlFor="categoryId">{dict.post.chooseCategory}</label>

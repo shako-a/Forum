@@ -7,6 +7,7 @@ import { ReplyEditForm } from "@/components/ReplyEditForm";
 import { ShareMenu } from "@/components/ShareMenu";
 import { deleteReply } from "@/app/actions/replies";
 import { setReplyHidden } from "@/app/actions/moderation";
+import type { AliasOption } from "@/components/IdentityPicker";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 
@@ -27,6 +28,8 @@ export function ReplyActions({
   loginHref,
   shareTitle,
   dict,
+  realName,
+  aliases,
 }: {
   replyId: string;
   locale: Locale;
@@ -44,6 +47,8 @@ export function ReplyActions({
   loginHref: string;
   shareTitle: string;
   dict: Dictionary;
+  realName: string;
+  aliases: AliasOption[];
 }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -119,6 +124,8 @@ export function ReplyActions({
           parentId={replyId}
           dict={dict}
           autoFocus
+          realName={realName}
+          aliases={aliases}
           onDone={() => setOpen(false)}
         />
       )}

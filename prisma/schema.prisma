@@ -46,6 +46,10 @@ model User {
   role         Role       @default(USER)
   status       UserStatus @default(ACTIVE)
 
+  // The "main admin" / owner — always sees real authors behind anonymous
+  // content and controls whether other staff can. Typically just one user.
+  isOwner      Boolean    @default(false)
+
   // Paid "Donor" tier — orthogonal to role (any user can be a Donor). Grants
   // access to perks like the "Ask AI" feature. Admin-granted for now; will be
   // driven by Stripe subscriptions later.
@@ -130,6 +134,15 @@ model Post {
   category   Category @relation(fields: [categoryId], references: [id])
   categoryId String
 
+  // Anonymous posting: null = posted as the real author; 1/2/3 = which of the
+  // author's 3 generated anonymous aliases. authorId is always kept for
+  // moderation (revealed only to authorized staff).
+  anonAlias Int?
+
+  // Quick-posted from the home composer: auto-filed under Discussions, flagged
+  // so it shows a "may be moved to a fitting community" notice for moderators.
+  quickPosted Boolean @default(false)
+
   // Moderation: hidden (not deleted) content stays on the server; admins can see it.
   hidden     Boolean   @default(false)
   hiddenBy   User?     @relation("PostHiddenBy", fields: [hiddenById], references: [id])
@@ -165,6 +178,9 @@ model Reply {
   authorId String
   post     Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId   String
+
+  // Anonymous reply: null = real author; 1/2/3 = which generated alias.
+  anonAlias Int?
 
   // Self-relation for nested threads.
   parent   Reply?  @relation("ReplyThread", fields: [parentId], references: [id])
@@ -270,4 +286,18 @@ model Label {
   updatedAt DateTime @updatedAt
 
   @@index([sortOrder])
+}
+
+// ---------------------------------------------------------------------------
+// Site settings — a single-row table of global toggles (owner-controlled).
+// ---------------------------------------------------------------------------
+
+model SiteSetting {
+  id String @id @default("singleton")
+
+  // When true, all admins/moderators can see the real author behind anonymous
+  // content. When false, only the owner can. Controlled by the owner.
+  revealAnonymousToStaff Boolean @default(false)
+
+  updatedAt DateTime @updatedAt
 }

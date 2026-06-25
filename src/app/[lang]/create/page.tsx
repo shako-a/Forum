@@ -4,6 +4,7 @@ import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { getCurrentUser } from "@/lib/dal";
 import { db } from "@/lib/db";
+import { aliasOptions } from "@/lib/anon";
 import { categoryName } from "@/i18n/localize";
 import { Header } from "@/components/Header";
 import { CreatePostForm } from "@/components/CreatePostForm";
@@ -36,6 +37,8 @@ export default async function CreatePostPage({ params, searchParams }: PageProps
           dict={dict}
           categories={categories}
           defaultCategoryId={defaultCategoryId}
+          realName={user.forumName}
+          aliases={aliasOptions(user.id)}
         />
       </main>
     </>

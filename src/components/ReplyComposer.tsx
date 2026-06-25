@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { createReply } from "@/app/actions/replies";
+import { IdentityPicker, type AliasOption } from "@/components/IdentityPicker";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 
@@ -13,6 +14,8 @@ export function ReplyComposer({
   dict,
   autoFocus,
   onDone,
+  realName,
+  aliases,
 }: {
   locale: Locale;
   slug: string;
@@ -21,6 +24,8 @@ export function ReplyComposer({
   dict: Dictionary;
   autoFocus?: boolean;
   onDone?: () => void;
+  realName: string;
+  aliases: AliasOption[];
 }) {
   const [state, action, pending] = useActionState(createReply, undefined);
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -46,6 +51,10 @@ export function ReplyComposer({
       <input type="hidden" name="postId" value={postId} />
       {parentId && <input type="hidden" name="parentId" value={parentId} />}
       {image && <input type="hidden" name="image" value={image} />}
+
+      <div className="reply-identity-row">
+        <IdentityPicker realName={realName} aliases={aliases} dict={dict} />
+      </div>
 
       <textarea
         ref={ref}

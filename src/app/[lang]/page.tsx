@@ -4,6 +4,7 @@ import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { getCurrentUser } from "@/lib/dal";
 import { getHomeData } from "@/lib/forum-data";
+import { aliasOptions } from "@/lib/anon";
 import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { RightSidebar } from "@/components/RightSidebar";
@@ -29,7 +30,13 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
         <LeftSidebar locale={lang} dict={dict} categories={data.categories} />
         <div className="center-col">
           <TopPanel locale={lang} dict={dict} popular={data.popular} ads={data.topAds} />
-          <Feed locale={lang} dict={dict} user={headerUser} posts={data.posts} />
+          <Feed
+            locale={lang}
+            dict={dict}
+            user={headerUser}
+            posts={data.posts}
+            aliases={user ? aliasOptions(user.id) : []}
+          />
         </div>
         <RightSidebar
           locale={lang}

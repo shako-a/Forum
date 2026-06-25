@@ -1,6 +1,8 @@
 import { timeAgo } from "@/lib/format";
 import { ReplyActions } from "@/components/ReplyActions";
 import { CollapsibleChildren } from "@/components/CollapsibleChildren";
+import { AuthorTag } from "@/components/AuthorTag";
+import type { AliasOption } from "@/components/IdentityPicker";
 import type { ThreadReply } from "@/lib/forum-data";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
@@ -15,10 +17,13 @@ type Common = {
   canModerate: boolean;
   loginHref: string;
   shareTitle: string;
+  realName: string;
+  aliases: AliasOption[];
 };
 
 function ReplyNode({ node, common }: { node: ThreadReply; common: Common }) {
-  const { locale, slug, postId, dict, canVote, canReply, canModerate, loginHref, shareTitle } = common;
+  const { locale, slug, postId, dict, canVote, canReply, canModerate, loginHref, shareTitle, realName, aliases } =
+    common;
 
   // Tombstone for author-deleted replies that still have a sub-thread.
   if (node.deleted) {
@@ -43,7 +48,7 @@ function ReplyNode({ node, common }: { node: ThreadReply; common: Common }) {
   return (
     <div className="reply" id={`r-${node.id}`}>
       <div className="reply-head">
-        <span className="author">{node.authorName}</span>
+        <AuthorTag author={node.author} />
         <span className="sep">·</span>
         {timeAgo(node.createdAt, locale)}
         {node.hidden && <span className="hidden-tag">({dict.admin.hiddenContent})</span>}
@@ -66,6 +71,8 @@ function ReplyNode({ node, common }: { node: ThreadReply; common: Common }) {
         loginHref={loginHref}
         shareTitle={shareTitle}
         dict={dict}
+        realName={realName}
+        aliases={aliases}
       />
       {node.children.length > 0 && (
         <CollapsibleChildren count={node.children.length} dict={dict}>

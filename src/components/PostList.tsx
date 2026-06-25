@@ -4,7 +4,9 @@ import type { Locale } from "@/i18n/config";
 import { categoryName } from "@/i18n/localize";
 import { categoryStyle } from "@/lib/category-style";
 import { timeAgo, postExcerpt } from "@/lib/format";
+import { resolveAuthor } from "@/lib/anon";
 import { Vote } from "@/components/Vote";
+import { AuthorTag } from "@/components/AuthorTag";
 
 // Shape of the posts produced by the home/category loaders.
 export type FeedPost = {
@@ -15,6 +17,9 @@ export type FeedPost = {
   score: number;
   myVote: number;
   lastActivity: Date;
+  authorId: string;
+  anonAlias: number | null;
+  quickPosted: boolean;
   author: { forumName: string };
   category: { nameEn: string; nameKa: string; slug: string };
   _count: { replies: number; votes: number };
@@ -40,6 +45,12 @@ function PostCard({
   const chipClass = RED_CHIP.has(post.category.slug) ? "chip chip-red" : "chip chip-blue";
   const excerpt = postExcerpt(post.body);
   const showTranslate = locale === "en" && GEORGIAN.test(excerpt);
+  // Feed never reveals real authors behind anonymous posts.
+  const author = resolveAuthor(locale, {
+    authorId: post.authorId,
+    forumName: post.author.forumName,
+    anonAlias: post.anonAlias,
+  });
 
   return (
     <article className="post">
@@ -59,9 +70,14 @@ function PostCard({
             {categoryName(post.category, locale)}
           </Link>
           <span className="sep">·</span>
-          by <Link href={`/${locale}/u/${post.author.forumName}`}>{post.author.forumName}</Link>
+          by <AuthorTag author={author} />
           <span className="sep">·</span>
           {timeAgo(new Date(post.lastActivity), locale)}
+          {post.quickPosted && (
+            <span className="quick-flag" title={dict.feed.quickPostNote}>
+              ⚠ {dict.feed.mayBeMoved}
+            </span>
+          )}
         </div>
         <h2 className="post-title">
           <Link href={`/${locale}/p/${post.slug}`}>{post.title}</Link>

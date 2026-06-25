@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import { PostList, type FeedPost } from "@/components/PostList";
+import { QuickPostComposer } from "@/components/QuickPostComposer";
+import type { AliasOption } from "@/components/IdentityPicker";
 
 export type { FeedPost };
 
@@ -10,39 +12,42 @@ export function Feed({
   dict,
   user,
   posts,
+  aliases,
 }: {
   locale: Locale;
   dict: Dictionary;
   user: { forumName: string } | null;
   posts: FeedPost[];
+  aliases: AliasOption[];
 }) {
-  const initial = user ? user.forumName.charAt(0).toUpperCase() : "✦";
-  const composerHref = user ? `/${locale}/create` : `/${locale}/login`;
-
   return (
     <main className="feed">
-      {/* Composer */}
-      <div className="composer">
-        <span className="avatar" style={{ background: "var(--blue)" }}>
-          {initial}
-        </span>
-        <Link
-          href={composerHref}
-          style={{
-            flex: 1,
-            border: "1px solid var(--line)",
-            background: "var(--bg)",
-            borderRadius: 999,
-            padding: "10px 16px",
-            color: "var(--muted)",
-          }}
-        >
-          {dict.feed.composerPlaceholder}
-        </Link>
-        <Link href={composerHref} className="btn btn-primary">
-          {dict.common.post}
-        </Link>
-      </div>
+      {/* Composer: inline quick-post for members; login prompt for guests */}
+      {user ? (
+        <QuickPostComposer locale={locale} dict={dict} realName={user.forumName} aliases={aliases} />
+      ) : (
+        <div className="composer">
+          <span className="avatar" style={{ background: "var(--blue)" }}>
+            ✦
+          </span>
+          <Link
+            href={`/${locale}/login`}
+            style={{
+              flex: 1,
+              border: "1px solid var(--line)",
+              background: "var(--bg)",
+              borderRadius: 999,
+              padding: "10px 16px",
+              color: "var(--muted)",
+            }}
+          >
+            {dict.feed.composerPlaceholder}
+          </Link>
+          <Link href={`/${locale}/login`} className="btn btn-primary">
+            {dict.common.post}
+          </Link>
+        </div>
+      )}
 
       {/* Tabs + city filter */}
       <div className="feed-tabs">

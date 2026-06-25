@@ -23,6 +23,8 @@ export async function createReply(_state: FormState, formData: FormData): Promis
   const parentId = (formData.get("parentId") as string) || null;
   const text = String(formData.get("body") ?? "").trim();
   const image = safeUrl(formData.get("image"));
+  const anonRaw = String(formData.get("anonAlias") ?? "");
+  const anonAlias = /^[1-3]$/.test(anonRaw) ? Number(anonRaw) : null;
 
   if (!text && !image) return { errors: { body: ["Please write a reply or attach an image."] } };
 
@@ -51,6 +53,7 @@ export async function createReply(_state: FormState, formData: FormData): Promis
         postId,
         parentId,
         authorId: user.id,
+        anonAlias,
         body: buildReplyDoc(text, image) as unknown as Prisma.InputJsonValue,
       },
     }),
