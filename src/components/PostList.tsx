@@ -6,6 +6,7 @@ import { categoryStyle } from "@/lib/category-style";
 import { timeAgo, postExcerpt } from "@/lib/format";
 import { resolveAuthor } from "@/lib/anon";
 import { Vote } from "@/components/Vote";
+import { SaveButton } from "@/components/SaveButton";
 import { AuthorTag } from "@/components/AuthorTag";
 
 // Shape of the posts produced by the home/category loaders.
@@ -16,6 +17,7 @@ export type FeedPost = {
   body: unknown;
   score: number;
   myVote: number;
+  saved: boolean;
   lastActivity: Date;
   authorId: string;
   anonAlias: number | null;
@@ -54,15 +56,6 @@ function PostCard({
 
   return (
     <article className="post">
-      <Vote
-        id={post.id}
-        kind="post"
-        initialScore={post.score}
-        initialVote={post.myVote}
-        canVote={canVote}
-        loginHref={loginHref}
-        orientation="vertical"
-      />
       <div className="post-body">
         <div className="post-meta">
           <Link href={`/${locale}/c/${post.category.slug}`} className={chipClass}>
@@ -88,6 +81,15 @@ function PostCard({
           </p>
         )}
         <div className="post-actions">
+          <Vote
+            id={post.id}
+            kind="post"
+            initialScore={post.score}
+            initialVote={post.myVote}
+            canVote={canVote}
+            loginHref={loginHref}
+            orientation="horizontal"
+          />
           <Link href={`/${locale}/p/${post.slug}`} className="action">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 12a8 8 0 01-8 8H5l-2 2V12a8 8 0 018-8h2a8 8 0 018 8z" />
@@ -100,7 +102,14 @@ function PostCard({
             </svg>
             {dict.common.share}
           </button>
-          <button className="action">{dict.common.save}</button>
+          <SaveButton
+            postId={post.id}
+            initialSaved={post.saved}
+            canSave={canVote}
+            loginHref={loginHref}
+            saveLabel={dict.common.save}
+            savedLabel={dict.common.saved}
+          />
           {showTranslate && (
             <button className="translate-hint">✦ {dict.home.translateToEnglish}</button>
           )}

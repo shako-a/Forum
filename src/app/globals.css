@@ -757,8 +757,6 @@ button {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  display: grid;
-  grid-template-columns: 52px minmax(0, 1fr);
   transition: box-shadow 0.15s, transform 0.15s;
 }
 .post:hover {
@@ -770,8 +768,7 @@ button {
   align-items: center;
   gap: 2px;
   padding: 16px 0;
-  border-right: 1px solid var(--line);
-  border-radius: var(--radius) 0 0 var(--radius);
+  border-left: 1px solid var(--line);
   background: #fbfcfd;
 }
 .vote-btn {
@@ -785,16 +782,20 @@ button {
   place-items: center;
   transition: all 0.12s;
 }
+/* Upvote → blue, Downvote → orange-red (on hover and when the user has voted) */
 .vote-btn:hover {
-  background: var(--red-soft);
-  color: var(--red);
-}
-.vote-btn.down:hover {
   background: var(--blue-soft);
   color: var(--blue);
 }
+.vote-btn.down:hover {
+  background: color-mix(in srgb, #e8590c 14%, transparent);
+  color: #e8590c;
+}
 .vote-btn.voted {
-  color: var(--red);
+  color: var(--blue);
+}
+.vote-btn.down.voted {
+  color: #e8590c;
 }
 .vote-count {
   font-size: 13px;
@@ -802,7 +803,7 @@ button {
   color: var(--ink-2);
 }
 .vote-count.hot {
-  color: var(--red);
+  color: var(--blue);
 }
 
 .post-body {
@@ -904,6 +905,11 @@ button {
 .action:hover {
   background: var(--bg);
   color: var(--ink);
+}
+/* Saved post: bookmark fills with the brand color and stays highlighted. */
+.save-btn.saved,
+.save-btn.saved:hover {
+  color: var(--blue);
 }
 
 .translate-hint {
@@ -2072,6 +2078,9 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 2px;
+  border-radius: 999px;
+  background: var(--bg);
+  padding: 2px 5px;
 }
 .vote-inline .vote-count {
   min-width: 18px;
@@ -2080,6 +2089,24 @@ button {
 .vote-inline .vote-btn {
   width: 26px;
   height: 24px;
+}
+/* Voted: the whole pill fills with the chosen color, icons go white. */
+.vote-inline.up {
+  background: var(--blue);
+}
+.vote-inline.down {
+  background: #e8590c;
+}
+.vote-inline.up .vote-btn,
+.vote-inline.up .vote-count,
+.vote-inline.down .vote-btn,
+.vote-inline.down .vote-count {
+  color: #fff;
+}
+.vote-inline.up .vote-btn:hover,
+.vote-inline.down .vote-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
 }
 
 /* Collapse toggle for nested replies */

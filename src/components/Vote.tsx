@@ -6,14 +6,36 @@ import { resolveVote, type Vote as VoteValue } from "@/lib/vote-math";
 
 type State = { score: number; my: VoteValue };
 
-const UpArrow = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 19V5M5 12l7-7 7 7" />
+// One bold arrow shape; the fill is toggled — chosen = solid (filled), the
+// other = hollow outline. Both keep a bold stroke.
+const UpArrow = ({ filled }: { filled?: boolean }) => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill={filled ? "currentColor" : "none"}
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinejoin="round"
+    strokeLinecap="round"
+    aria-hidden="true"
+  >
+    <path d="M10.7 5.1 Q12 3.8 13.3 5.1 L18.2 10 Q19.5 11.3 17.7 11.3 L15.9 11.3 Q14.7 11.3 14.7 12.5 L14.7 18.8 Q14.7 20 13.5 20 L10.5 20 Q9.3 20 9.3 18.8 L9.3 12.5 Q9.3 11.3 8.1 11.3 L6.3 11.3 Q4.5 11.3 5.8 10 Z" />
   </svg>
 );
-const DownArrow = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 5v14M19 12l-7 7-7-7" />
+const DownArrow = ({ filled }: { filled?: boolean }) => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill={filled ? "currentColor" : "none"}
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinejoin="round"
+    strokeLinecap="round"
+    aria-hidden="true"
+  >
+    <path d="M10.7 18.9 Q12 20.2 13.3 18.9 L18.2 14 Q19.5 12.7 17.7 12.7 L15.9 12.7 Q14.7 12.7 14.7 11.5 L14.7 5.2 Q14.7 4 13.5 4 L10.5 4 Q9.3 4 9.3 5.2 L9.3 11.5 Q9.3 12.7 8.1 12.7 L6.3 12.7 Q4.5 12.7 5.8 14 Z" />
   </svg>
 );
 
@@ -62,7 +84,10 @@ export function Vote({
     });
   }
 
-  const wrapClass = orientation === "vertical" ? "vote-rail" : "vote-inline";
+  // Wrapper carries the user's current vote so the whole pill can fill with the
+  // chosen color (up = blue, down = orange-red).
+  const stateClass = view.my === 1 ? " up" : view.my === -1 ? " down" : "";
+  const wrapClass = (orientation === "vertical" ? "vote-rail" : "vote-inline") + stateClass;
   return (
     <div className={wrapClass}>
       <button
@@ -72,7 +97,7 @@ export function Vote({
         aria-pressed={view.my === 1}
         onClick={() => cast(1)}
       >
-        <UpArrow />
+        <UpArrow filled={view.my === 1} />
       </button>
       <span className={view.my === 1 ? "vote-count hot" : "vote-count"}>{view.score}</span>
       <button
@@ -82,7 +107,7 @@ export function Vote({
         aria-pressed={view.my === -1}
         onClick={() => cast(-1)}
       >
-        <DownArrow />
+        <DownArrow filled={view.my === -1} />
       </button>
     </div>
   );

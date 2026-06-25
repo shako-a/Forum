@@ -43,7 +43,10 @@ export async function getHomeData(viewer: { id: string } | null) {
     const visiblePosts = viewerIsAuthed
       ? posts
       : posts.filter((p) => !p.category.locked);
-    const postsWithVotes = await attachMyVotes(visiblePosts, viewer?.id ?? null);
+    const postsWithVotes = await attachSaved(
+      await attachMyVotes(visiblePosts, viewer?.id ?? null),
+      viewer?.id ?? null,
+    );
 
     // The Popular Topics bar shows *all* top topics (highest score) to everyone,
     // so the row stays full and the ad positions line up. Locked-category topics
@@ -141,6 +144,20 @@ async function attachMyVotes<T extends { id: string }>(
   return posts.map((p) => ({ ...p, myVote: map.get(p.id) ?? 0 }));
 }
 
+// Attach whether the viewer has saved (bookmarked) each post.
+async function attachSaved<T extends { id: string }>(
+  posts: T[],
+  userId: string | null,
+): Promise<(T & { saved: boolean })[]> {
+  if (!userId || posts.length === 0) return posts.map((p) => ({ ...p, saved: false }));
+  const rows = await db.savedPost.findMany({
+    where: { userId, postId: { in: posts.map((p) => p.id) } },
+    select: { postId: true },
+  });
+  const set = new Set(rows.map((r) => r.postId));
+  return posts.map((p) => ({ ...p, saved: set.has(p.id) }));
+}
+
 // A single category page: the category plus its posts (most recent first).
 // Locked categories return `gated: true` with no posts for guests.
 export async function getCategoryPage(slug: string, viewer: { id: string } | null) {
@@ -157,7 +174,7 @@ export async function getCategoryPage(slug: string, viewer: { id: string } | nul
     take: 50,
     include: POST_CARD_INCLUDE,
   });
-  const posts = await attachMyVotes(found, viewer?.id ?? null);
+  const posts = await attachSaved(await attachMyVotes(found, viewer?.id ?? null), viewer?.id ?? null);
   return { category, posts, gated: false };
 }
 
@@ -198,7 +215,7 @@ export async function getUserProfile(forumName: string, viewer: { id: string } |
 
   // Guests don't see posts in locked categories (parity with the home feed).
   const visible = viewer ? found : found.filter((p) => !p.category.locked);
-  const posts = await attachMyVotes(visible, viewer?.id ?? null);
+  const posts = await attachSaved(await attachMyVotes(visible, viewer?.id ?? null), viewer?.id ?? null);
 
   return { profile, posts };
 }
