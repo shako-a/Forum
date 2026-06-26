@@ -5,8 +5,9 @@ import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import type { HeaderUser } from "@/lib/header-user";
 import { hasAiAccess } from "@/lib/perks";
+import { getInboxUnread } from "@/lib/inbox-data";
 
-export function Header({
+export async function Header({
   locale,
   dict,
   user,
@@ -16,6 +17,7 @@ export function Header({
   user: HeaderUser;
 }) {
   const t = dict.common;
+  const unread = user ? (await getInboxUnread()).total : 0;
   // "Ask AI" is a paid perk (Donor or Professional). Guests → login; logged-in
   // users without a paid tier → the upgrade page; paid → the Ask AI feature.
   const aiAccess = hasAiAccess(user);
@@ -90,6 +92,17 @@ export function Header({
                 <span aria-hidden="true">🛡</span> {t.admin}
               </Link>
             )}
+            <Link
+              href={`/${locale}/inbox`}
+              className="header-inbox"
+              title={t.inbox}
+              aria-label={t.inbox}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12a8 8 0 01-8 8H5l-2 2V12a8 8 0 018-8h2a8 8 0 018 8z" />
+              </svg>
+              {unread > 0 && <span className="nav-badge">{unread > 99 ? "99+" : unread}</span>}
+            </Link>
             <Link href={`/${locale}/create`} className="btn btn-primary">
               {t.create}
             </Link>

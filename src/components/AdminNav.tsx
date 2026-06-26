@@ -27,6 +27,7 @@ export function AdminNav({
         { href: `${base}/labels`, label: t.labels, icon: "🏷" },
         { href: `${base}/users`, label: t.users, icon: "👥" },
         { href: `${base}/businesses`, label: dict.business.directory, icon: "💼" },
+        { href: `${base}/reports`, label: t.reports, icon: "⚑" },
         { href: `${base}/hidden`, label: t.hiddenContent, icon: "🙈" },
       ]
     : [{ href: `${base}/hidden`, label: t.hiddenContent, icon: "🙈" }];

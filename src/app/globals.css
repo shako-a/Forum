@@ -279,6 +279,27 @@ button {
   padding-bottom: 4px;
   scrollbar-width: thin;
 }
+/* Popular-topics loop: a real scroll container that also auto-advances
+   (see PopularScroller). Users can drag/swipe/wheel to scroll manually. */
+.pop-loop {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+.pop-track {
+  display: flex;
+  width: max-content;
+}
+.pop-copy {
+  display: contents;
+}
+/* Each card carries its own trailing gap so the two copies are exactly equal
+   halves of the track — that makes the halfway wrap loop with no jump. */
+.pop-track .pop-card {
+  margin-right: 12px;
+}
 .pop-card {
   flex: 0 0 220px;
   min-height: 150px;
@@ -930,6 +951,12 @@ button {
 }
 .tier-box .checkbox-row {
   margin: 0;
+}
+
+.profile-members-note {
+  color: var(--muted);
+  font-size: 13px;
+  margin: -2px 0 12px;
 }
 
 /* Saved post: bookmark fills with the brand color and stays highlighted. */
@@ -2663,4 +2690,312 @@ a.biz-card:hover {
 }
 .biz-danger {
   border-color: color-mix(in srgb, var(--red) 30%, var(--line));
+}
+
+/* ================================ Inbox ================================== */
+/* Nav unread badge */
+.nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  font-size: 10.5px;
+  font-weight: 800;
+  line-height: 1;
+  color: #fff;
+  background: var(--red);
+  border-radius: 999px;
+}
+.header-inbox {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  color: var(--ink-2);
+}
+.header-inbox:hover {
+  background: var(--bg);
+  color: var(--ink);
+}
+.header-inbox .nav-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+}
+.bnav-inbox {
+  position: relative;
+}
+.bnav-badge {
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  margin-left: 4px;
+}
+
+/* Tabs */
+.inbox-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0 14px;
+  border-bottom: 1px solid var(--line);
+}
+.inbox-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.inbox-tab.active {
+  color: var(--ink);
+  border-bottom-color: var(--blue);
+}
+.inbox-tab-badge {
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+  background: var(--red);
+  border-radius: 999px;
+  padding: 1px 6px;
+}
+.inbox-empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 36px;
+}
+
+/* Notifications */
+.notif-list,
+.dm-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.notif,
+.dm-row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.notif:hover,
+.dm-row:hover {
+  border-color: var(--blue);
+}
+.notif.unread,
+.dm-row.unread {
+  background: color-mix(in srgb, var(--blue) 5%, var(--paper));
+  border-color: color-mix(in srgb, var(--blue) 25%, var(--line));
+}
+.notif-ico {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+}
+.notif-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.notif-text {
+  font-size: 14px;
+}
+.notif-target {
+  color: var(--blue);
+}
+.notif-snippet {
+  color: var(--ink-2);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.notif-time,
+.dm-row-time {
+  color: var(--muted);
+  font-size: 12px;
+}
+.notif-dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--blue);
+  margin-top: 6px;
+}
+
+/* DM list */
+.dm-row {
+  align-items: center;
+}
+.dm-avatar {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--blue);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+.dm-row-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.dm-row-name {
+  font-weight: 700;
+  font-size: 14px;
+}
+.dm-row-last {
+  color: var(--muted);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dm-you {
+  color: var(--ink-2);
+}
+
+/* DM thread */
+.dm-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.dm-back {
+  font-size: 26px;
+  line-height: 1;
+  color: var(--muted);
+  padding: 0 6px;
+}
+.dm-head-id {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.dm-head-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+}
+.dm-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.dm-msg {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 78%;
+}
+.dm-msg.mine {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+.dm-bubble {
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: var(--bg);
+  font-size: 14px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.dm-msg.mine .dm-bubble {
+  background: var(--blue);
+  color: #fff;
+}
+.dm-msg-time {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.dm-composer {
+  display: flex;
+  gap: 8px;
+}
+.dm-composer .input {
+  flex: 1;
+}
+
+/* DM block/report */
+.dm-actions {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+.dm-actions-row {
+  display: flex;
+  gap: 6px;
+}
+.dm-action-btn {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.dm-action-btn:hover {
+  border-color: var(--red);
+  color: var(--red);
+}
+.dm-report-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 240px;
+}
+.dm-report-ok {
+  color: var(--blue);
+  font-size: 13px;
+}
+.dm-blocked-note {
+  text-align: center;
+  color: var(--muted);
+  font-size: 13.5px;
+  padding: 12px;
+  background: var(--bg);
+  border-radius: 10px;
+}
+.report-context {
+  font-style: italic;
+  font-size: 12px;
+  margin-top: 2px;
 }

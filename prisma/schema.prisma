@@ -85,6 +85,14 @@ model User {
   savedPosts          SavedPost[]
   businesses          Business[]       @relation("BusinessOwner")
   businessReviews     BusinessReview[]
+  notifications       Notification[]            @relation("UserNotifications")
+  notificationsActed  Notification[]            @relation("NotificationActor")
+  conversations       ConversationParticipant[]
+  messagesSent        Message[]                 @relation("MessageSender")
+  blocksMade          Block[]                   @relation("Blocker")
+  blocksReceived      Block[]                   @relation("Blocked")
+  reportsMade         Report[]                  @relation("Reporter")
+  reportsAbout        Report[]                  @relation("ReportedUser")
 
   // Moderation bookkeeping (content this user hid, when acting as mod/admin)
   hiddenPosts   Post[]  @relation("PostHiddenBy")
@@ -391,6 +399,95 @@ model JobPosting {
 
   @@index([active, createdAt])
   @@index([businessId])
+}
+
+// ---------------------------------------------------------------------------
+// Inbox — notifications (activity about you) + direct messages (1:1 chat).
+// ---------------------------------------------------------------------------
+
+model Notification {
+  id     String @id @default(cuid())
+  user   User   @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  userId String // recipient
+
+  type String // "reply" | "mention" | "review" | "system"
+
+  // Who triggered it (null for system/anonymous).
+  actor   User?   @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+  actorId String?
+
+  title String // short snapshot, e.g. the related post/business title
+  body  String? // optional snippet
+  url   String // locale-less relative target, e.g. "/p/some-slug"
+
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read, createdAt])
+}
+
+model Conversation {
+  id            String   @id @default(cuid())
+  lastMessageAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@index([lastMessageAt])
+}
+
+model ConversationParticipant {
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  lastReadAt     DateTime?
+
+  @@id([conversationId, userId])
+  @@index([userId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId String
+  sender         User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  senderId       String
+  body           String
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+// Block: blocker can no longer exchange DMs with the blocked user (either way).
+model Block {
+  blocker   User     @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockerId String
+  blocked   User     @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+  blockedId String
+  createdAt DateTime @default(now())
+
+  @@id([blockerId, blockedId])
+  @@index([blockedId])
+}
+
+// Report: a member flags another member (optionally from a DM) for staff review.
+model Report {
+  id             String  @id @default(cuid())
+  reporter       User    @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reporterId     String
+  reportedUser   User?   @relation("ReportedUser", fields: [reportedUserId], references: [id], onDelete: SetNull)
+  reportedUserId String?
+  conversationId String? // context, if reported from a DM
+  reason         String?
+  context        String? // snapshot, e.g. the last message
+  status         String  @default("OPEN") // OPEN | RESOLVED
+
+  createdAt DateTime @default(now())
+
+  @@index([status, createdAt])
 }
 
 model SiteSetting {

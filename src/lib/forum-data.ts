@@ -201,24 +201,34 @@ export async function getUserProfile(forumName: string, viewer: { id: string } |
         select: { nameEn: true, nameKa: true, color: true, background: true, font: true, bold: true },
         orderBy: { sortOrder: "asc" },
       },
-      _count: { select: { posts: true } },
     },
   });
   if (!profile || profile.status !== "ACTIVE") return null;
 
-  const found = await db.post.findMany({
-    // Exclude the user's anonymous posts — listing them here would de-anonymize.
-    where: { authorId: profile.id, hidden: false, anonAlias: null },
-    orderBy: { lastActivity: "desc" },
-    take: 50,
-    include: POST_CARD_INCLUDE,
-  });
+  // Public posts = non-hidden, non-anonymous. The header shows this *actual*
+  // total (including locked-category posts). The list, however, still hides
+  // locked-category posts from guests — so the count can exceed the list, in
+  // which case we flag it and the page shows a "members-only" note.
+  const publicWhere = { authorId: profile.id, hidden: false, anonAlias: null };
+  const listWhere = viewer ? publicWhere : { ...publicWhere, category: { locked: false } };
 
-  // Guests don't see posts in locked categories (parity with the home feed).
-  const visible = viewer ? found : found.filter((p) => !p.category.locked);
-  const posts = await attachSaved(await attachMyVotes(visible, viewer?.id ?? null), viewer?.id ?? null);
+  const [found, postCount, listCount, anonCount] = await Promise.all([
+    db.post.findMany({
+      where: listWhere,
+      orderBy: { lastActivity: "desc" },
+      take: 50,
+      include: POST_CARD_INCLUDE,
+    }),
+    db.post.count({ where: publicWhere }),
+    db.post.count({ where: listWhere }),
+    // Anonymous post count — for admins/owner only (kept out of the public total).
+    db.post.count({ where: { authorId: profile.id, hidden: false, anonAlias: { not: null } } }),
+  ]);
 
-  return { profile, posts };
+  const posts = await attachSaved(await attachMyVotes(found, viewer?.id ?? null), viewer?.id ?? null);
+  const membersOnlyHidden = !viewer && listCount < postCount;
+
+  return { profile, posts, postCount, anonCount, membersOnlyHidden };
 }
 
 // The categories overview: every category with its 3 most recently discussed

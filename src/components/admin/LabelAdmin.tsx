@@ -173,10 +173,14 @@ export function LabelAdmin({
         )}
       </div>
 
-      {/* Built-in label: Donor (auto-assigned to paid members, not editable here) */}
+      {/* Built-in labels: Donor & Pro — driven by subscription flags, not editable here. */}
       <div className="card card-pad label-builtin">
         <span className="donor-badge">💛 {dict.profile.donorBadge}</span>
         <span className="muted-sm">{t.donorBuiltin}</span>
+      </div>
+      <div className="card card-pad label-builtin">
+        <span className="pro-badge">💼 {dict.profile.proBadge}</span>
+        <span className="muted-sm">{t.proBuiltin}</span>
       </div>
 
       {creating && <LabelForm locale={locale} dict={dict} onDone={() => setCreating(false)} />}

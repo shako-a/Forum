@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PopularScroller } from "@/components/PopularScroller";
 import { categoryName, adTitle } from "@/i18n/localize";
 import { categoryStyle } from "@/lib/category-style";
 import type { PopularTopic } from "@/lib/forum-data";
@@ -54,71 +55,81 @@ export function TopPanel({
 
   const items = buildItems(popular, ads);
 
+  // Render one card. `copy` keeps keys unique across the duplicated track.
+  function renderItem(item: Item, copy: number) {
+    if (item.kind === "post") {
+      const p = item.post;
+      const style = categoryStyle(p.category.slug);
+      // Locked-category topic shown to a guest: title is a teaser, but the
+      // card routes to login instead of opening the gated post.
+      const href = p.gated
+        ? `/${locale}/login?next=/${locale}/p/${p.slug}`
+        : `/${locale}/p/${p.slug}`;
+      return (
+        <Link
+          key={`c${copy}-p-${p.id}`}
+          href={href}
+          className={`pop-card${p.gated ? " pop-card-locked" : ""}`}
+        >
+          <span className="pop-cat" style={{ color: style.color }}>
+            <span className="dot" style={{ background: style.color }} />
+            {categoryName(p.category, locale)}
+            {p.gated && <span className="pop-lock" aria-hidden="true">🔒</span>}
+          </span>
+          <span className="pop-title">{p.title}</span>
+          {p.gated ? (
+            <span className="pop-meta pop-meta-locked">🔒 {dict.categories.membersOnly}</span>
+          ) : (
+            <span className="pop-meta">
+              ▲ {p.score} · {p._count.replies} {dict.home.comments}
+            </span>
+          )}
+        </Link>
+      );
+    }
+
+    const ad = item.ad;
+    const cls = `pop-card ad-card-top${ad.imageUrl ? " ad-has-image" : ""}`;
+    const inner = (
+      <>
+        {ad.imageUrl && (
+          <span
+            className="ad-img-full"
+            style={{ backgroundImage: `url(${ad.imageUrl})` }}
+            aria-hidden="true"
+          />
+        )}
+        <span className="ad-overlay-title" style={{ color: ad.titleColor }}>
+          {adTitle(ad, locale)}
+        </span>
+      </>
+    );
+    return ad.linkUrl ? (
+      <a key={`c${copy}-ad-${ad.id}`} href={ad.linkUrl} target="_blank" rel="noreferrer" className={cls}>
+        {inner}
+      </a>
+    ) : (
+      <div key={`c${copy}-ad-${ad.id}`} className={cls}>
+        {inner}
+      </div>
+    );
+  }
+
+  // Continuous loop with two identical copies; the scroller auto-advances and
+  // also lets users scroll manually (see PopularScroller).
   return (
     <section className="top-panel" aria-label={dict.home.popularTopics}>
       <div className="top-panel-head">
         <h3>{dict.home.popularTopics}</h3>
       </div>
-      <div className="hscroll">
-        {items.map((item) => {
-          if (item.kind === "post") {
-            const p = item.post;
-            const style = categoryStyle(p.category.slug);
-            // Locked-category topic shown to a guest: title is a teaser, but the
-            // card routes to login instead of opening the gated post.
-            const href = p.gated
-              ? `/${locale}/login?next=/${locale}/p/${p.slug}`
-              : `/${locale}/p/${p.slug}`;
-            return (
-              <Link
-                key={`p-${p.id}`}
-                href={href}
-                className={`pop-card${p.gated ? " pop-card-locked" : ""}`}
-              >
-                <span className="pop-cat" style={{ color: style.color }}>
-                  <span className="dot" style={{ background: style.color }} />
-                  {categoryName(p.category, locale)}
-                  {p.gated && <span className="pop-lock" aria-hidden="true">🔒</span>}
-                </span>
-                <span className="pop-title">{p.title}</span>
-                {p.gated ? (
-                  <span className="pop-meta pop-meta-locked">🔒 {dict.categories.membersOnly}</span>
-                ) : (
-                  <span className="pop-meta">
-                    ▲ {p.score} · {p._count.replies} {dict.home.comments}
-                  </span>
-                )}
-              </Link>
-            );
-          }
-
-          const ad = item.ad;
-          const cls = `pop-card ad-card-top${ad.imageUrl ? " ad-has-image" : ""}`;
-          const inner = (
-            <>
-              {ad.imageUrl && (
-                <span
-                  className="ad-img-full"
-                  style={{ backgroundImage: `url(${ad.imageUrl})` }}
-                  aria-hidden="true"
-                />
-              )}
-              <span className="ad-overlay-title" style={{ color: ad.titleColor }}>
-                {adTitle(ad, locale)}
-              </span>
-            </>
-          );
-          return ad.linkUrl ? (
-            <a key={`ad-${ad.id}`} href={ad.linkUrl} target="_blank" rel="noreferrer" className={cls}>
-              {inner}
-            </a>
-          ) : (
-            <div key={`ad-${ad.id}`} className={cls}>
-              {inner}
-            </div>
-          );
-        })}
-      </div>
+      <PopularScroller>
+        <div className="pop-track">
+          <div className="pop-copy">{items.map((it) => renderItem(it, 0))}</div>
+          <div className="pop-copy" aria-hidden="true" inert>
+            {items.map((it) => renderItem(it, 1))}
+          </div>
+        </div>
+      </PopularScroller>
     </section>
   );
 }

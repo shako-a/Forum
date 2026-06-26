@@ -1,9 +1,10 @@
 import Link from "next/link";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
+import { getInboxUnread } from "@/lib/inbox-data";
 
 // Mobile-only bottom navigation (shown under 840px via CSS).
-export function BottomNav({
+export async function BottomNav({
   locale,
   dict,
   user,
@@ -13,6 +14,7 @@ export function BottomNav({
   user: { forumName: string } | null;
 }) {
   const t = dict.bottomNav;
+  const unread = user ? (await getInboxUnread()).total : 0;
   return (
     <nav className="bottom-nav" aria-label="Mobile">
       <div className="row">
@@ -37,10 +39,11 @@ export function BottomNav({
             </svg>
           </span>
         </Link>
-        <Link href={user ? `/${locale}/inbox` : `/${locale}/login`} className="bnav-item">
+        <Link href={user ? `/${locale}/inbox` : `/${locale}/login`} className="bnav-item bnav-inbox">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 12a8 8 0 01-8 8H5l-2 2V12a8 8 0 018-8h2a8 8 0 018 8z" />
           </svg>
+          {unread > 0 && <span className="nav-badge bnav-badge">{unread > 99 ? "99+" : unread}</span>}
           {t.inbox}
         </Link>
         <Link href={user ? `/${locale}/u/${user.forumName}` : `/${locale}/login`} className="bnav-item">

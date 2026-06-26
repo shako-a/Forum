@@ -6,6 +6,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUser, canModerateCategory } from "@/lib/dal";
 import { defaultLocale, isLocale } from "@/i18n/config";
 import { buildReplyDoc, safeUrl } from "@/lib/prosemirror";
+import { createNotification, notifyMentions } from "@/lib/notify";
 import type { FormState } from "@/lib/definitions";
 
 function localeFrom(formData: FormData): string {
@@ -30,7 +31,7 @@ export async function createReply(_state: FormState, formData: FormData): Promis
 
   const post = await db.post.findUnique({
     where: { id: postId },
-    select: { id: true, repliesLocked: true, categoryId: true },
+    select: { id: true, repliesLocked: true, categoryId: true, authorId: true, slug: true, title: true },
   });
   if (!post) return { message: "Post not found." };
 
@@ -40,11 +41,16 @@ export async function createReply(_state: FormState, formData: FormData): Promis
   }
 
   // A nested reply's parent must belong to this post.
+  let parentAuthorId: string | null = null;
   if (parentId) {
-    const parent = await db.reply.findUnique({ where: { id: parentId }, select: { postId: true } });
+    const parent = await db.reply.findUnique({
+      where: { id: parentId },
+      select: { postId: true, authorId: true },
+    });
     if (!parent || parent.postId !== postId) {
       return { message: "Invalid reply target." };
     }
+    parentAuthorId = parent.authorId;
   }
 
   await db.$transaction([
@@ -59,6 +65,43 @@ export async function createReply(_state: FormState, formData: FormData): Promis
     }),
     db.post.update({ where: { id: postId }, data: { lastActivity: new Date() } }),
   ]);
+
+  // Notifications (best-effort, after the write). Anonymous replies don't reveal
+  // the author, so the notification's actor is omitted in that case.
+  const replyUrl = `/p/${slug}`;
+  const actorId = anonAlias ? null : user.id;
+  const notified = new Set<string>();
+  if (parentAuthorId && parentAuthorId !== user.id) {
+    await createNotification({
+      userId: parentAuthorId,
+      type: "reply",
+      actorId,
+      title: post.title,
+      body: text.slice(0, 140) || undefined,
+      url: replyUrl,
+    });
+    notified.add(parentAuthorId);
+  }
+  if (post.authorId !== user.id && !notified.has(post.authorId)) {
+    await createNotification({
+      userId: post.authorId,
+      type: "reply",
+      actorId,
+      title: post.title,
+      body: text.slice(0, 140) || undefined,
+      url: replyUrl,
+    });
+    notified.add(post.authorId);
+  }
+  if (text) {
+    await notifyMentions({
+      text,
+      actorId: user.id,
+      excludeUserIds: [...notified],
+      title: post.title,
+      url: replyUrl,
+    });
+  }
 
   revalidatePath(`/${locale}/p/${slug}`);
   return { ok: true };

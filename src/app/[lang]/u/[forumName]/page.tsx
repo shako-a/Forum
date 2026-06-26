@@ -11,6 +11,7 @@ import { LeftSidebar } from "@/components/LeftSidebar";
 import { PostList } from "@/components/PostList";
 import { LabelBadge } from "@/components/LabelBadge";
 import { stateLabel } from "@/lib/us-states";
+import { startConversation } from "@/app/actions/inbox";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,9 @@ export default async function ProfilePage({ params }: PageProps<"/[lang]/u/[foru
   ]);
   if (!data) notFound();
 
-  const { profile, posts } = data;
+  const { profile, posts, postCount, anonCount, membersOnlyHidden } = data;
+  // Anonymous-post count is moderation info: only admins and the owner see it.
+  const showAnon = (user?.role === "ADMIN" || user?.id === profile.id) && anonCount > 0;
   const t = dict.profile;
   const isOwn = user?.id === profile.id;
   const showRealName = !profile.hideRealName;
@@ -88,18 +91,30 @@ export default async function ProfilePage({ params }: PageProps<"/[lang]/u/[foru
                 </span>
                 <span className="sep">·</span>
                 <span>
-                  {profile._count.posts} {t.posts}
+                  {postCount} {t.posts}
+                  {showAnon && (
+                    <span className="muted-sm"> ({anonCount} {t.anonymous})</span>
+                  )}
                 </span>
               </p>
             </div>
-            {isOwn && (
+            {isOwn ? (
               <Link href={`/${lang}/account`} className="btn btn-ghost">
                 {t.editProfile}
               </Link>
+            ) : (
+              user && (
+                <form action={startConversation.bind(null, profile.id, lang)}>
+                  <button type="submit" className="btn btn-ghost">✉ {t.message}</button>
+                </form>
+              )
             )}
           </div>
 
           <h2 className="profile-section-title">{t.postsBy.replace("{name}", profile.forumName)}</h2>
+          {membersOnlyHidden && (
+            <p className="profile-members-note">🔒 {t.membersOnlyNote}</p>
+          )}
           <PostList
             locale={lang}
             dict={dict}

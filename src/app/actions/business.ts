@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal";
 import { canRegisterBusiness } from "@/lib/perks";
 import { slugify } from "@/lib/slug";
+import { createNotification } from "@/lib/notify";
 import { BusinessSchema, JobSchema, ReviewSchema, zodErrors, type FormState } from "@/lib/definitions";
 
 async function uniqueBusinessSlug(name: string): Promise<string> {
@@ -136,7 +137,7 @@ export async function submitReview(_state: FormState, formData: FormData): Promi
   const businessId = String(formData.get("businessId") ?? "");
   const biz = await db.business.findUnique({
     where: { id: businessId },
-    select: { ownerId: true, slug: true },
+    select: { ownerId: true, slug: true, name: true },
   });
   if (!biz) return { message: "Business not found." };
   if (biz.ownerId === user.id) return { message: "You can't review your own business." };
@@ -172,6 +173,15 @@ export async function submitReview(_state: FormState, formData: FormData): Promi
         data: { ratingCount: { increment: 1 }, ratingSum: { increment: rating } },
       });
     }
+  });
+
+  await createNotification({
+    userId: biz.ownerId,
+    type: "review",
+    actorId: user.id,
+    title: biz.name,
+    body: `${rating}★${body ? ` · ${body.slice(0, 120)}` : ""}`,
+    url: `/business/${biz.slug}`,
   });
 
   const locale = String(formData.get("locale") ?? "en");
