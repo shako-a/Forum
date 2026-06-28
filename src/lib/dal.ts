@@ -121,9 +121,12 @@ export async function canModerateCategory(
 export const getSiteSettings = cache(async () => {
   try {
     const row = await db.siteSetting.findUnique({ where: { id: "singleton" } });
-    return { revealAnonymousToStaff: row?.revealAnonymousToStaff ?? false };
+    return {
+      revealAnonymousToStaff: row?.revealAnonymousToStaff ?? false,
+      popularBarSize: row?.popularBarSize ?? 6,
+    };
   } catch {
-    return { revealAnonymousToStaff: false };
+    return { revealAnonymousToStaff: false, popularBarSize: 6 };
   }
 });
 

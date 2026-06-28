@@ -158,6 +158,10 @@ model Post {
   // so it shows a "may be moved to a fitting community" notice for moderators.
   quickPosted Boolean @default(false)
 
+  // Admin-curated: pinned into the Popular Topics bar. When any posts are
+  // featured, the bar shows those (instead of the automatic top-by-score list).
+  featuredInBar Boolean @default(false)
+
   // Moderation: hidden (not deleted) content stays on the server; admins can see it.
   hidden     Boolean   @default(false)
   hiddenBy   User?     @relation("PostHiddenBy", fields: [hiddenById], references: [id])
@@ -181,6 +185,7 @@ model Post {
 
   @@index([categoryId, lastActivity])
   @@index([hidden])
+  @@index([featuredInBar])
 }
 
 // ---------------------------------------------------------------------------
@@ -502,6 +507,9 @@ model SiteSetting {
   // When true, all admins/moderators can see the real author behind anonymous
   // content. When false, only the owner can. Controlled by the owner.
   revealAnonymousToStaff Boolean @default(false)
+
+  // Total items shown in the Popular Topics bar (posts + ad cards combined).
+  popularBarSize Int @default(6)
 
   updatedAt DateTime @updatedAt
 }

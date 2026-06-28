@@ -1,7 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { pmToHtml, pmPlainText, pmFirstImage } from "@/lib/prosemirror";
-import { canModerateCategory, canRevealAnonymous } from "@/lib/dal";
+import { canModerateCategory, canRevealAnonymous, getSiteSettings } from "@/lib/dal";
 import { resolveAuthor, type DisplayAuthor } from "@/lib/anon";
 import type { Locale } from "@/i18n/config";
 import type { Role } from "@/generated/prisma/client";
@@ -48,34 +48,51 @@ export async function getHomeData(viewer: { id: string } | null) {
       viewer?.id ?? null,
     );
 
-    // The Popular Topics bar shows *all* top topics (highest score) to everyone,
-    // so the row stays full and the ad positions line up. Locked-category topics
-    // are marked `gated` for guests: shown as a teaser, but not openable.
-    const popular: PopularTopic[] = [...posts]
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 8)
-      .map((p) => ({
-        id: p.id,
-        slug: p.slug,
-        title: p.title,
-        score: p.score,
-        category: {
-          slug: p.category.slug,
-          nameEn: p.category.nameEn,
-          nameKa: p.category.nameKa,
-          locked: p.category.locked,
-        },
-        _count: { replies: p._count.replies },
-        gated: !viewerIsAuthed && p.category.locked,
-      }));
+    // Popular Topics bar: admin-curated when any posts are pinned (featuredInBar),
+    // otherwise the automatic top-by-score list. Total bar size (posts + ads) is
+    // admin-configurable. Locked-category topics are marked `gated` for guests.
+    const { popularBarSize } = await getSiteSettings();
+    const featured = await db.post.findMany({
+      where: { featuredInBar: true, hidden: false },
+      orderBy: { score: "desc" },
+      take: popularBarSize,
+      include: { category: true, _count: { select: { replies: true } } },
+    });
+    const base =
+      featured.length > 0
+        ? featured
+        : [...posts].sort((a, b) => b.score - a.score).slice(0, popularBarSize);
+    const popular: PopularTopic[] = base.map((p) => ({
+      id: p.id,
+      slug: p.slug,
+      title: p.title,
+      score: p.score,
+      category: {
+        slug: p.category.slug,
+        nameEn: p.category.nameEn,
+        nameKa: p.category.nameKa,
+        locked: p.category.locked,
+      },
+      _count: { replies: p._count.replies },
+      gated: !viewerIsAuthed && p.category.locked,
+    }));
 
-    return { categories, posts: postsWithVotes, popular, topAds, sidebarAds, dbReady: true };
+    return {
+      categories,
+      posts: postsWithVotes,
+      popular,
+      barSize: popularBarSize,
+      topAds,
+      sidebarAds,
+      dbReady: true,
+    };
   } catch (error) {
     console.error("getHomeData failed (is the database running & migrated?):", error);
     return {
       categories: [],
       posts: [],
       popular: [],
+      barSize: 6,
       topAds: [],
       sidebarAds: [],
       dbReady: false,

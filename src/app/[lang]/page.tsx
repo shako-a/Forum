@@ -29,7 +29,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
       <div className="shell">
         <LeftSidebar locale={lang} dict={dict} categories={data.categories} />
         <div className="center-col">
-          <TopPanel locale={lang} dict={dict} popular={data.popular} ads={data.topAds} />
+          <TopPanel locale={lang} dict={dict} popular={data.popular} ads={data.topAds} limit={data.barSize} />
           <Feed
             locale={lang}
             dict={dict}

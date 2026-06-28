@@ -45,15 +45,19 @@ export function TopPanel({
   dict,
   popular,
   ads,
+  limit,
 }: {
   locale: Locale;
   dict: Dictionary;
   popular: PopularTopic[];
   ads: AdCard[];
+  limit?: number;
 }) {
   if (popular.length === 0 && ads.length === 0) return null;
 
-  const items = buildItems(popular, ads);
+  // Total items in the bar (posts + ads) is admin-configurable.
+  const built = buildItems(popular, ads);
+  const items = limit && limit > 0 ? built.slice(0, limit) : built;
 
   // Render one card. `copy` keeps keys unique across the duplicated track.
   function renderItem(item: Item, copy: number) {

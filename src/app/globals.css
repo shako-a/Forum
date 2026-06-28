@@ -2692,6 +2692,82 @@ a.biz-card:hover {
   border-color: color-mix(in srgb, var(--red) 30%, var(--line));
 }
 
+/* ========================= Admin: Popular bar =========================== */
+.bar-size-label {
+  font-weight: 700;
+  font-size: 14px;
+}
+.bar-size-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bar-size-input {
+  width: 90px;
+}
+.bar-lists {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.bar-list-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.bar-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.bar-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+}
+.bar-row:hover {
+  background: var(--bg);
+}
+.bar-pin {
+  flex: 0 0 auto;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--line);
+}
+.bar-pin.on {
+  color: #f5b301;
+}
+.bar-row-main {
+  min-width: 0;
+}
+.bar-row-title {
+  font-weight: 600;
+  font-size: 13.5px;
+  display: block;
+}
+.bar-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
+@media (max-width: 720px) {
+  .bar-lists {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ================================ Inbox ================================== */
 /* Nav unread badge */
 .nav-badge {

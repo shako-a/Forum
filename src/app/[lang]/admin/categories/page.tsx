@@ -21,10 +21,11 @@ export default async function AdminCategoriesPage({ params }: PageProps<"/[lang]
         },
       })
       .catch(() => []),
-    // Candidates for moderator assignment: active non-admin members.
+    // Candidates for category-moderator assignment: only existing moderators and
+    // admins (a plain user must be promoted to Moderator first, on the Users page).
     db.user
       .findMany({
-        where: { status: "ACTIVE", role: { in: ["USER", "MODERATOR"] } },
+        where: { status: "ACTIVE", role: { in: ["MODERATOR", "ADMIN"] } },
         select: { id: true, forumName: true },
         orderBy: { forumName: "asc" },
         take: 200,

@@ -30,10 +30,15 @@ export function PopularScroller({
       const dt = (t - last) / 1000;
       last = t;
       if (!paused.current) {
-        const half = el.scrollWidth / 2;
-        if (half > 0) {
+        const half = el.scrollWidth / 2; // width of one copy (two identical copies)
+        const max = el.scrollWidth - el.clientWidth; // furthest the browser will scroll
+        if (max > 1) {
           el.scrollLeft += speed * dt;
-          if (el.scrollLeft >= half) el.scrollLeft -= half; // seamless wrap
+          if (half > 1 && el.scrollLeft >= half) {
+            el.scrollLeft -= half; // seamless wrap when there's a full copy to spare
+          } else if (el.scrollLeft >= max - 1) {
+            el.scrollLeft = 0; // reached the end → start over from the first post
+          }
         }
       }
       raf = requestAnimationFrame(step);

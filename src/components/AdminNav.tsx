@@ -22,6 +22,7 @@ export function AdminNav({
   const items = isAdmin
     ? [
         { href: base, label: t.dashboard, icon: "📊" },
+        { href: `${base}/popular`, label: t.popularBar, icon: "🔥" },
         { href: `${base}/categories`, label: t.categories, icon: "🗂" },
         { href: `${base}/ad-cards`, label: t.adCards, icon: "📢" },
         { href: `${base}/labels`, label: t.labels, icon: "🏷" },
