@@ -16,10 +16,12 @@ import { DmActions } from "@/components/inbox/DmActions";
 
 export const dynamic = "force-dynamic";
 
-export default async function ConversationPage({ params }: PageProps<"/[lang]/inbox/[conversationId]">) {
+export default async function ConversationPage({ params, searchParams }: PageProps<"/[lang]/inbox/[conversationId]">) {
   const { lang, conversationId } = await params;
   if (!isLocale(lang)) notFound();
   const user = await requireUser(lang);
+  const sp = await searchParams;
+  const attachId = typeof sp.attach === "string" ? sp.attach : undefined;
 
   const [dict, allCategories, convo] = await Promise.all([
     getDictionary(lang),
@@ -30,6 +32,17 @@ export default async function ConversationPage({ params }: PageProps<"/[lang]/in
   const t = dict.inbox;
   const block = convo.otherId ? await getBlockState(user.id, convo.otherId) : { iBlocked: false, theyBlocked: false };
   const blocked = block.iBlocked || block.theyBlocked;
+
+  // Pre-attach a post if "Text the Author" passed ?attach=<postId>.
+  const attachPost = attachId
+    ? await db.post.findFirst({
+        where: { id: attachId, hidden: false },
+        select: { id: true, slug: true, title: true, category: { select: { slug: true } } },
+      })
+    : null;
+  const initialAttached = attachPost
+    ? { id: attachPost.id, slug: attachPost.slug, title: attachPost.title, categorySlug: attachPost.category.slug }
+    : null;
 
   return (
     <>
@@ -61,7 +74,15 @@ export default async function ConversationPage({ params }: PageProps<"/[lang]/in
             ) : (
               convo.messages.map((m) => (
                 <div key={m.id} className={`dm-msg${m.senderId === user.id ? " mine" : ""}`}>
-                  <span className="dm-bubble">{m.body}</span>
+                  {m.post && (
+                    <Link href={`/${lang}/p/${m.post.slug}`} className="dm-post-ref">
+                      <span className="dm-post-ref-cat">
+                        {lang === "ka" ? m.post.category.nameKa : m.post.category.nameEn}
+                      </span>
+                      <span className="dm-post-ref-title">{m.post.title}</span>
+                    </Link>
+                  )}
+                  {m.body && <span className="dm-bubble">{m.body}</span>}
                   <span className="dm-msg-time">{timeAgo(new Date(m.createdAt), lang)}</span>
                 </div>
               ))
@@ -73,7 +94,7 @@ export default async function ConversationPage({ params }: PageProps<"/[lang]/in
               {block.iBlocked ? t.youBlocked : t.cannotReply}
             </p>
           ) : (
-            <MessageComposer locale={lang} dict={dict} conversationId={convo.id} />
+            <MessageComposer locale={lang} dict={dict} conversationId={convo.id} initialAttached={initialAttached} />
           )}
         </main>
       </div>

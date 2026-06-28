@@ -170,9 +170,10 @@ model Post {
   // Denormalized net vote score (sum of PostVote.value), kept in sync on vote.
   score Int @default(0)
 
-  replies Reply[]
-  votes   PostVote[]
-  savedBy SavedPost[]
+  replies      Reply[]
+  votes        PostVote[]
+  savedBy      SavedPost[]
+  dmReferences Message[]  @relation("MessagePostRef")
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -455,6 +456,11 @@ model Message {
   sender         User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
   senderId       String
   body           String
+
+  // Optional referenced post ("about this listing"). Kept if the post is later
+  // deleted (the reference just goes null).
+  post   Post?   @relation("MessagePostRef", fields: [postId], references: [id], onDelete: SetNull)
+  postId String?
 
   createdAt DateTime @default(now())
 

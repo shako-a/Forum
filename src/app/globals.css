@@ -2951,6 +2951,114 @@ a.biz-card:hover {
   flex: 1;
 }
 
+/* DM attach-a-post */
+.dm-composer-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+.dm-attach-btn {
+  flex: 0 0 auto;
+  width: 38px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+}
+.dm-attach-btn:hover {
+  border-color: var(--blue);
+}
+.dm-attach-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 6px 10px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 13px;
+}
+.dm-attach-title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dm-attach-x {
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+}
+.dm-attach-search {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+.dm-attach-results {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.dm-attach-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  padding: 8px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+.dm-attach-result:hover {
+  background: var(--bg);
+}
+.dm-attach-empty {
+  color: var(--muted);
+  font-size: 13px;
+  padding: 6px 8px;
+}
+/* Post reference card inside a message bubble */
+.dm-post-ref {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--blue);
+  border-radius: 8px;
+  background: var(--paper);
+  margin-bottom: 4px;
+  max-width: 280px;
+}
+.dm-msg.mine .dm-post-ref {
+  background: color-mix(in srgb, #fff 88%, var(--blue));
+}
+.dm-post-ref-cat {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--blue);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.dm-post-ref-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
 /* DM block/report */
 .dm-actions {
   margin-left: auto;

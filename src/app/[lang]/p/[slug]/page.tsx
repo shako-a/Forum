@@ -5,6 +5,7 @@ import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { getCurrentUser } from "@/lib/dal";
 import { getPostView } from "@/lib/forum-data";
+import { startConversation } from "@/app/actions/inbox";
 import { resolveAuthor, aliasOptions } from "@/lib/anon";
 import { categoryName } from "@/i18n/localize";
 import { categoryStyle } from "@/lib/category-style";
@@ -98,6 +99,13 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
               💬 {replyCount} {dict.home.comments}
             </span>
             <ShareMenu title={post.title} dict={dict} />
+            {user && post.anonAlias == null && post.authorId !== user.id && (
+              <form action={startConversation.bind(null, post.authorId, lang, post.id)}>
+                <button type="submit" className="action">
+                  ✉ {dict.post.textAuthor}
+                </button>
+              </form>
+            )}
           </div>
 
           {canModerate && (

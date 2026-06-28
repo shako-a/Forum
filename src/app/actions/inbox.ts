@@ -7,12 +7,19 @@ import { getCurrentUser, authorize } from "@/lib/dal";
 import { isBlockedBetween } from "@/lib/inbox-data";
 import type { FormState } from "@/lib/definitions";
 
-// Find or create a 1:1 conversation with another user, then open it.
-export async function startConversation(otherUserId: string, locale: string): Promise<void> {
+// Find or create a 1:1 conversation with another user, then open it. An
+// optional postId is carried through as ?attach= so the composer pre-attaches
+// that post ("Text the Author" about a specific listing).
+export async function startConversation(
+  otherUserId: string,
+  locale: string,
+  postId?: string,
+): Promise<void> {
   const user = await getCurrentUser();
   if (!user || otherUserId === user.id) return;
   const other = await db.user.findUnique({ where: { id: otherUserId }, select: { id: true } });
   if (!other) return;
+  const attach = postId ? `?attach=${postId}` : "";
 
   const existing = await db.conversation.findFirst({
     where: {
@@ -38,7 +45,20 @@ export async function startConversation(otherUserId: string, locale: string): Pr
     });
     id = convo.id;
   }
-  redirect(`/${locale}/inbox/${id}`);
+  redirect(`/${locale}/inbox/${id}${attach}`);
+}
+
+// Title search for the "attach a post" picker in the DM composer.
+export async function searchPosts(query: string) {
+  const q = query.trim();
+  if (q.length < 2) return [];
+  const posts = await db.post.findMany({
+    where: { hidden: false, title: { contains: q, mode: "insensitive" } },
+    orderBy: { lastActivity: "desc" },
+    take: 8,
+    select: { id: true, slug: true, title: true, category: { select: { slug: true } } },
+  });
+  return posts.map((p) => ({ id: p.id, slug: p.slug, title: p.title, categorySlug: p.category.slug }));
 }
 
 export async function sendMessage(_state: FormState, formData: FormData): Promise<FormState> {
@@ -46,7 +66,16 @@ export async function sendMessage(_state: FormState, formData: FormData): Promis
   if (!user) return { message: "You must be logged in." };
   const conversationId = String(formData.get("conversationId") ?? "");
   const body = String(formData.get("body") ?? "").trim();
-  if (!body) return { errors: { body: ["Write a message."] } };
+  const postId = String(formData.get("postId") ?? "") || null;
+  // A message must have text or an attached post.
+  if (!body && !postId) return { errors: { body: ["Write a message."] } };
+
+  // Validate the referenced post exists (and isn't hidden).
+  let validPostId: string | null = null;
+  if (postId) {
+    const p = await db.post.findFirst({ where: { id: postId, hidden: false }, select: { id: true } });
+    validPostId = p?.id ?? null;
+  }
 
   const part = await db.conversationParticipant.findUnique({
     where: { conversationId_userId: { conversationId, userId: user.id } },
@@ -65,7 +94,7 @@ export async function sendMessage(_state: FormState, formData: FormData): Promis
   }
 
   await db.$transaction([
-    db.message.create({ data: { conversationId, senderId: user.id, body } }),
+    db.message.create({ data: { conversationId, senderId: user.id, body, postId: validPostId } }),
     db.conversation.update({ where: { id: conversationId }, data: { lastMessageAt: new Date() } }),
     db.conversationParticipant.update({
       where: { conversationId_userId: { conversationId, userId: user.id } },

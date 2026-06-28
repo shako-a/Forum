@@ -104,7 +104,7 @@ export default async function ProfilePage({ params }: PageProps<"/[lang]/u/[foru
               </Link>
             ) : (
               user && (
-                <form action={startConversation.bind(null, profile.id, lang)}>
+                <form action={startConversation.bind(null, profile.id, lang, undefined)}>
                   <button type="submit" className="btn btn-ghost">✉ {t.message}</button>
                 </form>
               )

@@ -56,7 +56,7 @@ export async function getConversations(userId: string) {
           messages: {
             take: 1,
             orderBy: { createdAt: "desc" },
-            select: { body: true, senderId: true },
+            select: { body: true, senderId: true, post: { select: { title: true } } },
           },
           participants: {
             where: { userId: { not: userId } },
@@ -71,10 +71,11 @@ export async function getConversations(userId: string) {
     const c = p.conversation;
     const last = c.messages[0] ?? null;
     const unread = !!last && last.senderId !== userId && (!p.lastReadAt || p.lastReadAt < c.lastMessageAt);
+    const lastBody = last?.body || (last?.post ? `📎 ${last.post.title}` : "");
     return {
       id: c.id,
       other: c.participants[0]?.user.forumName ?? "?",
-      lastBody: last?.body ?? "",
+      lastBody,
       fromSelf: last?.senderId === userId,
       lastAt: c.lastMessageAt,
       unread,
@@ -101,7 +102,15 @@ export async function getConversation(conversationId: string, userId: string) {
       messages: {
         orderBy: { createdAt: "asc" },
         take: 300,
-        select: { id: true, body: true, senderId: true, createdAt: true },
+        select: {
+          id: true,
+          body: true,
+          senderId: true,
+          createdAt: true,
+          post: {
+            select: { slug: true, title: true, category: { select: { slug: true, nameEn: true, nameKa: true } } },
+          },
+        },
       },
     },
   });
