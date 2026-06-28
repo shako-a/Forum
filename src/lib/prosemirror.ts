@@ -30,6 +30,29 @@ export function safeUrl(url: unknown): string | null {
   return null;
 }
 
+// Image src: same as safeUrl, plus inline base64 `data:image/...` (used for
+// uploaded images embedded directly in the document — no object storage yet).
+const DATA_IMAGE_RE = /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$/;
+export function safeImageUrl(url: unknown): string | null {
+  if (typeof url !== "string") return null;
+  const trimmed = url.trim();
+  if (/^https?:\/\//i.test(trimmed) || trimmed.startsWith("/")) return trimmed;
+  if (DATA_IMAGE_RE.test(trimmed)) return trimmed;
+  return null;
+}
+
+// Append an image node to a document (creating one if needed). Used to attach
+// an uploaded image to a post body.
+export function appendImage(doc: unknown, imageUrl: string): PMNode {
+  const base: PMNode =
+    doc && typeof doc === "object" && (doc as PMNode).type === "doc"
+      ? (doc as PMNode)
+      : { type: "doc", content: [] };
+  const content = Array.isArray(base.content) ? [...base.content] : [];
+  content.push({ type: "image", attrs: { src: imageUrl } });
+  return { ...base, content };
+}
+
 function applyMarks(text: string, marks?: PMMark[]): string {
   let html = escapeHtml(text);
   for (const mark of marks ?? []) {
@@ -87,7 +110,7 @@ function renderNode(node: PMNode): string {
     case "hardBreak":
       return "<br/>";
     case "image": {
-      const src = safeUrl(node.attrs?.src);
+      const src = safeImageUrl(node.attrs?.src);
       if (!src) return "";
       const alt = escapeHtml(String(node.attrs?.alt ?? ""));
       return `<img src="${escapeHtml(src)}" alt="${alt}" loading="lazy"/>`;
@@ -180,7 +203,7 @@ export function textToPmDoc(text: string): PMNode {
 // Reply document: plain text plus an optional (sanitized) image at the end.
 export function buildReplyDoc(text: string, imageUrl?: string | null): PMNode {
   const doc = textToPmDoc(text);
-  const url = imageUrl ? safeUrl(imageUrl) : null;
+  const url = imageUrl ? safeImageUrl(imageUrl) : null;
   if (url) (doc.content as PMNode[]).push({ type: "image", attrs: { src: url } });
   return doc;
 }

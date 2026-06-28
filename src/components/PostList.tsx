@@ -4,6 +4,7 @@ import type { Locale } from "@/i18n/config";
 import { categoryName } from "@/i18n/localize";
 import { categoryStyle } from "@/lib/category-style";
 import { timeAgo, postExcerpt } from "@/lib/format";
+import { pmFirstImage } from "@/lib/prosemirror";
 import { resolveAuthor } from "@/lib/anon";
 import { Vote } from "@/components/Vote";
 import { SaveButton } from "@/components/SaveButton";
@@ -49,6 +50,7 @@ function PostCard({
   const style = categoryStyle(post.category.slug);
   const chipClass = RED_CHIP.has(post.category.slug) ? "chip chip-red" : "chip chip-blue";
   const excerpt = postExcerpt(post.body);
+  const image = pmFirstImage(post.body);
   const showTranslate = locale === "en" && GEORGIAN.test(excerpt);
   // Feed never reveals real authors behind anonymous posts.
   const author = resolveAuthor(locale, {
@@ -82,6 +84,12 @@ function PostCard({
           <p className="post-excerpt">
             {GEORGIAN.test(excerpt) ? <span className="ka">{excerpt}</span> : excerpt}
           </p>
+        )}
+        {image && (
+          <Link href={`/${locale}/p/${post.slug}`} className="post-card-image">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={image} alt="" loading="lazy" />
+          </Link>
         )}
         <div className="post-actions">
           <Vote

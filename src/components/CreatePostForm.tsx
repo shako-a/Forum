@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { createPost } from "@/app/actions/posts";
 import { RichTextEditor } from "@/components/RichTextEditor";
+import { ImagePicker } from "@/components/ImagePicker";
 import { IdentityPicker, type AliasOption } from "@/components/IdentityPicker";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
@@ -26,10 +27,12 @@ export function CreatePostForm({
 }) {
   const [state, action, pending] = useActionState(createPost, undefined);
   const err = state?.errors;
+  const [image, setImage] = useState("");
 
   return (
     <form action={action}>
       <input type="hidden" name="locale" value={locale} />
+      {image && <input type="hidden" name="image" value={image} />}
       <h1 className="auth-title" style={{ textAlign: "left", marginBottom: 18 }}>
         {dict.home.createPost}
       </h1>
@@ -75,6 +78,10 @@ export function CreatePostForm({
         <label>{dict.post.body}</label>
         <RichTextEditor name="body" placeholder={dict.post.body} />
         {err?.body && <span className="field-error">{err.body.join(" ")}</span>}
+      </div>
+
+      <div className="field">
+        <ImagePicker value={image} onChange={setImage} dict={dict} />
       </div>
 
       <button type="submit" disabled={pending} className="btn btn-primary btn-full">

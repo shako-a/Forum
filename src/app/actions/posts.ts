@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/dal";
 import { defaultLocale, isLocale } from "@/i18n/config";
-import { pmHasContent, textToPmDoc } from "@/lib/prosemirror";
+import { pmHasContent, textToPmDoc, safeImageUrl, appendImage } from "@/lib/prosemirror";
 import { slugify } from "@/lib/slug";
 import type { FormState } from "@/lib/definitions";
 
@@ -45,22 +45,25 @@ export async function createPost(_state: FormState, formData: FormData): Promise
   } catch {
     body = null;
   }
+  const imageUrl = safeImageUrl(formData.get("image"));
 
   const errors: Record<string, string[]> = {};
   if (!categoryId) errors.categoryId = ["Please choose a category."];
   if (title.length < 3) errors.title = ["Title must be at least 3 characters."];
-  if (!pmHasContent(body)) errors.body = ["Please write something in the body."];
+  // A post needs body text or an attached image.
+  if (!pmHasContent(body) && !imageUrl) errors.body = ["Please write something or add an image."];
   if (Object.keys(errors).length) return { errors };
 
   const category = await db.category.findUnique({ where: { id: categoryId }, select: { id: true } });
   if (!category) return { errors: { categoryId: ["Category not found."] } };
 
+  const finalBody = imageUrl ? appendImage(body, imageUrl) : body;
   const slug = await uniqueSlug(title);
   await db.post.create({
     data: {
       slug,
       title,
-      body: body as Prisma.InputJsonValue,
+      body: finalBody as Prisma.InputJsonValue,
       categoryId,
       authorId: user.id,
       anonAlias,
