@@ -30,7 +30,9 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
   const sort: ReplySortKey = sp.sort === "new" || sp.sort === "old" ? sp.sort : "best";
 
   const [dict, user] = await Promise.all([getDictionary(lang), getCurrentUser()]);
-  const viewer = user ? { id: user.id, role: user.role, isOwner: user.isOwner } : null;
+  const viewer = user
+    ? { id: user.id, role: user.role, isOwner: user.isOwner, canRevealAnon: user.canRevealAnon }
+    : null;
   const data = await getPostView(slug, viewer, sort, lang);
   if (!data) notFound();
 

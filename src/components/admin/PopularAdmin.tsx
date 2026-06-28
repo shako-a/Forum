@@ -78,7 +78,7 @@ export function PopularAdmin({
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="admin-h1">{t.popularBar}</h1>
+      <h1 className="admin-h1">{t.postManagement}</h1>
 
       {/* Bar size */}
       <div className="card card-pad">

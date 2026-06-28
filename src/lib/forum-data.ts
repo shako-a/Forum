@@ -297,7 +297,7 @@ export type ReplySort = "best" | "new" | "old";
 // locked category) is decided by the caller from the returned `post`.
 export async function getPostView(
   slug: string,
-  viewer: { id: string; role: Role; isOwner: boolean } | null,
+  viewer: { id: string; role: Role; isOwner: boolean; canRevealAnon?: boolean } | null,
   sort: ReplySort = "best",
   locale: Locale = "en",
 ) {

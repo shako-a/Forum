@@ -19,3 +19,18 @@ export async function setBusinessFeatured(id: string, featured: boolean): Promis
   await db.business.update({ where: { id }, data: { featured } });
   revalidatePath("/[lang]/admin/businesses", "page");
 }
+
+// Admin: show/hide a job posting (toggle active) or remove it entirely.
+export async function setJobActive(id: string, active: boolean): Promise<void> {
+  const actor = await authorize("ADMIN");
+  if (!actor) return;
+  await db.jobPosting.update({ where: { id }, data: { active } });
+  revalidatePath("/[lang]/admin/jobs", "page");
+}
+
+export async function removeJob(id: string): Promise<void> {
+  const actor = await authorize("ADMIN");
+  if (!actor) return;
+  await db.jobPosting.delete({ where: { id } });
+  revalidatePath("/[lang]/admin/jobs", "page");
+}

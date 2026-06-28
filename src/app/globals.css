@@ -1220,6 +1220,34 @@ button {
   font-size: 14px;
   opacity: 0.95;
 }
+/* Collapsible nav group (e.g. Popular Bar) */
+.admin-nav-grouphdr {
+  width: 100%;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+.admin-nav-caret {
+  margin-left: auto;
+  font-size: 11px;
+  transition: transform 0.12s;
+}
+.admin-nav-caret.open {
+  transform: rotate(90deg);
+}
+.admin-nav-children {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 2px 0 2px 14px;
+  padding-left: 8px;
+  border-left: 1px solid var(--admin-bg-2);
+}
+.admin-nav-children .admin-nav-link {
+  font-size: 13px;
+}
 .admin-back {
   margin-top: auto;
   display: flex;
@@ -2690,6 +2718,10 @@ a.biz-card:hover {
 }
 .biz-danger {
   border-color: color-mix(in srgb, var(--red) 30%, var(--line));
+}
+.biz-back {
+  align-self: flex-start;
+  margin-bottom: 10px;
 }
 
 /* ========================= Admin: Popular bar =========================== */

@@ -63,6 +63,10 @@ model User {
   // panel. Admins always have access; plain users never do, regardless of flag.
   canAccessAdmin Boolean  @default(false)
 
+  // Per-staff grant: lets this moderator/admin see the real author behind
+  // anonymous content. The owner always can; others only when granted here.
+  canRevealAnon  Boolean  @default(false)
+
   // Public-facing identity
   forumName String @unique // "Name on the forum"
 

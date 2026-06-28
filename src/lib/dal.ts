@@ -46,6 +46,7 @@ export const getCurrentUser = cache(async () => {
       isDonor: true,
       isPro: true,
       canAccessAdmin: true,
+      canRevealAnon: true,
       isOwner: true,
     },
   });
@@ -121,28 +122,22 @@ export async function canModerateCategory(
 export const getSiteSettings = cache(async () => {
   try {
     const row = await db.siteSetting.findUnique({ where: { id: "singleton" } });
-    return {
-      revealAnonymousToStaff: row?.revealAnonymousToStaff ?? false,
-      popularBarSize: row?.popularBarSize ?? 6,
-    };
+    return { popularBarSize: row?.popularBarSize ?? 6 };
   } catch {
-    return { revealAnonymousToStaff: false, popularBarSize: 6 };
+    return { popularBarSize: 6 };
   }
 });
 
 /**
  * Whether a viewer may see the real author behind anonymous content: the owner
- * always; other admins/moderators only when the owner has enabled it.
+ * always; other staff (admins/moderators) only when granted on their profile.
  */
 export async function canRevealAnonymous(
-  viewer: { role: Role; isOwner: boolean } | null,
+  viewer: { isOwner: boolean; canRevealAnon?: boolean } | null,
 ): Promise<boolean> {
   if (!viewer) return false;
   if (viewer.isOwner) return true;
-  if (viewer.role === "ADMIN" || viewer.role === "MODERATOR") {
-    return (await getSiteSettings()).revealAnonymousToStaff;
-  }
-  return false;
+  return !!viewer.canRevealAnon;
 }
 
 /** The set of category ids a user moderates (empty for non-moderators / admins handled by caller). */

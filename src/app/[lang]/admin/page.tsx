@@ -4,7 +4,6 @@ import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { getCurrentUser, getSiteSettings } from "@/lib/dal";
 import { db } from "@/lib/db";
-import { AnonRevealToggle } from "@/components/admin/AnonRevealToggle";
 
 async function safeCount(fn: () => Promise<number>) {
   try {
@@ -27,19 +26,28 @@ export default async function AdminDashboard({ params }: PageProps<"/[lang]/admi
   const t = dict.admin;
   const settings = await getSiteSettings();
 
-  const [users, categories, posts, hidden, ads] = await Promise.all([
+  const [users, categories, posts, hidden, ads, pinned] = await Promise.all([
     safeCount(() => db.user.count()),
     safeCount(() => db.category.count()),
     safeCount(() => db.post.count()),
     safeCount(() => db.post.count({ where: { hidden: true } })),
     safeCount(() => db.adCard.count()),
+    safeCount(() => db.post.count({ where: { featuredInBar: true, hidden: false } })),
   ]);
+
+  // Posts currently shown in the Popular bar: pinned selection if curated,
+  // otherwise the configured size (auto-filled by top score).
+  const barPosts =
+    (pinned ?? 0) > 0
+      ? Math.min(pinned ?? 0, settings.popularBarSize)
+      : Math.min(settings.popularBarSize, posts ?? 0);
 
   const base = `/${lang}/admin`;
   const stats = [
     { label: t.users, value: users, icon: "👥", href: `${base}/users` },
     { label: t.categories, value: categories, icon: "🗂", href: `${base}/categories` },
     { label: t.posts, value: posts, icon: "📝", href: `/${lang}` },
+    { label: t.postManagement, value: barPosts, icon: "🔥", href: `${base}/popular` },
     { label: t.hiddenContent, value: hidden, icon: "🙈", href: `${base}/hidden` },
     { label: t.adCards, value: ads, icon: "📢", href: `${base}/ad-cards` },
   ];
@@ -58,14 +66,6 @@ export default async function AdminDashboard({ params }: PageProps<"/[lang]/admi
           </Link>
         ))}
       </div>
-
-      {me.isOwner && (
-        <section className="card card-pad" style={{ marginTop: 22, maxWidth: 540 }}>
-          <h2 className="admin-h1" style={{ fontSize: 16 }}>{t.ownerSettings}</h2>
-          <AnonRevealToggle enabled={settings.revealAnonymousToStaff} dict={dict} />
-          <p className="muted-sm" style={{ marginTop: 8 }}>{t.revealAnonHint}</p>
-        </section>
-      )}
     </div>
   );
 }

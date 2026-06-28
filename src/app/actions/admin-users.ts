@@ -93,6 +93,7 @@ export async function adminUpdateUser(_state: FormState, formData: FormData): Pr
   const { email, forumName, city, ...rest } = parsed.data;
   const isDonor = formData.get("isDonor") === "on"; // tier toggle, edited inline here
   const isPro = formData.get("isPro") === "on"; // tier toggle, edited inline here
+  const canRevealAnon = formData.get("canRevealAnon") === "on"; // per-staff reveal grant
   const labelIds = formData.getAll("labelIds").map(String); // custom labels assigned to this user
 
   // Unique fields — ignore the row being edited.
@@ -113,6 +114,7 @@ export async function adminUpdateUser(_state: FormState, formData: FormData): Pr
       city: city ?? null,
       isDonor,
       isPro,
+      canRevealAnon,
       ...rest,
       labels: { set: labelIds.map((id) => ({ id })) }, // replace assignments
     },

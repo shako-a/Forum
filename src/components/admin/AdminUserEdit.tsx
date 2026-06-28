@@ -26,6 +26,8 @@ export type AdminUserDetail = {
   isDonor: boolean;
   isPro: boolean;
   canAccessAdmin: boolean;
+  canRevealAnon: boolean;
+  isOwner: boolean;
   createdAt: string; // ISO
   postCount: number;
   replyCount: number;
@@ -212,6 +214,18 @@ export function AdminUserEdit({
             </label>
           </div>
         </div>
+
+        {/* Per-staff permission: see real authors behind anonymous content.
+            Only meaningful for moderators/admins; the owner always can. */}
+        {!user.isOwner && (user.role === "MODERATOR" || user.role === "ADMIN") && (
+          <div className="tier-box" style={{ marginTop: 2 }}>
+            <label className="checkbox-row" title={t.canRevealAnonHint}>
+              <input type="checkbox" name="canRevealAnon" defaultChecked={user.canRevealAnon} />
+              🕵 {t.canRevealAnon}
+            </label>
+            <p className="muted-sm" style={{ marginTop: 6 }}>{t.canRevealAnonHint}</p>
+          </div>
+        )}
 
         {labels.length > 0 && (
           <div className="field">

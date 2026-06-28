@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { requireUser } from "@/lib/dal";
@@ -33,6 +34,9 @@ export default async function EditBusinessPage({ params }: PageProps<"/[lang]/bu
       <div className="shell">
         <LeftSidebar locale={lang} dict={dict} categories={allCategories} />
         <main className="feed">
+          <Link href={`/${lang}/business/${biz.slug}`} className="btn btn-ghost btn-sm biz-back">
+            ‹ {t.back}
+          </Link>
           <div className="account-head">
             <h1 className="account-title">{t.editTitle}</h1>
             <p className="account-sub">{biz.name}</p>
