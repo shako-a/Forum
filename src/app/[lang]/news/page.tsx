@@ -33,6 +33,7 @@ export default async function NewsPage({ params }: PageProps<"/[lang]/news">) {
             posts={posts}
             canVote={!!user}
             loginHref={`/${lang}/login`}
+            canDelete={user?.role === "ADMIN"}
           />
         </div>
         <RightSidebar

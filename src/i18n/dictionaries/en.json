@@ -388,7 +388,9 @@
     "hide": "Hide",
     "show": "Unhide",
     "hiddenTag": "Hidden",
-    "confirmHidePost": "Hide this post from non-moderators?"
+    "confirmHidePost": "Hide this post from non-moderators?",
+    "deletePost": "Delete",
+    "confirmDeletePost": "Permanently delete this post and all its replies? This cannot be undone."
   },
   "footer": {
     "about": "About",

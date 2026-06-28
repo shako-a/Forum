@@ -33,6 +33,7 @@ export default async function PopularPage({ params }: PageProps<"/[lang]/popular
             posts={posts}
             canVote={!!user}
             loginHref={`/${lang}/login`}
+            canDelete={user?.role === "ADMIN"}
           />
         </div>
         <RightSidebar

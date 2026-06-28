@@ -36,6 +36,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
             user={headerUser}
             posts={data.posts}
             aliases={user ? aliasOptions(user.id) : []}
+            canDelete={user?.role === "ADMIN"}
           />
         </div>
         <RightSidebar

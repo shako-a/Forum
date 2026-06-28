@@ -14,6 +14,18 @@ function safeLocale(locale: string): string {
   return isLocale(locale) ? locale : defaultLocale;
 }
 
+/** Permanently delete a post (cascades replies/votes/saves). Admin only —
+ *  hard delete is irreversible, so it's not given to category moderators. */
+export async function deletePost(postId: string, locale: string): Promise<void> {
+  const user = await getCurrentUser();
+  if (user?.role !== "ADMIN") return;
+  await db.post.delete({ where: { id: postId } }).catch(() => {});
+  const lang = safeLocale(locale);
+  revalidatePath(`/${lang}`);
+  revalidatePath(`/${lang}/popular`);
+  revalidatePath(`/${lang}/news`);
+}
+
 /** Hide or unhide a post. Moderator (of the post's category) or admin only. */
 export async function setPostHidden(
   postId: string,

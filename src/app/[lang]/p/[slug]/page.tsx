@@ -117,6 +117,7 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
               slug={slug}
               hidden={post.hidden}
               repliesLocked={post.repliesLocked}
+              isAdmin={user?.role === "ADMIN"}
               dict={dict}
             />
           )}

@@ -82,6 +82,7 @@ export default async function CategoryPage({ params }: PageProps<"/[lang]/c/[slu
               posts={posts}
               canVote={!!user}
               loginHref={`/${lang}/login?next=/${lang}/c/${category.slug}`}
+              canDelete={user?.role === "ADMIN"}
             />
           )}
         </main>

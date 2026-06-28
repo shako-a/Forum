@@ -7,6 +7,7 @@ import { timeAgo, postExcerpt } from "@/lib/format";
 import { resolveAuthor } from "@/lib/anon";
 import { Vote } from "@/components/Vote";
 import { SaveButton } from "@/components/SaveButton";
+import { DeletePostButton } from "@/components/DeletePostButton";
 import { AuthorTag } from "@/components/AuthorTag";
 
 // Shape of the posts produced by the home/category loaders.
@@ -36,12 +37,14 @@ function PostCard({
   post,
   canVote,
   loginHref,
+  canDelete,
 }: {
   locale: Locale;
   dict: Dictionary;
   post: FeedPost;
   canVote: boolean;
   loginHref: string;
+  canDelete: boolean;
 }) {
   const style = categoryStyle(post.category.slug);
   const chipClass = RED_CHIP.has(post.category.slug) ? "chip chip-red" : "chip chip-blue";
@@ -113,6 +116,14 @@ function PostCard({
           {showTranslate && (
             <button className="translate-hint">✦ {dict.home.translateToEnglish}</button>
           )}
+          {canDelete && (
+            <DeletePostButton
+              postId={post.id}
+              locale={locale}
+              label={dict.mod.deletePost}
+              confirmText={dict.mod.confirmDeletePost}
+            />
+          )}
         </div>
       </div>
     </article>
@@ -126,6 +137,7 @@ export function PostList({
   canVote,
   loginHref,
   emptyMessage,
+  canDelete = false,
 }: {
   locale: Locale;
   dict: Dictionary;
@@ -133,6 +145,7 @@ export function PostList({
   canVote: boolean;
   loginHref: string;
   emptyMessage?: string;
+  canDelete?: boolean;
 }) {
   if (posts.length === 0) {
     return (
@@ -151,6 +164,7 @@ export function PostList({
           post={post}
           canVote={canVote}
           loginHref={loginHref}
+          canDelete={canDelete}
         />
       ))}
     </>

@@ -121,6 +121,7 @@ export default async function ProfilePage({ params }: PageProps<"/[lang]/u/[foru
             posts={posts}
             canVote={!!user}
             loginHref={`/${lang}/login?next=/${lang}/u/${profile.forumName}`}
+            canDelete={user?.role === "ADMIN"}
             emptyMessage={isOwn ? t.emptyOwn : t.empty}
           />
         </main>

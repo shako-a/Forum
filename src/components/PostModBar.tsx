@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { setPostHidden, setRepliesLocked } from "@/app/actions/moderation";
+import { DeletePostButton } from "@/components/DeletePostButton";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 
@@ -13,6 +14,7 @@ export function PostModBar({
   slug,
   hidden,
   repliesLocked,
+  isAdmin,
   dict,
 }: {
   postId: string;
@@ -20,6 +22,7 @@ export function PostModBar({
   slug: string;
   hidden: boolean;
   repliesLocked: boolean;
+  isAdmin: boolean;
   dict: Dictionary;
 }) {
   const t = dict.mod;
@@ -43,6 +46,15 @@ export function PostModBar({
       <button type="button" className="action" onClick={toggleLocked} disabled={pending}>
         {repliesLocked ? t.unlockReplies : t.lockReplies}
       </button>
+      {isAdmin && (
+        <DeletePostButton
+          postId={postId}
+          locale={locale}
+          label={t.deletePost}
+          confirmText={t.confirmDeletePost}
+          redirectHome
+        />
+      )}
     </div>
   );
 }

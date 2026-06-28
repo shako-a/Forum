@@ -22,12 +22,14 @@ export function Feed({
   user,
   posts,
   aliases,
+  canDelete = false,
 }: {
   locale: Locale;
   dict: Dictionary;
   user: { forumName: string } | null;
   posts: FeedPost[];
   aliases: AliasOption[];
+  canDelete?: boolean;
 }) {
   return (
     <main className="feed">
@@ -88,6 +90,7 @@ export function Feed({
         posts={posts}
         canVote={!!user}
         loginHref={`/${locale}/login`}
+        canDelete={canDelete}
       />
     </main>
   );
