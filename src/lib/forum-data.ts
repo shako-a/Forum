@@ -100,6 +100,36 @@ export async function getHomeData(viewer: { id: string } | null) {
   }
 }
 
+// Standalone feed pages (Popular = highest score, New = most recent). Returns
+// everything the page shell needs. Guests (shouldn't reach here while the forum
+// is gated) only see unlocked categories.
+export async function getFeedPage(viewer: { id: string } | null, sort: "popular" | "new") {
+  try {
+    const [categories, found, sidebarAds] = await Promise.all([
+      db.category.findMany({ orderBy: { sortOrder: "asc" } }),
+      db.post.findMany({
+        where: { hidden: false, ...(viewer ? {} : { category: { locked: false } }) },
+        orderBy: sort === "popular" ? [{ score: "desc" }, { lastActivity: "desc" }] : { createdAt: "desc" },
+        take: 50,
+        include: {
+          author: { select: { forumName: true } },
+          category: true,
+          _count: { select: { replies: true, votes: true } },
+        },
+      }),
+      db.adCard.findMany({
+        where: { active: true, placement: "SIDEBAR" },
+        orderBy: { sortOrder: "asc" },
+      }),
+    ]);
+    const posts = await attachSaved(await attachMyVotes(found, viewer?.id ?? null), viewer?.id ?? null);
+    return { categories, posts, sidebarAds };
+  } catch (error) {
+    console.error("getFeedPage failed:", error);
+    return { categories: [], posts: [], sidebarAds: [] };
+  }
+}
+
 // Forum-wide counters for the sidebar welcome card. "online" has no real-time
 // presence system, so it's approximated as members active (posted or replied)
 // in the last 24h — a real, honest figure. Degrades to zeros if the DB is down.

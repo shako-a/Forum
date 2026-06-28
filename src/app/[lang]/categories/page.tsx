@@ -51,7 +51,7 @@ export default async function CategoriesPage({ params }: PageProps<"/[lang]/cate
                   >
                     {categoryName(c, lang)}
                   </Link>
-                  {c.locked && <span className="lock">🔒</span>}
+                  {c.locked && !user && <span className="lock">🔒</span>}
                   <Link href={`/${lang}/c/${c.slug}`} style={{ marginLeft: "auto", fontSize: 12.5, fontWeight: 600 }}>
                     {dict.common.seeAll}
                   </Link>

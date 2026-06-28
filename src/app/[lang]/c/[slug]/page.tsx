@@ -50,7 +50,7 @@ export default async function CategoryPage({ params }: PageProps<"/[lang]/c/[slu
             <div style={{ flex: 1, minWidth: 0 }}>
               <h1 style={{ fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 700 }}>
                 {categoryName(category, lang)}
-                {category.locked && <span className="lock" style={{ marginLeft: 8 }}>🔒</span>}
+                {category.locked && !user && <span className="lock" style={{ marginLeft: 8 }}>🔒</span>}
               </h1>
               {description && <p style={{ fontSize: 13, color: "var(--muted)" }}>{description}</p>}
             </div>

@@ -3,9 +3,11 @@ import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import { categoryName } from "@/i18n/localize";
 import { categoryStyle } from "@/lib/category-style";
+import { getCurrentUser } from "@/lib/dal";
+import { MobileSidebar } from "@/components/MobileSidebar";
 import type { Category } from "@/generated/prisma/client";
 
-export function LeftSidebar({
+export async function LeftSidebar({
   locale,
   dict,
   categories,
@@ -15,8 +17,13 @@ export function LeftSidebar({
   categories: Category[];
 }) {
   const nav = dict.nav;
+  // Locked communities show a 🔒 to guests only; registered members can open
+  // them, so the lock is hidden once signed in.
+  const authed = !!(await getCurrentUser());
 
-  return (
+  // Built once, rendered twice: as the desktop column and inside the mobile
+  // drawer. (display:none at ≤1080 hides the column; the drawer overrides it.)
+  const items = (
     <nav className="sidenav" aria-label="Main">
       <Link href={`/${locale}`} className="nav-item active">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -58,15 +65,20 @@ export function LeftSidebar({
           <Link key={c.id} href={`/${locale}/c/${c.slug}`} className="nav-item">
             <span className="dot" style={{ background: style.color }} />
             {categoryName(c, locale)}
-            {c.locked && <span className="lock">🔒</span>}
+            {c.locked && !authed && <span className="lock">🔒</span>}
           </Link>
         );
       })}
 
       <div className="group-label">{nav.resources}</div>
-      <a href="#" className="nav-item">{nav.newcomerGuide}</a>
-      <a href="#" className="nav-item">{nav.immigrationGlossary}</a>
       <a href="#" className="nav-item">{nav.communityRules}</a>
     </nav>
+  );
+
+  return (
+    <>
+      {items}
+      <MobileSidebar label={dict.common.menu}>{items}</MobileSidebar>
+    </>
   );
 }

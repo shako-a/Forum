@@ -60,7 +60,7 @@ export async function RightSidebar({
                 <span>
                   <span className="comm-name">{categoryName(c, locale)}</span>
                 </span>
-                {c.locked ? (
+                {c.locked && !user ? (
                   <span className="lock">🔒</span>
                 ) : (
                   <span className="join">{dict.common.join}</span>
@@ -89,9 +89,11 @@ export async function RightSidebar({
       </div>
 
       <div className="footer-links">
-        <a href="#">{dict.footer.about}</a> · <a href="#">{dict.footer.rules}</a> ·{" "}
-        <a href="#">{dict.footer.moderators}</a> · <a href="#">{dict.footer.privacy}</a> ·{" "}
-        <a href="#">{dict.footer.contact}</a>
+        <Link href={`/${locale}/about`}>{dict.footer.about}</Link> ·{" "}
+        <Link href={`/${locale}/community-rules`}>{dict.footer.rules}</Link> ·{" "}
+        <Link href={`/${locale}/moderators`}>{dict.footer.moderators}</Link> ·{" "}
+        <Link href={`/${locale}/privacy`}>{dict.footer.privacy}</Link> ·{" "}
+        <Link href={`/${locale}/contact`}>{dict.footer.contact}</Link>
         <br />
         {dict.footer.copyright}
       </div>

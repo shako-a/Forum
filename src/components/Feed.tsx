@@ -4,6 +4,15 @@ import type { Locale } from "@/i18n/config";
 import { PostList, type FeedPost } from "@/components/PostList";
 import { QuickPostComposer } from "@/components/QuickPostComposer";
 import type { AliasOption } from "@/components/IdentityPicker";
+import {
+  US_STATES,
+  GEORGIA_VALUE,
+  GEORGIA_FLAG,
+  USA_VALUE,
+  USA_FLAG,
+  georgiaName,
+  usaName,
+} from "@/lib/us-states";
 
 export type { FeedPost };
 
@@ -60,11 +69,15 @@ export function Feed({
         <button className="tab">{dict.feed.tabNew}</button>
         <button className="tab">{dict.feed.tabTop}</button>
         <span className="spacer" />
-        <select aria-label="City" defaultValue="">
+        <select aria-label="Location" defaultValue="">
           <option value="">{dict.feed.allCities}</option>
-          <option>New York / NJ</option>
-          <option>London</option>
-          <option>Los Angeles</option>
+          <option value={GEORGIA_VALUE}>{GEORGIA_FLAG} {georgiaName(locale)}</option>
+          <option value={USA_VALUE}>{USA_FLAG} {usaName(locale)}</option>
+          {US_STATES.map((s) => (
+            <option key={s.abbr} value={s.abbr}>
+              {s.name} ({s.abbr})
+            </option>
+          ))}
         </select>
       </div>
 
