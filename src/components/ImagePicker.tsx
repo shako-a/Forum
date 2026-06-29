@@ -8,7 +8,7 @@ import type { Dictionary } from "@/i18n/dictionaries";
 const MAX_DIM = 1280;
 const QUALITY = 0.82;
 
-async function fileToResizedDataUrl(file: File): Promise<string> {
+async function fileToResizedCanvas(file: File): Promise<HTMLCanvasElement | null> {
   const original: string = await new Promise((resolve, reject) => {
     const r = new FileReader();
     r.onload = () => resolve(r.result as string);
@@ -28,8 +28,34 @@ async function fileToResizedDataUrl(file: File): Promise<string> {
   canvas.width = w;
   canvas.height = h;
   const ctx = canvas.getContext("2d");
-  if (!ctx) return original;
+  if (!ctx) return null;
   ctx.drawImage(img, 0, 0, w, h);
+  return canvas;
+}
+
+function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
+  return new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/jpeg", QUALITY));
+}
+
+// Resize, then upload to Spaces; if uploads aren't configured/available, fall
+// back to embedding the resized image as a data URL so it always works.
+async function processImage(file: File): Promise<string> {
+  const canvas = await fileToResizedCanvas(file);
+  if (!canvas) return "";
+  const blob = await canvasToBlob(canvas);
+  if (blob) {
+    try {
+      const fd = new FormData();
+      fd.append("file", new File([blob], "image.jpg", { type: "image/jpeg" }));
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.url) return data.url as string;
+      }
+    } catch {
+      /* fall through to data URL */
+    }
+  }
   return canvas.toDataURL("image/jpeg", QUALITY);
 }
 
@@ -51,7 +77,7 @@ export function ImagePicker({
     if (!file) return;
     setBusy(true);
     try {
-      onChange(await fileToResizedDataUrl(file));
+      onChange(await processImage(file));
     } catch {
       /* unsupported/broken image — ignore */
     } finally {

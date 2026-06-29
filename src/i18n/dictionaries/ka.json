@@ -313,6 +313,8 @@
     "titleKa": "სათაური (ქართული)",
     "imageUrl": "სურათის URL",
     "videoUrl": "ვიდეოს URL (mp4/webm)",
+    "upload": "ატვირთვა",
+    "uploading": "იტვირთება…",
     "linkUrl": "ბმულის URL",
     "placement": "განთავსება",
     "topPanel": "ზედა პანელი",

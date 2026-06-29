@@ -3354,3 +3354,24 @@ a.biz-card:hover {
   font-weight: 600;
   font-size: 13.5px;
 }
+
+/* Ad media upload (admin) */
+.upload-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.upload-row .input {
+  flex: 1;
+}
+.upload-field {
+  flex: 0 0 auto;
+}
+.ad-upload-preview {
+  display: block;
+  margin-top: 8px;
+  max-width: 100%;
+  max-height: 180px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+}

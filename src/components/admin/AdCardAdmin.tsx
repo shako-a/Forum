@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { createAdCard, updateAdCard, deleteAdCard, toggleAdCard } from "@/app/actions/admin-ads";
+import { UploadField } from "@/components/UploadField";
 import type { Dictionary } from "@/i18n/dictionaries";
 
 export type AdminAdCard = {
@@ -34,6 +35,9 @@ function AdCardForm({
   const t = dict.admin;
   const isEdit = !!card;
   const [state, action, pending] = useActionState(isEdit ? updateAdCard : createAdCard, undefined);
+  // Controlled so the Upload buttons can fill them (and preview).
+  const [imageUrl, setImageUrl] = useState(card?.imageUrl ?? "");
+  const [videoUrl, setVideoUrl] = useState(card?.videoUrl ?? "");
 
   useEffect(() => {
     if (state?.ok) onDone();
@@ -60,12 +64,45 @@ function AdCardForm({
       <div className="field-row">
         <div className="field">
           <label>{t.imageUrl}</label>
-          <input name="imageUrl" className="input" defaultValue={card?.imageUrl ?? ""} placeholder="https://…" />
+          <div className="upload-row">
+            <input
+              name="imageUrl"
+              className="input"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://…"
+            />
+            <UploadField
+              accept="image/*"
+              label={t.upload}
+              busyLabel={t.uploading}
+              onUploaded={setImageUrl}
+            />
+          </div>
+          {imageUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img className="ad-upload-preview" src={imageUrl} alt="" />
+          )}
           <FieldError msgs={state?.errors?.imageUrl} />
         </div>
         <div className="field">
           <label>{t.videoUrl}</label>
-          <input name="videoUrl" className="input" defaultValue={card?.videoUrl ?? ""} placeholder="https://… .mp4" />
+          <div className="upload-row">
+            <input
+              name="videoUrl"
+              className="input"
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              placeholder="https://… .mp4"
+            />
+            <UploadField
+              accept="video/*"
+              label={t.upload}
+              busyLabel={t.uploading}
+              onUploaded={setVideoUrl}
+            />
+          </div>
+          {videoUrl && <video className="ad-upload-preview" src={videoUrl} muted controls />}
           <FieldError msgs={state?.errors?.videoUrl} />
         </div>
       </div>

@@ -41,6 +41,22 @@ services:
       - key: DATABASE_URL
         scope: RUN_TIME
         value: ${forum-db.DATABASE_URL}
+      # DigitalOcean Spaces (media uploads). Set the two secrets in the
+      # dashboard; bucket/region are plain. Uploads no-op until all four exist.
+      - key: SPACES_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_WITH_SPACES_ACCESS_KEY
+      - key: SPACES_SECRET
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_WITH_SPACES_SECRET
+      - key: SPACES_BUCKET
+        scope: RUN_TIME
+        value: forum-media
+      - key: SPACES_REGION
+        scope: RUN_TIME
+        value: nyc3
 
 # ---------------------------------------------------------------------------
 # Pre-deploy job: apply migrations before each new version goes live.

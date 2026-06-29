@@ -313,6 +313,8 @@
     "titleKa": "Title (Georgian)",
     "imageUrl": "Image URL",
     "videoUrl": "Video URL (mp4/webm)",
+    "upload": "Upload",
+    "uploading": "Uploading…",
     "linkUrl": "Link URL",
     "placement": "Placement",
     "topPanel": "Top panel",
