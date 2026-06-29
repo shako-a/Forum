@@ -3375,3 +3375,14 @@ a.biz-card:hover {
   border-radius: 10px;
   border: 1px solid var(--line);
 }
+
+/* Admin: reset user password */
+.reset-pw-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.reset-pw-row .input {
+  flex: 1;
+  font-family: var(--font-body);
+}

@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { adminUpdateUser } from "@/app/actions/admin-users";
 import { LabelBadge, type BadgeLabel } from "@/components/LabelBadge";
 import { StateSelect } from "@/components/StateSelect";
+import { AdminPasswordReset } from "@/components/admin/AdminPasswordReset";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import type { Role, UserStatus } from "@/generated/prisma/client";
@@ -255,6 +256,8 @@ export function AdminUserEdit({
           </Link>
         </div>
       </form>
+
+      <AdminPasswordReset userId={user.id} dict={dict} />
     </div>
   );
 }

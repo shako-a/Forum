@@ -1,10 +1,31 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { authorize } from "@/lib/dal";
-import { ProfileFormSchema, zodErrors, type FormState } from "@/lib/definitions";
+import { ProfileFormSchema, SetPasswordSchema, zodErrors, type FormState } from "@/lib/definitions";
 import type { Role, UserStatus } from "@/generated/prisma/client";
+
+// Admin sets a new password for a user (no email flow). The admin shares the
+// new password with the user out-of-band.
+export async function setUserPassword(_state: FormState, formData: FormData): Promise<FormState> {
+  const actor = await authorize("ADMIN");
+  if (!actor) return { message: "You do not have permission to do this." };
+
+  const userId = String(formData.get("userId") ?? "");
+  if (!userId) return { message: "Missing user." };
+
+  const parsed = SetPasswordSchema.safeParse({ password: formData.get("password") });
+  if (!parsed.success) return { errors: zodErrors(parsed.error) };
+
+  const exists = await db.user.findUnique({ where: { id: userId }, select: { id: true } });
+  if (!exists) return { message: "User not found." };
+
+  const passwordHash = await bcrypt.hash(parsed.data.password, 10);
+  await db.user.update({ where: { id: userId }, data: { passwordHash } });
+  return { ok: true };
+}
 
 // User management — admin only. Admins cannot change their own role or status,
 // so an admin can never accidentally lock themselves out of the panel.
