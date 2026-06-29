@@ -15,6 +15,12 @@ const EXT: Record<string, string> = {
 const MAX_IMAGE = 10 * 1024 * 1024; // 10 MB
 const MAX_VIDEO = 80 * 1024 * 1024; // 80 MB
 
+// Diagnostic: is Spaces configured? Boolean only (no secrets). Used to verify
+// the env vars are live in an environment.
+export async function GET() {
+  return NextResponse.json({ configured: isSpacesConfigured() });
+}
+
 // Server-side upload: browser → here → Spaces (no CORS). Logged-in users only.
 export async function POST(req: Request) {
   const user = await getCurrentUser();
