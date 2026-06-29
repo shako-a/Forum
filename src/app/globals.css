@@ -3337,3 +3337,20 @@ a.biz-card:hover {
   border-radius: 10px;
   border: 1px solid var(--line);
 }
+
+/* Sidebar ad slot (image/video) */
+.sidebar-ad {
+  padding: 0;
+  overflow: hidden;
+}
+.sidebar-ad-media {
+  display: block;
+  width: 100%;
+  max-height: 360px;
+  object-fit: cover;
+}
+.sidebar-ad-title {
+  padding: 10px 14px;
+  font-weight: 600;
+  font-size: 13.5px;
+}

@@ -11,6 +11,37 @@ function fmtCount(n: number): string {
   return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${n}`;
 }
 
+// A sidebar ad: video takes priority over image; optional title + click-through.
+function AdMediaCard({ ad, locale }: { ad: AdCard; locale: Locale }) {
+  const title = adTitle(ad, locale);
+  const inner = (
+    <>
+      {ad.videoUrl ? (
+        <video
+          className="sidebar-ad-media"
+          src={ad.videoUrl}
+          muted
+          loop
+          autoPlay
+          playsInline
+          controls
+        />
+      ) : ad.imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img className="sidebar-ad-media" src={ad.imageUrl} alt="" />
+      ) : null}
+      {title && <div className="sidebar-ad-title">{title}</div>}
+    </>
+  );
+  return ad.linkUrl ? (
+    <a href={ad.linkUrl} target="_blank" rel="noreferrer" className="card sidebar-ad">
+      {inner}
+    </a>
+  ) : (
+    <div className="card sidebar-ad">{inner}</div>
+  );
+}
+
 export async function RightSidebar({
   locale,
   dict,
@@ -46,37 +77,31 @@ export async function RightSidebar({
         </div>
       </div>
 
-      {/* Popular communities */}
-      <div className="card card-pad">
-        <h3>{dict.home.popularCommunities}</h3>
-        <div className="comm-list">
-          {categories.slice(0, 4).map((c) => {
-            const style = categoryStyle(c.slug);
-            return (
-              <Link key={c.id} href={`/${locale}/c/${c.slug}`} className="comm">
-                <span className="comm-icon" style={{ background: `${style.color}1f`, color: style.color }}>
-                  {style.icon}
-                </span>
-                <span>
-                  <span className="comm-name">{categoryName(c, locale)}</span>
-                </span>
-                {c.locked && !user ? (
-                  <span className="lock">🔒</span>
-                ) : (
-                  <span className="join">{dict.common.join}</span>
-                )}
-              </Link>
-            );
-          })}
+      {/* Sidebar ad slot — admin-managed image/video ads. Falls back to the
+          popular-communities list when no sidebar ad is configured. */}
+      {ads.length > 0 ? (
+        ads.map((ad) => <AdMediaCard key={ad.id} ad={ad} locale={locale} />)
+      ) : (
+        <div className="card card-pad">
+          <h3>{dict.home.popularCommunities}</h3>
+          <div className="comm-list">
+            {categories.slice(0, 4).map((c) => {
+              const style = categoryStyle(c.slug);
+              return (
+                <Link key={c.id} href={`/${locale}/c/${c.slug}`} className="comm">
+                  <span className="comm-icon" style={{ background: `${style.color}1f`, color: style.color }}>
+                    {style.icon}
+                  </span>
+                  <span>
+                    <span className="comm-name">{categoryName(c, locale)}</span>
+                  </span>
+                  {c.locked && !user && <span className="lock">🔒</span>}
+                </Link>
+              );
+            })}
+          </div>
         </div>
-      </div>
-
-      {/* Admin-managed sidebar ad cards (if any) */}
-      {ads.map((ad) => (
-        <a key={ad.id} href={ad.linkUrl ?? "#"} className="card card-pad" style={{ fontWeight: 600 }}>
-          {adTitle(ad, locale)}
-        </a>
-      ))}
+      )}
 
       {/* App promo */}
       <div className="card card-pad app-card">

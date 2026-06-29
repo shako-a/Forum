@@ -276,6 +276,7 @@ model AdCard {
   // title stays legible against whatever image is used.
   titleColor String     @default("#ffffff")
   imageUrl  String?
+  videoUrl  String? // direct video file URL (mp4/webm); takes priority over image
   linkUrl   String?
   placement AdPlacement @default(TOP_PANEL)
   active    Boolean     @default(true)

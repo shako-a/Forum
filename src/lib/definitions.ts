@@ -101,6 +101,7 @@ export const AdCardSchema = z.object({
     .regex(/^#[0-9a-fA-F]{6}$/, { error: "Pick a color." })
     .optional(),
   imageUrl: optionalUrl,
+  videoUrl: optionalUrl,
   linkUrl: optionalUrl,
   placement: z.enum(["TOP_PANEL", "SIDEBAR"]),
   active: z.boolean().optional(),

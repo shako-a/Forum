@@ -10,6 +10,7 @@ export type AdminAdCard = {
   titleKa: string;
   titleColor: string;
   imageUrl: string | null;
+  videoUrl: string | null;
   linkUrl: string | null;
   placement: "TOP_PANEL" | "SIDEBAR";
   active: boolean;
@@ -62,6 +63,13 @@ function AdCardForm({
           <input name="imageUrl" className="input" defaultValue={card?.imageUrl ?? ""} placeholder="https://…" />
           <FieldError msgs={state?.errors?.imageUrl} />
         </div>
+        <div className="field">
+          <label>{t.videoUrl}</label>
+          <input name="videoUrl" className="input" defaultValue={card?.videoUrl ?? ""} placeholder="https://… .mp4" />
+          <FieldError msgs={state?.errors?.videoUrl} />
+        </div>
+      </div>
+      <div className="field-row">
         <div className="field">
           <label>{t.linkUrl}</label>
           <input name="linkUrl" className="input" defaultValue={card?.linkUrl ?? ""} placeholder="https://…" />
