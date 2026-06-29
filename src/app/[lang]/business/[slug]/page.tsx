@@ -30,6 +30,7 @@ export default async function BusinessProfilePage({ params }: PageProps<"/[lang]
   const t = dict.business;
 
   const isOwner = !!user && user.id === biz.owner.id;
+  const canManage = isOwner || user?.role === "ADMIN"; // admins can manage any business
   const myReview = user ? biz.reviews.find((r) => r.authorId === user.id) : undefined;
   const location = [biz.city, stateLabel(biz.state, lang)].filter(Boolean).join(", ");
   const website = biz.website;
@@ -63,7 +64,7 @@ export default async function BusinessProfilePage({ params }: PageProps<"/[lang]
               </div>
               <Stars value={avgRating(biz)} count={biz.ratingCount} />
             </div>
-            {isOwner && (
+            {canManage && (
               <Link href={`/${lang}/business/${biz.slug}/edit`} className="btn btn-ghost biz-manage">
                 {t.manage}
               </Link>

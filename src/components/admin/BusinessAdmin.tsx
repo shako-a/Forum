@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTransition } from "react";
-import { setBusinessVerified, setBusinessFeatured } from "@/app/actions/admin-business";
+import { setBusinessVerified, setBusinessFeatured, removeBusiness } from "@/app/actions/admin-business";
 import { businessCategoryLabel } from "@/lib/business-categories";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
@@ -48,6 +48,18 @@ function Row({ b, dict, locale }: { b: AdminBusiness; dict: Dictionary; locale: 
           {b.featured ? "★ " + t.featured : "— " + t.featured}
         </button>
       </td>
+      <td style={{ textAlign: "right" }}>
+        <button
+          type="button"
+          className="action mod-action"
+          disabled={pending}
+          onClick={() => {
+            if (window.confirm(t.confirmDeleteBusiness)) startTransition(() => void removeBusiness(b.id));
+          }}
+        >
+          🗑 {dict.admin.delete}
+        </button>
+      </td>
     </tr>
   );
 }
@@ -73,6 +85,7 @@ export function BusinessAdmin({
             <th>{t.owner}</th>
             <th>{t.verified}</th>
             <th>{t.featured}</th>
+            <th style={{ textAlign: "right" }}>{dict.admin.actions}</th>
           </tr>
         </thead>
         <tbody>
@@ -81,7 +94,7 @@ export function BusinessAdmin({
           ))}
           {businesses.length === 0 && (
             <tr>
-              <td colSpan={5} style={{ textAlign: "center", color: "var(--muted)", padding: 24 }}>
+              <td colSpan={6} style={{ textAlign: "center", color: "var(--muted)", padding: 24 }}>
                 {dict.admin.empty}
               </td>
             </tr>

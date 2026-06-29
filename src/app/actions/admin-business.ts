@@ -20,6 +20,14 @@ export async function setBusinessFeatured(id: string, featured: boolean): Promis
   revalidatePath("/[lang]/admin/businesses", "page");
 }
 
+// Admin: permanently delete a business (cascades reviews + jobs).
+export async function removeBusiness(id: string): Promise<void> {
+  const actor = await authorize("ADMIN");
+  if (!actor) return;
+  await db.business.delete({ where: { id } }).catch(() => {});
+  revalidatePath("/[lang]/admin/businesses", "page");
+}
+
 // Admin: show/hide a job posting (toggle active) or remove it entirely.
 export async function setJobActive(id: string, active: boolean): Promise<void> {
   const actor = await authorize("ADMIN");
