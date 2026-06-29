@@ -135,22 +135,14 @@ export async function getFeedPage(viewer: { id: string } | null, sort: "popular"
 // in the last 24h — a real, honest figure. Degrades to zeros if the DB is down.
 export async function getForumStats() {
   try {
-    const activeSince = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const [members, topics, recentPosters, recentRepliers] = await Promise.all([
+    // "Online" = users who loaded a page in the last 5 minutes (see lastSeenAt
+    // in getCurrentUser). Reflects actual presence, not just recent posters.
+    const onlineSince = new Date(Date.now() - 5 * 60 * 1000);
+    const [members, topics, online] = await Promise.all([
       db.user.count(),
       db.post.count(),
-      db.post.findMany({
-        where: { createdAt: { gte: activeSince } },
-        select: { authorId: true },
-        distinct: ["authorId"],
-      }),
-      db.reply.findMany({
-        where: { createdAt: { gte: activeSince } },
-        select: { authorId: true },
-        distinct: ["authorId"],
-      }),
+      db.user.count({ where: { lastSeenAt: { gte: onlineSince } } }),
     ]);
-    const online = new Set([...recentPosters, ...recentRepliers].map((r) => r.authorId)).size;
     return { members, online, topics };
   } catch (error) {
     console.error("getForumStats failed:", error);

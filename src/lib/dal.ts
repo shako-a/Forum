@@ -48,10 +48,24 @@ export const getCurrentUser = cache(async () => {
       canAccessAdmin: true,
       canRevealAnon: true,
       isOwner: true,
+      lastSeenAt: true,
     },
   });
 
   if (!user || user.status !== "ACTIVE") return null;
+
+  // Presence: bump lastSeenAt at most once every couple of minutes so the live
+  // "online" count reflects who's actually browsing (not just who posted).
+  const TOUCH_THROTTLE_MS = 2 * 60 * 1000;
+  const now = Date.now();
+  if (!user.lastSeenAt || now - user.lastSeenAt.getTime() > TOUCH_THROTTLE_MS) {
+    try {
+      await db.user.update({ where: { id: user.id }, data: { lastSeenAt: new Date(now) } });
+    } catch {
+      // Non-fatal: presence is best-effort, never block auth on it.
+    }
+  }
+
   return user;
 });
 

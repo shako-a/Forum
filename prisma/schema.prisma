@@ -104,8 +104,11 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  // Last time the user loaded a page — drives the live "online" count.
+  lastSeenAt DateTime?
 
   @@index([role])
+  @@index([lastSeenAt])
 }
 
 // ---------------------------------------------------------------------------
