@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { Prisma } from "@/generated/prisma/client";
-import { getCurrentUser } from "@/lib/dal";
+import { getCurrentUser, canModerateCategory } from "@/lib/dal";
 import { defaultLocale, isLocale } from "@/i18n/config";
 import { pmHasContent, textToPmDoc, safeImageUrl, appendImage } from "@/lib/prosemirror";
 import { slugify } from "@/lib/slug";
@@ -72,6 +72,54 @@ export async function createPost(_state: FormState, formData: FormData): Promise
   });
 
   redirect(`/${locale}/p/${slug}`);
+}
+
+// Edit a post's title, category and body. Allowed for the author, a category
+// moderator, or an admin. The slug is kept stable (links don't break).
+export async function editPost(_state: FormState, formData: FormData): Promise<FormState> {
+  const locale = localeFrom(formData);
+  const user = await getCurrentUser();
+  if (!user) return { message: "You must be logged in." };
+
+  const postId = String(formData.get("postId") ?? "");
+  const post = await db.post.findUnique({
+    where: { id: postId },
+    select: { id: true, slug: true, authorId: true, categoryId: true },
+  });
+  if (!post) return { message: "Post not found." };
+
+  const canEdit = post.authorId === user.id || (await canModerateCategory(user, post.categoryId));
+  if (!canEdit) return { message: "You can't edit this post." };
+
+  const categoryId = String(formData.get("categoryId") ?? "");
+  const title = String(formData.get("title") ?? "").trim();
+  const bodyRaw = String(formData.get("body") ?? "");
+  let body: unknown = null;
+  try {
+    body = JSON.parse(bodyRaw);
+  } catch {
+    body = null;
+  }
+  const imageUrl = safeImageUrl(formData.get("image"));
+
+  const errors: Record<string, string[]> = {};
+  if (!categoryId) errors.categoryId = ["Please choose a category."];
+  if (title.length < 3) errors.title = ["Title must be at least 3 characters."];
+  if (!pmHasContent(body) && !imageUrl) errors.body = ["Please write something or add an image."];
+  if (Object.keys(errors).length) return { errors };
+
+  const category = await db.category.findUnique({ where: { id: categoryId }, select: { id: true } });
+  if (!category) return { errors: { categoryId: ["Category not found."] } };
+
+  const finalBody = imageUrl ? appendImage(body, imageUrl) : body;
+  await db.post.update({
+    where: { id: post.id },
+    data: { title, body: finalBody as Prisma.InputJsonValue, categoryId },
+  });
+
+  revalidatePath(`/${locale}/p/${post.slug}`);
+  revalidatePath(`/${locale}`);
+  redirect(`/${locale}/p/${post.slug}`);
 }
 
 // Quick-post from the home composer: just typed text → a post auto-filed under

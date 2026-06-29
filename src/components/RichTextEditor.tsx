@@ -115,15 +115,32 @@ function Toolbar({ editor }: { editor: Editor }) {
 
 // Rich text editor that serializes its document into a hidden input so it submits
 // with the surrounding <form>. Body is stored as ProseMirror JSON.
-export function RichTextEditor({ name, placeholder }: { name: string; placeholder?: string }) {
-  const [doc, setDoc] = useState(EMPTY_DOC);
+export function RichTextEditor({
+  name,
+  placeholder,
+  initialDoc,
+}: {
+  name: string;
+  placeholder?: string;
+  initialDoc?: string; // ProseMirror JSON string, for editing
+}) {
+  const [doc, setDoc] = useState(initialDoc || EMPTY_DOC);
+
+  let initialContent: object | string = "";
+  if (initialDoc) {
+    try {
+      initialContent = JSON.parse(initialDoc);
+    } catch {
+      initialContent = "";
+    }
+  }
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ link: { openOnClick: false } }),
       Image.configure({ inline: false }),
     ],
-    content: "",
+    content: initialContent,
     immediatelyRender: false, // avoid SSR hydration mismatch
     editorProps: {
       attributes: { "aria-label": placeholder ?? "Body", role: "textbox", "aria-multiline": "true" },

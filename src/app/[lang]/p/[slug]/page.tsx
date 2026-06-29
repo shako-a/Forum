@@ -53,6 +53,8 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
   const style = categoryStyle(post.category.slug);
   const html = pmToHtml(post.body);
   const canReply = !!user && (!post.repliesLocked || canModerate);
+  // Author, category moderators, and admins may edit the post.
+  const canEdit = (!!user && post.authorId === user.id) || canModerate;
   const loginHref = `/${lang}/login?next=/${lang}/p/${slug}`;
   const headerUser = toHeaderUser(user);
 
@@ -101,6 +103,11 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
               💬 {replyCount} {dict.home.comments}
             </span>
             <ShareMenu title={post.title} dict={dict} />
+            {canEdit && (
+              <Link href={`/${lang}/p/${post.slug}/edit`} className="action">
+                ✎ {dict.post.edit}
+              </Link>
+            )}
             {user && post.anonAlias == null && post.authorId !== user.id && (
               <form action={startConversation.bind(null, post.authorId, lang, post.id)}>
                 <button type="submit" className="action">
