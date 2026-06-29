@@ -7,6 +7,7 @@ import { hasAiAccess } from "@/lib/perks";
 import { db } from "@/lib/db";
 import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
+import { AskAiChat } from "@/components/AskAiChat";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,9 @@ export default async function AskPage({ params }: PageProps<"/[lang]/ask">) {
             <div className="ask-spark">✦</div>
             <h1 className="ask-title">{dict.common.askAi}</h1>
             <p className="ask-donor-tag">💛 {t.donorAccess}</p>
-            <p className="ask-soon">{t.comingSoon}</p>
+          </div>
+          <div className="card card-pad" style={{ marginTop: 16 }}>
+            <AskAiChat dict={dict} />
           </div>
         </main>
       </div>

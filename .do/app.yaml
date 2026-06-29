@@ -57,6 +57,12 @@ services:
       - key: SPACES_REGION
         scope: RUN_TIME
         value: nyc3
+      # Anthropic (Ask AI + discussion summaries). Set the secret in the
+      # dashboard; AI features no-op until it exists.
+      - key: ANTHROPIC_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_WITH_ANTHROPIC_API_KEY
 
 # ---------------------------------------------------------------------------
 # Pre-deploy job: apply migrations before each new version goes live.

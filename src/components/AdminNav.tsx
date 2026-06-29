@@ -95,6 +95,7 @@ export function AdminNav({
             { href: `${base}/jobs`, label: dict.business.jobs, icon: "📋" },
           ],
         },
+        { href: `${base}/ai-usage`, label: t.aiUsage, icon: "✦" },
         { href: `${base}/reports`, label: t.reports, icon: "⚑" },
         { href: `${base}/hidden`, label: t.hiddenContent, icon: "🙈" },
       ]

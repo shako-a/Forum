@@ -101,6 +101,7 @@ model User {
   // Moderation bookkeeping (content this user hid, when acting as mod/admin)
   hiddenPosts   Post[]  @relation("PostHiddenBy")
   hiddenReplies Reply[] @relation("ReplyHiddenBy")
+  aiUsage       AiUsage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -185,6 +186,10 @@ model Post {
   votes        PostVote[]
   savedBy      SavedPost[]
   dmReferences Message[]  @relation("MessagePostRef")
+
+  // Cached AI summary of the thread (regenerated when newer activity appears).
+  aiSummary   String?
+  aiSummaryAt DateTime?
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -520,4 +525,26 @@ model SiteSetting {
   popularBarSize Int @default(6)
 
   updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// AI usage log — one row per LLM call, for admin cost tracking. Per-user
+// budget caps come later; for now this is observability only.
+model AiUsage {
+  id     String  @id @default(cuid())
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId String?
+
+  kind  String // "summary" | "ask"
+  model String // resolved Claude model id
+
+  tokensIn  Int
+  tokensOut Int
+  // Cost in micro-USD (USD × 1_000_000) computed from model pricing at call time.
+  costMicroUsd Int
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userId, createdAt])
 }

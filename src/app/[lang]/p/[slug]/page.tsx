@@ -4,6 +4,7 @@ import Link from "next/link";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { getCurrentUser } from "@/lib/dal";
+import { hasAiAccess } from "@/lib/perks";
 import { getPostView } from "@/lib/forum-data";
 import { startConversation } from "@/app/actions/inbox";
 import { resolveAuthor, aliasOptions } from "@/lib/anon";
@@ -19,6 +20,7 @@ import { ReplyComposer } from "@/components/ReplyComposer";
 import { ReplyThread } from "@/components/ReplyThread";
 import { PostModBar } from "@/components/PostModBar";
 import { ReplySort, type ReplySortKey } from "@/components/ReplySort";
+import { SummarizeButton } from "@/components/SummarizeButton";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +55,7 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
   const style = categoryStyle(post.category.slug);
   const html = pmToHtml(post.body);
   const canReply = !!user && (!post.repliesLocked || canModerate);
+  const aiAccess = hasAiAccess(user);
   // Author, category moderators, and admins may edit the post.
   const canEdit = (!!user && post.authorId === user.id) || canModerate;
   const loginHref = `/${lang}/login?next=/${lang}/p/${slug}`;
@@ -84,6 +87,8 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
           </h1>
 
           <div className="prose" dangerouslySetInnerHTML={{ __html: html }} />
+
+          {aiAccess && <SummarizeButton postId={post.id} dict={dict} />}
 
           {/* Action bar: vote · comments · share */}
           <div
