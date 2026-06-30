@@ -3338,21 +3338,32 @@ a.biz-card:hover {
   border: 1px solid var(--line);
 }
 
-/* Sidebar ad slot (image/video) */
+/* Sidebar ad slot (image/video) — image fills the whole box, title overlaid */
 .sidebar-ad {
+  position: relative;
+  display: block;
   padding: 0;
   overflow: hidden;
+  aspect-ratio: 4 / 5;
 }
 .sidebar-ad-media {
-  display: block;
+  position: absolute;
+  inset: 0;
   width: 100%;
-  max-height: 360px;
+  height: 100%;
   object-fit: cover;
 }
 .sidebar-ad-title {
-  padding: 10px 14px;
-  font-weight: 600;
-  font-size: 13.5px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 30px 14px 12px;
+  font-weight: 700;
+  font-size: 14px;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));
 }
 
 /* Ad media upload (admin) */

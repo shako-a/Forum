@@ -24,7 +24,6 @@ function AdMediaCard({ ad, locale }: { ad: AdCard; locale: Locale }) {
           loop
           autoPlay
           playsInline
-          controls
         />
       ) : ad.imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
