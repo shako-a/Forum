@@ -1,23 +1,61 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { requireRole } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { isAiConfigured } from "@/lib/ai";
+import { billingPeriodStart } from "@/lib/subscriptions";
+import type { Dictionary } from "@/i18n/dictionaries";
 
 export const dynamic = "force-dynamic";
 
 const usd = (micro: number) => "$" + (micro / 1_000_000).toFixed(micro >= 1_000_000 ? 2 : 4);
+const usdCents = (cents: number) => "$" + (cents / 100).toFixed(2);
 const num = (n: number) => n.toLocaleString("en-US");
+const ymd = (d: Date) => d.toISOString().slice(0, 10);
 
-export default async function AdminAiUsagePage({ params }: PageProps<"/[lang]/admin/ai-usage">) {
+export default async function AdminAiUsagePage({
+  params,
+  searchParams,
+}: PageProps<"/[lang]/admin/ai-usage">) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
   await requireRole(lang, "ADMIN");
   const dict = await getDictionary(lang);
   const t = dict.admin;
+  const base = `/${lang}/admin`;
 
-  // Calendar-month boundary for the "this month" column.
+  const sp = await searchParams;
+  const tab = sp.tab === "per-user" ? "per-user" : "overview";
+
+  return (
+    <div>
+      <h1 className="admin-h1">{t.aiUsage}</h1>
+      <p className="muted-sm" style={{ marginBottom: 16 }}>{t.aiUsageSub}</p>
+
+      {!isAiConfigured() && (
+        <p className="auth-alert" style={{ marginBottom: 16 }}>⚠ {t.aiNotConfigured}</p>
+      )}
+
+      <div className="admin-tabs">
+        <Link href={`${base}/ai-usage`} className={`admin-tab${tab === "overview" ? " active" : ""}`}>
+          {t.aiTabOverview}
+        </Link>
+        <Link
+          href={`${base}/ai-usage?tab=per-user`}
+          className={`admin-tab${tab === "per-user" ? " active" : ""}`}
+        >
+          {t.aiTabPerUser}
+        </Link>
+      </div>
+
+      {tab === "overview" ? <Overview t={t} /> : <PerUser t={t} lang={lang} />}
+    </div>
+  );
+}
+
+async function Overview({ t }: { t: Dictionary["admin"] }) {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
@@ -49,19 +87,10 @@ export default async function AdminAiUsagePage({ params }: PageProps<"/[lang]/ad
     ? await db.user.findMany({ where: { id: { in: userIds } }, select: { id: true, forumName: true } })
     : [];
   const nameOf = new Map(users.map((u) => [u.id, u.forumName]));
-
   const kindLabel = (k: string) => (k === "summary" ? t.aiKindSummary : k === "ask" ? t.aiKindAsk : k);
 
   return (
-    <div>
-      <h1 className="admin-h1">{t.aiUsage}</h1>
-      <p className="muted-sm" style={{ marginBottom: 16 }}>{t.aiUsageSub}</p>
-
-      {!isAiConfigured() && (
-        <p className="auth-alert" style={{ marginBottom: 16 }}>⚠ {t.aiNotConfigured}</p>
-      )}
-
-      {/* Headline stats */}
+    <>
       <div className="admin-stats" style={{ marginBottom: 20 }}>
         <div className="admin-stat">
           <span className="admin-stat-ico" aria-hidden="true">💸</span>
@@ -89,7 +118,6 @@ export default async function AdminAiUsagePage({ params }: PageProps<"/[lang]/ad
         <div className="card card-pad muted-sm">{t.aiNoUsage}</div>
       ) : (
         <div className="ai-usage-tables">
-          {/* By model */}
           <div className="card card-pad">
             <h2 className="admin-h2">{t.aiByModel}</h2>
             <table className="admin-table">
@@ -109,7 +137,6 @@ export default async function AdminAiUsagePage({ params }: PageProps<"/[lang]/ad
             </table>
           </div>
 
-          {/* By kind */}
           <div className="card card-pad">
             <h2 className="admin-h2">{t.aiByKind}</h2>
             <table className="admin-table">
@@ -128,7 +155,6 @@ export default async function AdminAiUsagePage({ params }: PageProps<"/[lang]/ad
             </table>
           </div>
 
-          {/* Top users */}
           <div className="card card-pad">
             <h2 className="admin-h2">{t.aiTopUsers}</h2>
             <table className="admin-table">
@@ -148,6 +174,86 @@ export default async function AdminAiUsagePage({ params }: PageProps<"/[lang]/ad
           </div>
         </div>
       )}
+    </>
+  );
+}
+
+async function PerUser({ t, lang }: { t: Dictionary["admin"]; lang: string }) {
+  const now = new Date();
+
+  // Every subscription (active + canceled) with its user.
+  const subs = await db.subscription.findMany({
+    orderBy: [{ status: "asc" }, { startedAt: "desc" }],
+    take: 500,
+    include: { user: { select: { id: true, forumName: true } } },
+  });
+
+  if (subs.length === 0) {
+    return <div className="card card-pad muted-sm">{t.aiNoSubs}</div>;
+  }
+
+  // Pull usage for the involved users once; bucket per row's billing window in JS.
+  const userIds = [...new Set(subs.map((s) => s.userId))];
+  const usage = await db.aiUsage.findMany({
+    where: { userId: { in: userIds } },
+    select: { userId: true, costMicroUsd: true, createdAt: true },
+  });
+
+  const tierLabel = (tier: string) => (tier === "PRO" ? t.aiTierPro : t.aiTierDonor);
+
+  const rows = subs.map((s) => {
+    const active = s.status === "ACTIVE";
+    // Active → current billing period to now. Canceled → its final period.
+    const windowEnd = active ? now : s.endedAt ?? now;
+    const windowStart = billingPeriodStart(s.startedAt, windowEnd);
+    const spentMicro = usage.reduce(
+      (sum, u) =>
+        u.userId === s.userId && u.createdAt >= windowStart && u.createdAt <= windowEnd
+          ? sum + u.costMicroUsd
+          : sum,
+      0,
+    );
+    const spentUsd = spentMicro / 1_000_000;
+    const paidUsd = s.priceCents / 100;
+    const pct = paidUsd > 0 ? (spentUsd / paidUsd) * 100 : 0;
+    return { s, active, spentMicro, pct };
+  });
+
+  return (
+    <div className="card card-pad">
+      <table className="admin-table">
+        <thead>
+          <tr>
+            <th>{t.aiUser}</th>
+            <th>{t.aiSubType}</th>
+            <th>{t.aiPeriod}</th>
+            <th>{t.aiPaid}</th>
+            <th>{t.aiSpent}</th>
+            <th>{t.aiUsagePct}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(({ s, active, spentMicro, pct }) => (
+            <tr key={s.id} className={active ? undefined : "row-muted"}>
+              <td>
+                <Link href={`/${lang}/admin/users/${s.userId}`} className="admin-link">
+                  {s.user.forumName}
+                </Link>
+              </td>
+              <td>
+                {tierLabel(s.tier)}
+                {!active && <span className="sub-badge"> · {t.aiStatusCanceled}</span>}
+              </td>
+              <td className="muted-sm">
+                {ymd(s.startedAt)} — {s.endedAt ? ymd(s.endedAt) : t.aiStatusActive}
+              </td>
+              <td>{usdCents(s.priceCents)}</td>
+              <td>{usd(spentMicro)}</td>
+              <td className={pct > 100 ? "usage-over" : undefined}>{pct.toFixed(0)}%</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

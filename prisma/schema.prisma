@@ -102,6 +102,7 @@ model User {
   hiddenPosts   Post[]  @relation("PostHiddenBy")
   hiddenReplies Reply[] @relation("ReplyHiddenBy")
   aiUsage       AiUsage[]
+  subscriptions Subscription[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -547,4 +548,26 @@ model AiUsage {
 
   @@index([createdAt])
   @@index([userId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Paid subscriptions (Donor / Professional). One row per subscription instance,
+// so canceled ones stay as history. Today driven by admin tier toggles; Stripe
+// will create these rows later. priceCents = what the user pays per month.
+model Subscription {
+  id     String @id @default(cuid())
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  tier      String    // "DONOR" | "PRO"
+  status    String    @default("ACTIVE") // "ACTIVE" | "CANCELED"
+  priceCents Int
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
 }

@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { authorize } from "@/lib/dal";
 import { ProfileFormSchema, SetPasswordSchema, zodErrors, type FormState } from "@/lib/definitions";
+import { syncSubscription } from "@/lib/subscriptions";
 import type { Role, UserStatus } from "@/generated/prisma/client";
 
 // Admin sets a new password for a user (no email flow). The admin shares the
@@ -68,6 +69,7 @@ export async function setUserDonor(userId: string, isDonor: boolean): Promise<vo
   if (!actor) return;
 
   await db.user.update({ where: { id: userId }, data: { isDonor } });
+  await syncSubscription(userId, "DONOR", isDonor);
   revalidatePath("/[lang]/admin/users", "page");
 }
 
@@ -77,6 +79,7 @@ export async function setUserPro(userId: string, isPro: boolean): Promise<void> 
   if (!actor) return;
 
   await db.user.update({ where: { id: userId }, data: { isPro } });
+  await syncSubscription(userId, "PRO", isPro);
   revalidatePath("/[lang]/admin/users", "page");
 }
 
@@ -140,6 +143,10 @@ export async function adminUpdateUser(_state: FormState, formData: FormData): Pr
       labels: { set: labelIds.map((id) => ({ id })) }, // replace assignments
     },
   });
+
+  // Keep the subscription ledger in sync with the tier toggles.
+  await syncSubscription(userId, "DONOR", isDonor);
+  await syncSubscription(userId, "PRO", isPro);
 
   revalidatePath("/[lang]/admin/users", "page");
   revalidatePath("/[lang]/admin/users/[id]", "page");

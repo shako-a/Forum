@@ -3496,3 +3496,47 @@ a.biz-card:hover {
   color: var(--muted, #889);
   margin: 0;
 }
+
+/* ---------- Admin: tabs + AI per-user table ---------- */
+.admin-tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 18px;
+}
+.admin-tab {
+  padding: 9px 16px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--muted, #667);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  text-decoration: none;
+}
+.admin-tab:hover {
+  color: var(--text, #111);
+}
+.admin-tab.active {
+  color: var(--brand, #1d4ed8);
+  border-bottom-color: var(--brand, #1d4ed8);
+}
+.admin-link {
+  color: var(--brand, #1d4ed8);
+  font-weight: 600;
+  text-decoration: none;
+}
+.admin-link:hover {
+  text-decoration: underline;
+}
+.row-muted {
+  opacity: 0.6;
+}
+.sub-badge {
+  color: var(--muted, #889);
+  font-size: 12px;
+  font-weight: 600;
+}
+.usage-over {
+  color: #d11;
+  font-weight: 700;
+}
