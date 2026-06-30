@@ -3551,3 +3551,69 @@ a.biz-card:hover {
   color: #d11;
   font-weight: 700;
 }
+
+/* ---------- Image cropper modal ---------- */
+.crop-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.crop-modal {
+  background: var(--paper, #fff);
+  border-radius: 16px;
+  width: min(560px, 100%);
+  max-height: 92vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+.crop-stage {
+  position: relative;
+  width: 100%;
+  height: min(60vh, 440px);
+  background: #1a1a1a;
+}
+.crop-controls {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.crop-aspects {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.crop-aspect {
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper, #fff);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+.crop-aspect.active {
+  background: var(--brand, #1d4ed8);
+  border-color: var(--brand, #1d4ed8);
+  color: #fff;
+}
+.crop-zoom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.crop-zoom input[type="range"] {
+  flex: 1;
+}
+.crop-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

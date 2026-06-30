@@ -2,6 +2,10 @@
   "common": {
     "appName": "GeoGlobally",
     "tagline": "Georgians, worldwide",
+    "cropTitle": "Crop image",
+    "cropApply": "Crop",
+    "cropCancel": "Cancel",
+    "cropZoom": "Zoom",
     "search": "Search posts, jobs, housing…",
     "askAi": "Ask AI",
     "askAiDonorOnly": "Ask AI is a Donor perk — become a Donor to unlock it.",

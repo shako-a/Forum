@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { createAdCard, updateAdCard, deleteAdCard, toggleAdCard } from "@/app/actions/admin-ads";
 import { UploadField } from "@/components/UploadField";
+import { CroppedUploadField, AD_ASPECT } from "@/components/CroppedUploadField";
 import type { Dictionary } from "@/i18n/dictionaries";
 
 export type AdminAdCard = {
@@ -38,6 +39,8 @@ function AdCardForm({
   // Controlled so the Upload buttons can fill them (and preview).
   const [imageUrl, setImageUrl] = useState(card?.imageUrl ?? "");
   const [videoUrl, setVideoUrl] = useState(card?.videoUrl ?? "");
+  // Placement drives the crop aspect ratio (each card type has its own shape).
+  const [placement, setPlacement] = useState<"TOP_PANEL" | "SIDEBAR">(card?.placement ?? "TOP_PANEL");
 
   useEffect(() => {
     if (state?.ok) onDone();
@@ -72,10 +75,11 @@ function AdCardForm({
               onChange={(e) => setImageUrl(e.target.value)}
               placeholder="https://…"
             />
-            <UploadField
-              accept="image/*"
+            <CroppedUploadField
+              aspect={AD_ASPECT[placement]}
               label={t.upload}
               busyLabel={t.uploading}
+              dict={dict}
               onUploaded={setImageUrl}
             />
           </div>
@@ -117,7 +121,12 @@ function AdCardForm({
       <div className="field-row">
         <div className="field">
           <label>{t.placement}</label>
-          <select name="placement" className="input" defaultValue={card?.placement ?? "TOP_PANEL"}>
+          <select
+            name="placement"
+            className="input"
+            value={placement}
+            onChange={(e) => setPlacement(e.target.value as "TOP_PANEL" | "SIDEBAR")}
+          >
             <option value="TOP_PANEL">{t.topPanel}</option>
             <option value="SIDEBAR">{t.sidebar}</option>
           </select>

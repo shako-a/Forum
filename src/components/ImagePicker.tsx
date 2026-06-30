@@ -2,87 +2,80 @@
 
 import { useRef, useState } from "react";
 import type { Dictionary } from "@/i18n/dictionaries";
+import { ImageCropper, type AspectOption } from "@/components/ImageCropper";
+import { fileToDataUrl } from "@/lib/crop";
 
-// Downscale + re-encode so the embedded data URL stays small (no object storage
-// yet — the image rides inside the post body).
-const MAX_DIM = 1280;
-const QUALITY = 0.82;
+// Default crop presets for post/reply images (feed-friendly).
+const POST_ASPECTS: AspectOption[] = [
+  { label: "16:9", value: 16 / 9 },
+  { label: "4:3", value: 4 / 3 },
+  { label: "1:1", value: 1 },
+  { label: "4:5", value: 4 / 5 },
+];
 
-async function fileToResizedCanvas(file: File): Promise<HTMLCanvasElement | null> {
-  const original: string = await new Promise((resolve, reject) => {
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve) => {
     const r = new FileReader();
     r.onload = () => resolve(r.result as string);
-    r.onerror = reject;
-    r.readAsDataURL(file);
+    r.readAsDataURL(blob);
   });
-  const img: HTMLImageElement = await new Promise((resolve, reject) => {
-    const i = new Image();
-    i.onload = () => resolve(i);
-    i.onerror = reject;
-    i.src = original;
-  });
-  const scale = Math.min(1, MAX_DIM / Math.max(img.width, img.height));
-  const w = Math.max(1, Math.round(img.width * scale));
-  const h = Math.max(1, Math.round(img.height * scale));
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return null;
-  ctx.drawImage(img, 0, 0, w, h);
-  return canvas;
 }
 
-function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
-  return new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/jpeg", QUALITY));
-}
-
-// Resize, then upload to Spaces; if uploads aren't configured/available, fall
-// back to embedding the resized image as a data URL so it always works.
-async function processImage(file: File): Promise<string> {
-  const canvas = await fileToResizedCanvas(file);
-  if (!canvas) return "";
-  const blob = await canvasToBlob(canvas);
-  if (blob) {
-    try {
-      const fd = new FormData();
-      fd.append("file", new File([blob], "image.jpg", { type: "image/jpeg" }));
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
-      if (res.ok) {
-        const data = await res.json();
-        if (data?.url) return data.url as string;
-      }
-    } catch {
-      /* fall through to data URL */
+// Upload the cropped blob to Spaces; fall back to an embedded data URL if uploads
+// aren't configured/available, so posting always works.
+async function uploadBlob(blob: Blob): Promise<string> {
+  try {
+    const fd = new FormData();
+    fd.append("file", new File([blob], "image.jpg", { type: "image/jpeg" }));
+    const res = await fetch("/api/upload", { method: "POST", body: fd });
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.url) return data.url as string;
     }
+  } catch {
+    /* fall through to data URL */
   }
-  return canvas.toDataURL("image/jpeg", QUALITY);
+  return blobToDataUrl(blob);
 }
 
-// Controlled image field: `value` is the (data) URL, `onChange` sets it.
+// Controlled image field: `value` is the (data/hosted) URL, `onChange` sets it.
+// Picking a file opens a crop modal before upload.
 export function ImagePicker({
   value,
   onChange,
   dict,
+  aspect = 16 / 9,
+  aspectOptions = POST_ASPECTS,
 }: {
   value: string;
   onChange: (v: string) => void;
   dict: Dictionary;
+  aspect?: number;
+  aspectOptions?: AspectOption[];
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setBusy(true);
     try {
-      onChange(await processImage(file));
+      setCropSrc(await fileToDataUrl(file));
     } catch {
       /* unsupported/broken image — ignore */
     } finally {
-      setBusy(false);
       if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  async function onCropped(blob: Blob) {
+    setCropSrc(null);
+    setBusy(true);
+    try {
+      onChange(await uploadBlob(blob));
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -106,6 +99,17 @@ export function ImagePicker({
         >
           🖼 {busy ? "…" : dict.post.addImage}
         </button>
+      )}
+
+      {cropSrc && (
+        <ImageCropper
+          src={cropSrc}
+          aspect={aspect}
+          aspectOptions={aspectOptions}
+          dict={dict}
+          onCancel={() => setCropSrc(null)}
+          onDone={onCropped}
+        />
       )}
     </div>
   );
