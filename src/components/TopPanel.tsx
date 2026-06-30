@@ -103,7 +103,7 @@ export function TopPanel({
             aria-hidden="true"
           />
         )}
-        <span className="ad-overlay-title" style={{ color: ad.titleColor }}>
+        <span className="ad-overlay-title" style={{ color: ad.titleColor, fontSize: ad.titleSize }}>
           {adTitle(ad, locale)}
         </span>
       </>

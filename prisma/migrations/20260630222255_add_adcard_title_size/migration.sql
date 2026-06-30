@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "AdCard" ADD COLUMN     "titleSize" INTEGER NOT NULL DEFAULT 16;

@@ -284,6 +284,8 @@ model AdCard {
   // Hex color for the title overlaid on the card image — admin-editable so the
   // title stays legible against whatever image is used.
   titleColor String     @default("#ffffff")
+  // Title font size in px (admin-editable).
+  titleSize  Int        @default(16)
   imageUrl  String?
   videoUrl  String? // direct video file URL (mp4/webm); takes priority over image
   linkUrl   String?

@@ -110,6 +110,7 @@ export const AdCardSchema = z.object({
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/, { error: "Pick a color." })
     .optional(),
+  titleSize: z.coerce.number().int().min(10).max(48).optional(),
   imageUrl: optionalUrl,
   videoUrl: optionalUrl,
   linkUrl: optionalUrl,

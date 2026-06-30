@@ -11,6 +11,7 @@ export type AdminAdCard = {
   titleEn: string;
   titleKa: string;
   titleColor: string;
+  titleSize: number;
   imageUrl: string | null;
   videoUrl: string | null;
   linkUrl: string | null;
@@ -144,6 +145,16 @@ function AdCardForm({
             className="input admin-color-input"
             defaultValue={card?.titleColor ?? "#ffffff"}
           />
+        </div>
+        <div className="field">
+          <label>{t.titleSize}</label>
+          <select name="titleSize" className="input" defaultValue={card?.titleSize ?? 16}>
+            <option value={13}>{t.sizeS}</option>
+            <option value={16}>{t.sizeM}</option>
+            <option value={20}>{t.sizeL}</option>
+            <option value={26}>{t.sizeXl}</option>
+            <option value={32}>{t.sizeXxl}</option>
+          </select>
         </div>
       </div>
 

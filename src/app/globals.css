@@ -3338,13 +3338,15 @@ a.biz-card:hover {
   border: 1px solid var(--line);
 }
 
-/* Sidebar ad slot (image/video) — image fills the whole box, title overlaid */
+/* Sidebar ad slot (image/video) — image fills the whole box, title overlaid.
+   Full width (aligns with the cards above/below); square keeps it from being
+   too tall. */
 .sidebar-ad {
   position: relative;
   display: block;
   padding: 0;
   overflow: hidden;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 5 / 4;
 }
 .sidebar-ad-media {
   position: absolute;

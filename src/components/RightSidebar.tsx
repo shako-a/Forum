@@ -4,6 +4,7 @@ import type { Locale } from "@/i18n/config";
 import { categoryName, adTitle } from "@/i18n/localize";
 import { categoryStyle } from "@/lib/category-style";
 import { getForumStats } from "@/lib/forum-data";
+import { pickRotatingAd } from "@/lib/ad-rotation";
 import type { Category, AdCard } from "@/generated/prisma/client";
 
 // Compact count: 4 → "4", 12400 → "12.4k".
@@ -29,7 +30,11 @@ function AdMediaCard({ ad, locale }: { ad: AdCard; locale: Locale }) {
         // eslint-disable-next-line @next/next/no-img-element
         <img className="sidebar-ad-media" src={ad.imageUrl} alt="" />
       ) : null}
-      {title && <div className="sidebar-ad-title">{title}</div>}
+      {title && (
+        <div className="sidebar-ad-title" style={{ color: ad.titleColor, fontSize: ad.titleSize }}>
+          {title}
+        </div>
+      )}
     </>
   );
   return ad.linkUrl ? (
@@ -55,6 +60,8 @@ export async function RightSidebar({
   ads: AdCard[];
 }) {
   const stats = await getForumStats();
+  // Show one sidebar ad per view, rotating in position order across refreshes.
+  const rotatingAd = pickRotatingAd(ads);
   return (
     <aside className="rail">
       {/* Welcome / hero card */}
@@ -78,8 +85,8 @@ export async function RightSidebar({
 
       {/* Sidebar ad slot — admin-managed image/video ads. Falls back to the
           popular-communities list when no sidebar ad is configured. */}
-      {ads.length > 0 ? (
-        ads.map((ad) => <AdMediaCard key={ad.id} ad={ad} locale={locale} />)
+      {rotatingAd ? (
+        <AdMediaCard key={rotatingAd.id} ad={rotatingAd} locale={locale} />
       ) : (
         <div className="card card-pad">
           <h3>{dict.home.popularCommunities}</h3>

@@ -88,5 +88,5 @@ export function CroppedUploadField({
 // Aspect ratio per ad placement (matches how the cards render).
 export const AD_ASPECT: Record<"TOP_PANEL" | "SIDEBAR", number> = {
   TOP_PANEL: 3 / 2,
-  SIDEBAR: 4 / 5,
+  SIDEBAR: 5 / 4,
 };
