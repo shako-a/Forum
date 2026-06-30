@@ -45,6 +45,17 @@ export async function proxy(request: NextRequest) {
     const locale = segments[1];
     const sub = segments[2] ?? "";
 
+    // Enforce the language preference: visitors who haven't explicitly chosen a
+    // language (no NEXT_LOCALE cookie) always get the default (ka), even when
+    // they land on an /en link from history/autocomplete. Explicit choices
+    // (the switcher sets the cookie) are honored.
+    const preferred = negotiateLocale(request);
+    if (locale !== preferred) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/${preferred}${pathname.slice(locale.length + 1)}`;
+      return NextResponse.redirect(url);
+    }
+
     // Auth pages stay public; the whole forum is otherwise behind login.
     if (PUBLIC_SUBPATHS.has(sub)) return NextResponse.next();
     if (await hasValidSession(request)) return NextResponse.next();
