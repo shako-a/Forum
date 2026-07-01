@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="72" viewBox="0 0 360 72" role="img" aria-label="GeoGlobally — Georgians, worldwide">
+  <!-- mark -->
+  <g transform="translate(8,8)">
+    <rect width="56" height="56" rx="15" fill="#d7263d"/>
+    <g transform="translate(11.5,11.5) scale(1.375)" stroke="#ffffff" stroke-linecap="round" fill="none">
+      <path d="M12 4v16M4 12h16" stroke-width="3.4"/>
+      <path d="M6 6.5h2M16 6.5h2M6 17.5h2M16 17.5h2" stroke-width="1.6" opacity="0.85"/>
+    </g>
+  </g>
+  <!-- wordmark -->
+  <text x="80" y="40" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="30" letter-spacing="-0.6">
+    <tspan fill="#16233a">Geo</tspan><tspan fill="#d7263d">Globally</tspan>
+  </text>
+  <text x="81" y="59" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="500" font-size="13" letter-spacing="0.5" fill="#6b7280">Georgians, worldwide</text>
+</svg>

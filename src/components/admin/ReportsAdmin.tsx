@@ -10,6 +10,7 @@ export type AdminReport = {
   reported: string | null;
   reason: string | null;
   context: string | null;
+  target: { href: string; label: string } | null;
   status: string;
   createdAt: string;
 };
@@ -22,6 +23,15 @@ function Row({ r, dict }: { r: AdminReport; dict: Dictionary }) {
     <tr className={resolved ? "opacity-50" : ""}>
       <td>{r.reporter}</td>
       <td>{r.reported ?? "—"}</td>
+      <td>
+        {r.target ? (
+          <a className="admin-link" href={r.target.href} target="_blank" rel="noreferrer">
+            {r.target.label}
+          </a>
+        ) : (
+          "—"
+        )}
+      </td>
       <td style={{ color: "var(--muted)" }}>
         {r.reason || "—"}
         {r.context && <div className="report-context">“{r.context}”</div>}
@@ -53,6 +63,7 @@ export function ReportsAdmin({ dict, reports }: { dict: Dictionary; reports: Adm
           <tr>
             <th>{t.reporter}</th>
             <th>{t.reported}</th>
+            <th>{t.reportContent}</th>
             <th>{t.reason}</th>
             <th>{t.status}</th>
             <th style={{ textAlign: "right" }}>{t.actions}</th>
@@ -64,7 +75,7 @@ export function ReportsAdmin({ dict, reports }: { dict: Dictionary; reports: Adm
           ))}
           {reports.length === 0 && (
             <tr>
-              <td colSpan={5} style={{ textAlign: "center", color: "var(--muted)", padding: 24 }}>
+              <td colSpan={6} style={{ textAlign: "center", color: "var(--muted)", padding: 24 }}>
                 {t.noReports}
               </td>
             </tr>

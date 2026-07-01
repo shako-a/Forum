@@ -15,6 +15,7 @@ type Common = {
   canVote: boolean;
   canReply: boolean;
   canModerate: boolean;
+  isLoggedIn: boolean;
   loginHref: string;
   shareTitle: string;
   realName: string;
@@ -22,7 +23,7 @@ type Common = {
 };
 
 function ReplyNode({ node, common }: { node: ThreadReply; common: Common }) {
-  const { locale, slug, postId, dict, canVote, canReply, canModerate, loginHref, shareTitle, realName, aliases } =
+  const { locale, slug, postId, dict, canVote, canReply, canModerate, isLoggedIn, loginHref, shareTitle, realName, aliases } =
     common;
 
   // Tombstone for author-deleted replies that still have a sub-thread.
@@ -65,6 +66,7 @@ function ReplyNode({ node, common }: { node: ThreadReply; common: Common }) {
         canReply={canReply}
         canEdit={node.isOwn || canModerate}
         canModerate={canModerate}
+        canReport={isLoggedIn && !node.isOwn}
         hidden={node.hidden}
         editText={node.editableText}
         editImage={node.imageUrl}

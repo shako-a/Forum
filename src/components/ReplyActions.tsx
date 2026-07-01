@@ -5,6 +5,7 @@ import { Vote } from "@/components/Vote";
 import { ReplyComposer } from "@/components/ReplyComposer";
 import { ReplyEditForm } from "@/components/ReplyEditForm";
 import { ShareMenu } from "@/components/ShareMenu";
+import { ReportButton } from "@/components/ReportButton";
 import { deleteReply } from "@/app/actions/replies";
 import { setReplyHidden } from "@/app/actions/moderation";
 import type { AliasOption } from "@/components/IdentityPicker";
@@ -22,6 +23,7 @@ export function ReplyActions({
   canReply,
   canEdit,
   canModerate,
+  canReport,
   hidden,
   editText,
   editImage,
@@ -41,6 +43,7 @@ export function ReplyActions({
   canReply: boolean;
   canEdit: boolean;
   canModerate: boolean;
+  canReport: boolean;
   hidden: boolean;
   editText: string;
   editImage: string | null;
@@ -102,6 +105,7 @@ export function ReplyActions({
             🛡 {hidden ? dict.mod.show : dict.mod.hide}
           </button>
         )}
+        {canReport && <ReportButton replyId={replyId} dict={dict} />}
       </div>
 
       {editing && (

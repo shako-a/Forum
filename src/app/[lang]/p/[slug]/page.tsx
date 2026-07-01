@@ -21,6 +21,7 @@ import { ReplyThread } from "@/components/ReplyThread";
 import { PostModBar } from "@/components/PostModBar";
 import { ReplySort, type ReplySortKey } from "@/components/ReplySort";
 import { SummarizeButton } from "@/components/SummarizeButton";
+import { ReportButton } from "@/components/ReportButton";
 
 export const dynamic = "force-dynamic";
 
@@ -120,6 +121,7 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
                 </button>
               </form>
             )}
+            {user && post.authorId !== user.id && <ReportButton postId={post.id} dict={dict} />}
           </div>
 
           {canModerate && (
@@ -177,6 +179,7 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
             canVote={!!user}
             canReply={canReply}
             canModerate={canModerate}
+            isLoggedIn={!!user}
             loginHref={loginHref}
             shareTitle={post.title}
             realName={replyRealName}

@@ -187,6 +187,7 @@ model Post {
   votes        PostVote[]
   savedBy      SavedPost[]
   dmReferences Message[]  @relation("MessagePostRef")
+  reports      Report[]
 
   // Cached AI summary of the thread (regenerated when newer activity appears).
   aiSummary   String?
@@ -234,7 +235,8 @@ model Reply {
   // Denormalized net vote score (sum of ReplyVote.value).
   score Int @default(0)
 
-  votes ReplyVote[]
+  votes   ReplyVote[]
+  reports Report[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -508,6 +510,10 @@ model Report {
   reportedUser   User?   @relation("ReportedUser", fields: [reportedUserId], references: [id], onDelete: SetNull)
   reportedUserId String?
   conversationId String? // context, if reported from a DM
+  post           Post?   @relation(fields: [postId], references: [id], onDelete: SetNull)
+  postId         String? // set when a post is reported
+  reply          Reply?  @relation(fields: [replyId], references: [id], onDelete: SetNull)
+  replyId        String? // set when a reply is reported
   reason         String?
   context        String? // snapshot, e.g. the last message
   status         String  @default("OPEN") // OPEN | RESOLVED

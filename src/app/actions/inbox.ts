@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser, authorize } from "@/lib/dal";
 import { isBlockedBetween } from "@/lib/inbox-data";
+import { pmPlainText } from "@/lib/prosemirror";
 import type { FormState } from "@/lib/definitions";
 
 // Find or create a 1:1 conversation with another user, then open it. An
@@ -170,6 +171,53 @@ export async function reportUser(_state: FormState, formData: FormData): Promise
 
   await db.report.create({
     data: { reporterId: user.id, reportedUserId, conversationId, reason, context },
+  });
+  return { ok: true };
+}
+
+// Report a post or a reply (გასაჩივრება). Snapshots the content for the admin
+// Reports panel and records who authored it. Ignores duplicate open reports.
+export async function reportContent(_state: FormState, formData: FormData): Promise<FormState> {
+  const user = await getCurrentUser();
+  if (!user) return { message: "You must be logged in." };
+
+  const postId = String(formData.get("postId") ?? "") || null;
+  const replyId = String(formData.get("replyId") ?? "") || null;
+  const reason = String(formData.get("reason") ?? "").trim() || null;
+  if (!postId && !replyId) return { message: "Invalid report." };
+
+  let reportedUserId: string | null = null;
+  let context: string | null = null;
+
+  if (replyId) {
+    const reply = await db.reply.findUnique({
+      where: { id: replyId },
+      select: { authorId: true, body: true },
+    });
+    if (!reply) return { message: "Not found." };
+    reportedUserId = reply.authorId;
+    context = pmPlainText(reply.body).slice(0, 280) || null;
+  } else if (postId) {
+    const post = await db.post.findUnique({
+      where: { id: postId },
+      select: { authorId: true, title: true, body: true },
+    });
+    if (!post) return { message: "Not found." };
+    reportedUserId = post.authorId;
+    context = `${post.title} — ${pmPlainText(post.body)}`.slice(0, 280) || null;
+  }
+
+  if (reportedUserId === user.id) return { message: "You can't report your own content." };
+
+  // Don't stack duplicate open reports from the same user for the same content.
+  const dupe = await db.report.findFirst({
+    where: { reporterId: user.id, postId, replyId, status: "OPEN" },
+    select: { id: true },
+  });
+  if (dupe) return { ok: true };
+
+  await db.report.create({
+    data: { reporterId: user.id, reportedUserId, postId, replyId, reason, context },
   });
   return { ok: true };
 }
