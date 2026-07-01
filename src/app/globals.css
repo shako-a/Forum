@@ -763,6 +763,7 @@ button {
 .tab:hover {
   background: #fff;
   border-color: var(--line);
+  text-decoration: none;
 }
 .tab.active {
   background: var(--ink);

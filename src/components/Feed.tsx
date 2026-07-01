@@ -21,6 +21,7 @@ export function Feed({
   dict,
   user,
   posts,
+  sort = "hot",
   aliases,
   canDelete = false,
 }: {
@@ -28,9 +29,11 @@ export function Feed({
   dict: Dictionary;
   user: { forumName: string } | null;
   posts: FeedPost[];
+  sort?: "hot" | "new" | "top";
   aliases: AliasOption[];
   canDelete?: boolean;
 }) {
+  const base = `/${locale}`;
   return (
     <main className="feed">
       {/* Composer: inline quick-post for members; login prompt for guests */}
@@ -62,14 +65,18 @@ export function Feed({
 
       {/* Tabs + city filter */}
       <div className="feed-tabs">
-        <button className="tab active">
+        <Link href={base} className={`tab${sort === "hot" ? " active" : ""}`}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 3c1 4-3 5-3 9a3 3 0 006 0c0-1.5-.7-2.5-.7-2.5S17 11 17 14a5 5 0 01-10 0c0-5 5-7 5-11z" />
           </svg>
           {dict.feed.tabHot}
-        </button>
-        <button className="tab">{dict.feed.tabNew}</button>
-        <button className="tab">{dict.feed.tabTop}</button>
+        </Link>
+        <Link href={`${base}?sort=new`} className={`tab${sort === "new" ? " active" : ""}`}>
+          {dict.feed.tabNew}
+        </Link>
+        <Link href={`${base}?sort=top`} className={`tab${sort === "top" ? " active" : ""}`}>
+          {dict.feed.tabTop}
+        </Link>
         <span className="spacer" />
         <select aria-label="Location" defaultValue="">
           <option value="">{dict.feed.allCities}</option>

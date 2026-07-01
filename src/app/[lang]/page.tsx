@@ -15,12 +15,15 @@ import { BottomNav } from "@/components/BottomNav";
 // Per-request: depends on the viewer's session and live forum data.
 export const dynamic = "force-dynamic";
 
-export default async function HomePage({ params }: PageProps<"/[lang]">) {
+export default async function HomePage({ params, searchParams }: PageProps<"/[lang]">) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
 
+  const sp = await searchParams;
+  const sort = sp.sort === "new" || sp.sort === "top" ? sp.sort : "hot";
+
   const [dict, user] = await Promise.all([getDictionary(lang), getCurrentUser()]);
-  const data = await getHomeData(user ? { id: user.id } : null);
+  const data = await getHomeData(user ? { id: user.id } : null, sort);
   const headerUser = toHeaderUser(user);
 
   return (
@@ -35,6 +38,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
             dict={dict}
             user={headerUser}
             posts={data.posts}
+            sort={sort}
             aliases={user ? aliasOptions(user.id) : []}
             canDelete={user?.role === "ADMIN"}
           />

@@ -4,7 +4,18 @@ import { pmToHtml, pmPlainText, pmFirstImage } from "@/lib/prosemirror";
 import { canModerateCategory, canRevealAnonymous, getSiteSettings } from "@/lib/dal";
 import { resolveAuthor, type DisplayAuthor } from "@/lib/anon";
 import type { Locale } from "@/i18n/config";
-import type { Role } from "@/generated/prisma/client";
+import { Prisma, type Role } from "@/generated/prisma/client";
+
+// Home feed sort tabs: hot = most-discussed, new = most recent, top = highest score.
+export type FeedSort = "hot" | "new" | "top";
+
+function feedOrderBy(
+  sort: FeedSort,
+): Prisma.PostOrderByWithRelationInput | Prisma.PostOrderByWithRelationInput[] {
+  if (sort === "new") return { createdAt: "desc" };
+  if (sort === "top") return [{ score: "desc" }, { lastActivity: "desc" }];
+  return [{ replies: { _count: "desc" } }, { lastActivity: "desc" }]; // hot
+}
 
 // These loaders degrade gracefully: if the database isn't reachable yet
 // (e.g. before the first `prisma migrate`), they return empty results so the
@@ -12,14 +23,14 @@ import type { Role } from "@/generated/prisma/client";
 
 export type HomeData = Awaited<ReturnType<typeof getHomeData>>;
 
-export async function getHomeData(viewer: { id: string } | null) {
+export async function getHomeData(viewer: { id: string } | null, sort: FeedSort = "hot") {
   const viewerIsAuthed = !!viewer;
   try {
     const [categories, posts, topAds, sidebarAds] = await Promise.all([
       db.category.findMany({ orderBy: { sortOrder: "asc" } }),
       db.post.findMany({
         where: { hidden: false },
-        orderBy: { lastActivity: "desc" },
+        orderBy: feedOrderBy(sort),
         take: 20,
         include: {
           author: { select: { forumName: true } },
@@ -109,7 +120,10 @@ export async function getFeedPage(viewer: { id: string } | null, sort: "popular"
       db.category.findMany({ orderBy: { sortOrder: "asc" } }),
       db.post.findMany({
         where: { hidden: false, ...(viewer ? {} : { category: { locked: false } }) },
-        orderBy: sort === "popular" ? [{ score: "desc" }, { lastActivity: "desc" }] : { createdAt: "desc" },
+        orderBy:
+          sort === "popular"
+            ? [{ score: "desc" }, { replies: { _count: "desc" } }, { lastActivity: "desc" }]
+            : { createdAt: "desc" },
         take: 50,
         include: {
           author: { select: { forumName: true } },
