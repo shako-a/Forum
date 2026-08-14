@@ -3,6 +3,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/session";
+import { getUserFeatureKeys } from "@/lib/packages";
 import type { Role } from "@/generated/prisma/client";
 
 // Role hierarchy for "at least this role" checks.
@@ -45,6 +46,12 @@ export const getCurrentUser = cache(async () => {
       status: true,
       isDonor: true,
       isPro: true,
+      isSupporter: true,
+      themePalette: true,
+      themeAccent: true,
+      themeDensity: true,
+      themeRadius: true,
+      themeDepth: true,
       canAccessAdmin: true,
       canRevealAnon: true,
       isOwner: true,
@@ -53,6 +60,12 @@ export const getCurrentUser = cache(async () => {
   });
 
   if (!user || user.status !== "ACTIVE") return null;
+
+  // Feature keys from any admin-created packages this user holds. The three
+  // built-in tiers are still carried by the booleans above; this is what lets
+  // a package an admin invented grant a perk too. Empty for almost everyone,
+  // and the query is indexed on userId.
+  const featureKeys = await getUserFeatureKeys(user.id);
 
   // Presence: bump lastSeenAt at most once every couple of minutes so the live
   // "online" count reflects who's actually browsing (not just who posted).
@@ -66,7 +79,7 @@ export const getCurrentUser = cache(async () => {
     }
   }
 
-  return user;
+  return { ...user, featureKeys };
 });
 
 /**

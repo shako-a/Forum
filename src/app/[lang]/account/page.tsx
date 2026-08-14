@@ -7,6 +7,8 @@ import { db } from "@/lib/db";
 import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { AccountForm } from "@/components/AccountForm";
+import { AppearanceForm } from "@/components/AppearanceForm";
+import { canCustomize } from "@/lib/perks";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +61,21 @@ export default async function AccountPage({ params }: PageProps<"/[lang]/account
               city: full.city ?? "",
               state: full.state,
               hideRealName: full.hideRealName,
+            }}
+          />
+
+          {/* Appearance is self-only, so it lives with the account settings
+              rather than the public profile. */}
+          <AppearanceForm
+            locale={lang}
+            dict={dict}
+            canCustomize={canCustomize(user)}
+            prefs={{
+              themePalette: user.themePalette,
+              themeAccent: user.themeAccent,
+              themeDensity: user.themeDensity,
+              themeRadius: user.themeRadius,
+              themeDepth: user.themeDepth,
             }}
           />
         </main>

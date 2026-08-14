@@ -249,6 +249,7 @@ export async function getUserProfile(forumName: string, viewer: { id: string } |
       status: true,
       isDonor: true,
       isPro: true,
+      isSupporter: true,
       createdAt: true,
       labels: {
         select: { nameEn: true, nameKa: true, color: true, background: true, font: true, bold: true },

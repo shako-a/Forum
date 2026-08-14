@@ -3,6 +3,7 @@ import { Sora, Inter, Noto_Sans_Georgian } from "next/font/google";
 import { notFound } from "next/navigation";
 import "../globals.css";
 import { locales, isLocale } from "@/i18n/config";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 
 const sora = Sora({ variable: "--font-sora", subsets: ["latin"], weight: ["600", "700", "800"] });
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
@@ -30,10 +31,14 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
     <html
       lang={lang}
       className={`${sora.variable} ${inter.variable} ${notoGe.variable}`}
+      suppressHydrationWarning
     >
+      <head>
+        {/* Applies the saved/OS theme before first paint. Must stay blocking
+            and inline — deferring it reintroduces the light-mode flash. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body>
-        {/* Signature dual-flag ribbon (Georgia + US) */}
-        <div className="flag-ribbon" aria-hidden="true" />
         {children}
       </body>
     </html>

@@ -1,12 +1,13 @@
 import { db } from "@/lib/db";
 
-export type Tier = "DONOR" | "PRO";
+export type Tier = "SUPPORTER" | "DONOR" | "PRO";
 
 // Monthly price each tier pays, in USD cents. PLACEHOLDERS — change here when
 // pricing is finalized; this drives the "Paid" column and Usage %.
 export const TIER_PRICE_CENTS: Record<Tier, number> = {
-  DONOR: 500, // $5/mo
-  PRO: 2000, // $20/mo
+  SUPPORTER: 200, // $2/mo — entry bracket, no AI
+  DONOR: 2500, // $25/mo — includes $10 of AI
+  PRO: 7900, // $79/mo — includes $30 of AI
 };
 
 export function tierPriceCents(tier: string): number {

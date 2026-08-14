@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { UserTheme } from "@/components/UserTheme";
 import { logout } from "@/app/actions/auth";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
@@ -32,7 +34,11 @@ export async function Header({
   const showAdmin =
     !!user && (user.role === "ADMIN" || (user.role === "MODERATOR" && user.canAccessAdmin));
   return (
-    <header className="header">
+    <>
+      {/* User appearance overrides. Header renders on every user-facing page
+          with the user already loaded, so this costs no extra query. */}
+      <UserTheme prefs={user?.prefs ?? null} />
+      <header className="header">
       {/* Logo */}
       <Link className="logo" href={`/${locale}`} aria-label={`${t.appName} home`}>
         <span className="logo-mark" aria-hidden="true">
@@ -82,6 +88,8 @@ export async function Header({
           <span className="spark">✦</span> {t.askAi}
           {askAiLocked && <span className="ask-ai-lock" aria-hidden="true">🔒</span>}
         </Link>
+
+        <ThemeToggle label={t.toggleTheme} />
 
         <LanguageSwitcher current={locale} />
 
@@ -134,6 +142,7 @@ export async function Header({
           </>
         )}
       </div>
-    </header>
+      </header>
+    </>
   );
 }

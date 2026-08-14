@@ -70,6 +70,9 @@ export default async function ProfilePage({ params }: PageProps<"/[lang]/u/[foru
                 {roleLabel && <span className="role-badge">{roleLabel}</span>}
                 {profile.isDonor && <span className="donor-badge">💛 {t.donorBadge}</span>}
                 {profile.isPro && <span className="pro-badge">💼 {t.proBadge}</span>}
+                {profile.isSupporter && (
+                  <span className="supporter-badge">🤍 {t.supporterBadge}</span>
+                )}
                 {profile.labels.map((l, i) => (
                   <LabelBadge key={i} label={l} locale={lang} />
                 ))}

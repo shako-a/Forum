@@ -59,6 +59,26 @@ model User {
   // AI access as Donor, plus the ability to register a business account.
   isPro        Boolean    @default(false)
 
+  // Paid "Supporter" (მხარდამჭერი) tier — the entry-level donation bracket.
+  // Deliberately does NOT grant AI access; it unlocks profile and feed
+  // customization only. Donor and Pro include everything it offers.
+  isSupporter  Boolean    @default(false)
+
+  // --- Appearance preferences (the Supporter "feed customization" perk) ---
+  // These only change what THIS user sees; nothing here is public, so none of
+  // it is a moderation surface. Stored on the user row rather than in the
+  // browser because getCurrentUser() already selects this row on every
+  // request, making the read free, and because it should follow the user
+  // across devices.
+  //
+  // NOTE: accessibility-affecting settings must never live behind the paid
+  // gate (see FREE_PREFS in src/lib/appearance.ts).
+  themePalette String  @default("default") // curated preset, or "custom"
+  themeAccent  String? // hex, only used when themePalette == "custom"
+  themeDensity String  @default("comfortable") // comfortable | compact
+  themeRadius  String  @default("rounded") // rounded | soft | square
+  themeDepth   String  @default("full") // full | subtle | flat
+
   // Per-moderator grant: lets this moderator open the (moderation-only) admin
   // panel. Admins always have access; plain users never do, regardless of flag.
   canAccessAdmin Boolean  @default(false)
@@ -102,7 +122,9 @@ model User {
   hiddenPosts   Post[]  @relation("PostHiddenBy")
   hiddenReplies Reply[] @relation("ReplyHiddenBy")
   aiUsage       AiUsage[]
+  aiBalance     AiBalance?
   subscriptions Subscription[]
+  packages      UserPackage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -539,6 +561,66 @@ model SiteSetting {
 // ---------------------------------------------------------------------------
 // AI usage log — one row per LLM call, for admin cost tracking. Per-user
 // budget caps come later; for now this is observability only.
+// ---------------------------------------------------------------------------
+// AI packages: how much AI a user gets, decided by the subscription they hold.
+// Admin-editable from /admin/ai-usage, so allowances can be tuned without a
+// deploy (and dialled to 0 to switch a tier's AI off entirely).
+//
+// Credits are pegged to real spend (creditMicroUsd) rather than call counts,
+// because a long question costs far more than a short one — counting calls
+// would leave the Anthropic bill unbounded.
+model AiPackage {
+  id     String @id @default(cuid())
+  key    String @unique // "AI_USER" | "AI_DONOR" | "AI_PRO"
+  nameEn String
+  nameKa String
+
+  // Subscription tier this package is obtained through. null = granted to
+  // nobody (AI_USER ships this way as a placeholder until Supporters get it).
+  tier String? // "SUPPORTER" | "DONOR" | "PRO"
+
+  // Off means the tier gets no AI at all, regardless of the numbers below.
+  isActive Boolean @default(true)
+
+  // Monthly allowance in micro-USD (USD × 1_000_000). Admin enters dollars.
+  // Pegged to real spend rather than a call count, because a long question
+  // costs far more than a short one.
+  monthlyBudgetMicroUsd Int @default(0)
+
+  // Share of an unused allowance carried into the next calendar month, so a
+  // light month is not simply confiscated. 0 = use it or lose it.
+  rolloverPercent Int @default(50)
+
+  sortOrder Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Per-user token bucket. Deliberately has no cron: `credits` is the balance as
+// of `lastRefillAt`, and accrual since then is computed on read (the same
+// derive-on-read trick used for discount expiry in lib/packages.ts).
+model AiBalance {
+  userId String @id
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // All amounts in micro-USD. `balance` is the value as of `lastRefillAt`;
+  // accrual since then is derived on read.
+  balanceMicroUsd Float    @default(0)
+  lastRefillAt    DateTime @default(now())
+
+  // Package the balance last accrued under; a tier change re-clamps to the
+  // new ceiling instead of silently keeping an oversized balance.
+  packageKey String?
+
+  // Calendar-month window driving the "used X%" figures and the rollover.
+  spentThisPeriodMicroUsd Float    @default(0)
+  carriedInMicroUsd       Float    @default(0)
+  periodStartedAt         DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+}
+
 model AiUsage {
   id     String  @id @default(cuid())
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -556,6 +638,102 @@ model AiUsage {
 
   @@index([createdAt])
   @@index([userId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Paid packages shown on the "მეტი" page. Everything marketing-facing — price,
+// discount, copy, perk list, ordering, active state — lives here rather than in
+// code, so an admin can change the offer without a deploy.
+//
+// The three original tiers (SUPPORTER / DONOR / PRO) are seeded as built-ins and
+// stay mirrored onto User.isSupporter/isDonor/isPro, so all existing gating
+// keeps working. Admin-created packages are granted through UserPackage and gate
+// via their feature keys instead.
+enum DiscountType {
+  PERCENT // e.g. 20% off
+  FIXED // e.g. flat $3.50 while the promo runs
+}
+
+model PaidPackage {
+  id        String  @id @default(cuid())
+  key       String  @unique // "SUPPORTER" | "DONOR" | "PRO" | generated
+  slug      String  @unique // public route: /[lang]/<slug>
+  isBuiltIn Boolean @default(false) // built-ins can be edited but not deleted
+
+  nameEn  String
+  nameKa  String
+  blurbEn String // one-liner on the card
+  blurbKa String
+  pitchEn String // paragraph on the package's own page
+  pitchKa String
+
+  icon   String @default("✦")
+  accent String @default("#1f4e9c")
+
+  priceCents Int @default(0)
+
+  // Discount is optional and per-package: the admin picks a percentage or a
+  // flat promo price. Whether it is live is derived from the window on read,
+  // so a discount starts and expires on its own with no scheduled job.
+  discountType       DiscountType?
+  discountPercent    Int?
+  discountPriceCents Int?
+  discountStartsAt   DateTime?
+  discountEndsAt     DateTime?
+
+  isActive  Boolean @default(true) // hidden from the public page when false
+  featured  Boolean @default(false) // draws the "most popular" flag
+  sortOrder Int     @default(0)
+
+  features PackageFeature[]
+  grants   UserPackage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+// Catalogue of perk lines, shared across packages so the same perk reads
+// identically everywhere. `key` is what gating looks up (e.g. "askAi").
+model Feature {
+  id        String           @id @default(cuid())
+  key       String           @unique
+  nameEn    String
+  nameKa    String
+  isActive  Boolean          @default(true)
+  sortOrder Int              @default(0)
+  packages  PackageFeature[]
+  createdAt DateTime         @default(now())
+
+  @@index([isActive, sortOrder])
+}
+
+// Which perks a package lists. `included: false` renders struck through — used
+// to spell out what a cheaper package deliberately leaves out (e.g. no AI).
+model PackageFeature {
+  package   PaidPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  packageId String
+  feature   Feature     @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  featureId String
+  included  Boolean     @default(true)
+  sortOrder Int         @default(0)
+
+  @@id([packageId, featureId])
+  @@index([featureId])
+}
+
+// Generic package ownership, so admin-created packages can be granted too.
+model UserPackage {
+  id        String      @id @default(cuid())
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  package   PaidPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  packageId String
+  grantedAt DateTime    @default(now())
+
+  @@unique([userId, packageId])
+  @@index([userId])
 }
 
 // ---------------------------------------------------------------------------

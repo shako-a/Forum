@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState, useTransition } from "react";
 import { adminUpdateUser } from "@/app/actions/admin-users";
+import { setUserPackage } from "@/app/actions/admin-packages";
 import { LabelBadge, type BadgeLabel } from "@/components/LabelBadge";
 import { StateSelect } from "@/components/StateSelect";
 import { AdminPasswordReset } from "@/components/admin/AdminPasswordReset";
@@ -26,6 +27,7 @@ export type AdminUserDetail = {
   status: UserStatus;
   isDonor: boolean;
   isPro: boolean;
+  isSupporter: boolean;
   canAccessAdmin: boolean;
   canRevealAnon: boolean;
   isOwner: boolean;
@@ -41,18 +43,75 @@ function avatarColor(seed: string): string {
   return AVATAR_COLORS[h % AVATAR_COLORS.length];
 }
 
+// Packages an admin created (the three built-ins have their own checkboxes in
+// the form above, since those are carried by User booleans). Each toggle
+// commits on click rather than waiting for the form to be saved.
+function CustomPackageGrants({
+  userId,
+  packages,
+  held,
+  dict,
+}: {
+  userId: string;
+  packages: { id: string; name: string; icon: string }[];
+  held: string[];
+  dict: Dictionary;
+}) {
+  const t = dict.admin.pkg;
+  const [pending, startTransition] = useTransition();
+  const [on, setOn] = useState<Set<string>>(new Set(held));
+  if (packages.length === 0) return null;
+
+  return (
+    <div className="admin-section">
+      <h2 className="admin-section-title">{t.packages}</h2>
+      <div className="tier-grid">
+        {packages.map((p) => {
+          const has = on.has(p.id);
+          return (
+            <div className="tier-box" key={p.id}>
+              <label className="checkbox-row">
+                <input
+                  type="checkbox"
+                  checked={has}
+                  disabled={pending}
+                  onChange={() => {
+                    setOn((prev) => {
+                      const next = new Set(prev);
+                      if (has) next.delete(p.id);
+                      else next.add(p.id);
+                      return next;
+                    });
+                    startTransition(() => void setUserPackage(userId, p.id, !has));
+                  }}
+                />
+                {p.icon} {p.name}
+              </label>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function AdminUserEdit({
   locale,
   dict,
   user,
   labels,
   assignedLabelIds,
+  customPackages,
+  heldPackageIds,
 }: {
   locale: Locale;
   dict: Dictionary;
   user: AdminUserDetail;
   labels: AssignableLabel[];
   assignedLabelIds: string[];
+  /** Admin-created packages (built-ins have their own checkboxes above). */
+  customPackages: { id: string; name: string; icon: string }[];
+  heldPackageIds: string[];
 }) {
   const t = dict.admin;
   const ta = dict.auth;
@@ -130,6 +189,9 @@ export function AdminUserEdit({
             <span className="role-badge">{roleLabel}</span>
             {user.isDonor && <span className="donor-badge">💛 {dict.profile.donorBadge}</span>}
             {user.isPro && <span className="pro-badge">💼 {dict.profile.proBadge}</span>}
+            {user.isSupporter && (
+              <span className="supporter-badge">🤍 {dict.profile.supporterBadge}</span>
+            )}
             {user.role === "MODERATOR" && user.canAccessAdmin && (
               <span className="role-badge">🛡 {t.adminAccess}</span>
             )}
@@ -214,6 +276,12 @@ export function AdminUserEdit({
               💼 {t.pro}
             </label>
           </div>
+          <div className="tier-box">
+            <label className="checkbox-row" title={t.supporterHint}>
+              <input type="checkbox" name="isSupporter" defaultChecked={user.isSupporter} />
+              🤍 {t.supporter}
+            </label>
+          </div>
         </div>
 
         {/* Per-staff permission: see real authors behind anonymous content.
@@ -256,6 +324,13 @@ export function AdminUserEdit({
           </Link>
         </div>
       </form>
+
+      <CustomPackageGrants
+        userId={user.id}
+        packages={customPackages}
+        held={heldPackageIds}
+        dict={dict}
+      />
 
       <AdminPasswordReset userId={user.id} dict={dict} />
     </div>

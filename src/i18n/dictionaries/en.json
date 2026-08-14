@@ -26,7 +26,8 @@
     "getApp": "Get the app",
     "seeAll": "… see all",
     "loading": "Loading…",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "toggleTheme": "Toggle dark mode"
   },
   "nav": {
     "home": "Home",
@@ -40,7 +41,10 @@
     "newcomerGuide": "Newcomer guide",
     "immigrationGlossary": "Immigration glossary",
     "communityRules": "Community rules",
-    "suggestedTopics": "Suggested Topics"
+    "suggestedTopics": "Suggested Topics",
+    "allTopics": "+ all topics",
+    "fewerTopics": "− fewer",
+    "more": "More"
   },
   "feed": {
     "composerPlaceholder": "Start a discussion…",
@@ -123,7 +127,6 @@
     "sortOld": "Old",
     "hide": "Hide",
     "show": "Show",
-    "edit": "Edit",
     "delete": "Delete",
     "save": "Save",
     "deletedTag": "[deleted]",
@@ -181,7 +184,8 @@
     "saved": "Your profile has been updated.",
     "phoneHint": "Hidden from other members.",
     "donorBadge": "Donor",
-    "proBadge": "Professional"
+    "proBadge": "Professional",
+    "supporterBadge": "Supporter"
   },
   "donate": {
     "title": "Become a Donor",
@@ -207,7 +211,8 @@
     "summarize": "Summarize discussion",
     "summarizing": "Summarizing…",
     "summaryTitle": "✦ AI summary",
-    "summaryError": "Couldn't summarize this discussion. Please try again."
+    "summaryError": "Couldn't summarize this discussion. Please try again.",
+    "errorCredits": "You have used your AI allowance for now — it refills continuously."
   },
   "business": {
     "directory": "Business directory",
@@ -448,7 +453,103 @@
     "unhide": "Unhide",
     "rehide": "Hide",
     "nothingHidden": "Nothing hidden.",
-    "empty": "Nothing here yet."
+    "empty": "Nothing here yet.",
+    "supporter": "Supporter",
+    "supporterHint": "Entry donation tier — profile and feed customization, no AI.",
+    "morePackages": "More",
+    "pkg": {
+      "title": "More — paid packages",
+      "subtitle": "Prices, discounts, copy and perk lists for everything shown on the public “More” page.",
+      "packages": "Packages",
+      "features": "Perk catalogue",
+      "newPackage": "New package",
+      "editPackage": "Edit package",
+      "create": "Create package",
+      "back": "Packages",
+      "nameEn": "Name (EN)",
+      "nameKa": "Name (KA)",
+      "blurbEn": "Short description (EN)",
+      "blurbKa": "Short description (KA)",
+      "pitchEn": "Full description (EN)",
+      "pitchKa": "Full description (KA)",
+      "blurbHint": "One line, shown on the card.",
+      "pitchHint": "Paragraph, shown on the package’s own page.",
+      "icon": "Icon",
+      "accent": "Accent color",
+      "slug": "URL slug",
+      "slugHint": "Public address: /more/<slug>",
+      "price": "Price",
+      "priceHint": "Per month, in dollars.",
+      "discount": "Discount",
+      "discountNone": "No discount",
+      "discountPercent": "Percent off",
+      "discountFixed": "Promo price",
+      "percentOff": "Percent off (%)",
+      "promoPrice": "Promo price",
+      "startsAt": "Starts",
+      "endsAt": "Ends",
+      "discountHint": "Leave the dates empty to run it until you turn it off. It applies and expires on its own.",
+      "active": "Active",
+      "inactive": "Inactive",
+      "activeHint": "Inactive packages are hidden from the public page.",
+      "featured": "Mark as most popular",
+      "order": "Order",
+      "perks": "Perks",
+      "perksHint": "Tick the perks this package lists. Mark one as “not included” to show it struck through — useful for spelling out what a cheaper package leaves out.",
+      "included": "Included",
+      "notIncluded": "Not included",
+      "noFeatures": "No perks in the catalogue yet — add one below.",
+      "featureNameEn": "Perk (EN)",
+      "featureNameKa": "Perk (KA)",
+      "featureKey": "Key",
+      "featureKeyHint": "Used by access checks (e.g. askAi). Fixed once created.",
+      "newFeature": "Add perk",
+      "deletePackage": "Delete",
+      "deleteConfirm": "Delete this package? Anyone who holds it will lose it.",
+      "deleteFeatureConfirm": "Delete this perk? It will be removed from every package.",
+      "builtIn": "Built-in",
+      "builtInHint": "Built-in packages can be edited but not deleted.",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "discountLive": "Discount live",
+      "discountScheduled": "Discount scheduled",
+      "discountEnded": "Discount ended",
+      "noPackages": "No packages yet.",
+      "holders": "Holders"
+    },
+    "ai": {
+      "tabPackages": "Packages",
+      "packagesIntro": "How much AI each subscription tier gets. Credits are pegged to real spend, so these numbers bound the actual API bill. Allowances refill continuously rather than resetting on a fixed date.",
+      "nameEn": "Name (EN)",
+      "nameKa": "Name (KA)",
+      "tier": "Obtained through",
+      "tierNone": "Nobody (placeholder)",
+      "tierSupporter": "Supporter",
+      "tierDonor": "Donor",
+      "tierPro": "Professional",
+      "tierHint": "Each tier can feed only one package; assigning it here clears it elsewhere.",
+      "derivedPerDay": "released per day",
+      "active": "Active",
+      "holders": "users",
+      "colAllocation": "Monthly",
+      "colBalance": "Available",
+      "colAllocatedPct": "Allocated %",
+      "colCreditSpend": "Spent",
+      "colSpendPct": "Spend %",
+      "noPackage": "No AI package",
+      "yourUsage": "AI usage",
+      "usedPct": "You have used {pct}% of your allowance.",
+      "refillFull": "Full again in {time}.",
+      "refillSome": "More credits in {time}.",
+      "outOfCredits": "You have used your AI allowance for now.",
+      "noAccess": "Your plan does not include AI.",
+      "monthlyBudget": "Monthly amount ($)",
+      "monthlyBudgetHint": "Spread evenly across the calendar month.",
+      "rollover": "Roll over unused (%)",
+      "rolloverHint": "Share of the leftover amount carried into next month. 0 = use it or lose it.",
+      "derivedMaxCarry": "max carried over",
+      "derivedPeak": "peak in one month"
+    }
   },
   "mod": {
     "tools": "Moderator tools",
@@ -478,5 +579,82 @@
     "inbox": "Inbox",
     "profile": "Profile",
     "create": "Create post"
+  },
+  "tiers": {
+    "pageTitle": "More",
+    "pageSubtitle": "Paid tiers that keep GeoGlobally running. Pick the one that fits — every tier is optional, and the forum stays free without one.",
+    "perMonth": "/month",
+    "popular": "Most popular",
+    "learnMore": "Learn more",
+    "youHaveThis": "You have this tier",
+    "thanksHolding": "You have this tier — thank you!",
+    "backToAll": "All tiers",
+    "ctaComingSoon": "Payments coming soon",
+    "loginPrompt": "Sign in to subscribe.",
+    "contactPrompt": "Online payment is coming soon. In the meantime, contact an administrator to get this tier.",
+    "allPaymentsNote": "Payments are not live yet — tiers are granted by an administrator for now.",
+    "names": {
+      "SUPPORTER": "Supporter",
+      "DONOR": "Donor",
+      "PRO": "Professional"
+    },
+    "blurbs": {
+      "SUPPORTER": "The small bracket — make the forum yours, without the AI extras.",
+      "DONOR": "Back the community and unlock AI answers.",
+      "PRO": "For businesses and people offering services."
+    },
+    "pitches": {
+      "SUPPORTER": "The entry bracket for people who want to chip in and personalize how the forum looks and reads. It covers profile and feed customization, and deliberately leaves out AI — if you want Ask AI, the Donor tier is the one you want.",
+      "DONOR": "Donor keeps the lights on and unlocks Ask AI: instant answers about jobs, housing and life abroad. It includes everything in Supporter.",
+      "PRO": "Professional is for anyone running a business or offering services to the community. It adds a business listing in the directory on top of everything Donor includes."
+    },
+    "perks": {
+      "askAi": "Ask AI — instant answers on jobs, housing and life abroad",
+      "profileCustom": "Profile customization",
+      "feedCustom": "Feed customization",
+      "badgeSupporter": "Supporter badge on your profile",
+      "badgeDonor": "Donor badge on your profile",
+      "badgePro": "Professional badge on your profile",
+      "business": "Register a business in the directory",
+      "support": "Help keep the community running"
+    },
+    "noneYet": "No packages are available right now.",
+    "dealUntil": "until"
+  },
+  "appearance": {
+    "title": "Appearance",
+    "subtitle": "Change how the forum looks for you. Only you see these settings — nothing here is shown to other members.",
+    "supporterOnly": "Appearance settings are a Supporter perk.",
+    "seePackages": "See packages",
+    "accent": "Accent colour",
+    "custom": "Custom colour",
+    "contrastNote": "Any colour you pick is automatically adjusted for readability in both light and dark mode.",
+    "density": "Density",
+    "radius": "Corners",
+    "depth": "Background",
+    "saved": "Saved — your settings are applied everywhere.",
+    "palettes": {
+      "default": "Classic red",
+      "ocean": "Ocean",
+      "forest": "Forest",
+      "plum": "Plum",
+      "amber": "Amber",
+      "teal": "Teal",
+      "rose": "Rose"
+    },
+    "densities": {
+      "comfortable": "Comfortable",
+      "compact": "Compact"
+    },
+    "radii": {
+      "rounded": "Rounded",
+      "soft": "Soft",
+      "square": "Square"
+    },
+    "depths": {
+      "full": "Full",
+      "subtle": "Subtle",
+      "flat": "Flat"
+    }
   }
 }

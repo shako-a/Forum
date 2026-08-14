@@ -83,6 +83,16 @@ export async function setUserPro(userId: string, isPro: boolean): Promise<void> 
   revalidatePath("/[lang]/admin/users", "page");
 }
 
+// Grant/revoke the entry-level "Supporter" tier. Stripe will drive this later.
+export async function setUserSupporter(userId: string, isSupporter: boolean): Promise<void> {
+  const actor = await authorize("ADMIN");
+  if (!actor) return;
+
+  await db.user.update({ where: { id: userId }, data: { isSupporter } });
+  await syncSubscription(userId, "SUPPORTER", isSupporter);
+  revalidatePath("/[lang]/admin/users", "page");
+}
+
 // Grant/revoke a moderator's access to the (moderation-only) admin panel. Only
 // meaningful for moderators — admins always have access, plain users never do.
 export async function setUserAdminAccess(userId: string, canAccessAdmin: boolean): Promise<void> {
@@ -117,6 +127,7 @@ export async function adminUpdateUser(_state: FormState, formData: FormData): Pr
   const { email, forumName, city, ...rest } = parsed.data;
   const isDonor = formData.get("isDonor") === "on"; // tier toggle, edited inline here
   const isPro = formData.get("isPro") === "on"; // tier toggle, edited inline here
+  const isSupporter = formData.get("isSupporter") === "on"; // tier toggle, edited inline here
   const canRevealAnon = formData.get("canRevealAnon") === "on"; // per-staff reveal grant
   const labelIds = formData.getAll("labelIds").map(String); // custom labels assigned to this user
 
@@ -138,6 +149,7 @@ export async function adminUpdateUser(_state: FormState, formData: FormData): Pr
       city: city ?? null,
       isDonor,
       isPro,
+      isSupporter,
       canRevealAnon,
       ...rest,
       labels: { set: labelIds.map((id) => ({ id })) }, // replace assignments
@@ -147,6 +159,7 @@ export async function adminUpdateUser(_state: FormState, formData: FormData): Pr
   // Keep the subscription ledger in sync with the tier toggles.
   await syncSubscription(userId, "DONOR", isDonor);
   await syncSubscription(userId, "PRO", isPro);
+  await syncSubscription(userId, "SUPPORTER", isSupporter);
 
   revalidatePath("/[lang]/admin/users", "page");
   revalidatePath("/[lang]/admin/users/[id]", "page");

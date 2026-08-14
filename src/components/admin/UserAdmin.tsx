@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { useTransition } from "react";
-import { setUserRole, setUserStatus, setUserDonor, setUserPro, setUserAdminAccess } from "@/app/actions/admin-users";
+import {
+  setUserRole,
+  setUserStatus,
+  setUserDonor,
+  setUserPro,
+  setUserSupporter,
+  setUserAdminAccess,
+} from "@/app/actions/admin-users";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import type { Role, UserStatus } from "@/generated/prisma/client";
@@ -15,6 +22,7 @@ export type AdminUser = {
   status: UserStatus;
   isDonor: boolean;
   isPro: boolean;
+  isSupporter: boolean;
   canAccessAdmin: boolean;
 };
 
@@ -85,6 +93,17 @@ function UserRow({
         </button>
       </td>
       <td>
+        <button
+          type="button"
+          className="action"
+          disabled={pending}
+          title={t.supporterHint}
+          onClick={() => startTransition(() => void setUserSupporter(user.id, !user.isSupporter))}
+        >
+          {user.isSupporter ? "🤍 " + t.supporter : "— " + t.supporter}
+        </button>
+      </td>
+      <td>
         {user.role === "ADMIN" ? (
           <span className="opacity-50" title={t.adminAccessHint}>🛡 {t.always}</span>
         ) : user.role === "MODERATOR" ? (
@@ -144,6 +163,7 @@ export function UserAdmin({
             <th>{t.status}</th>
             <th>{t.donor}</th>
             <th>{t.pro}</th>
+            <th>{t.supporter}</th>
             <th>{t.adminAccess}</th>
             <th style={{ textAlign: "right" }}>{t.actions}</th>
           </tr>

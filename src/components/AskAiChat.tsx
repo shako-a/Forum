@@ -24,7 +24,13 @@ export function AskAiChat({ dict }: { dict: Dictionary }) {
       if (res.ok) {
         setTurns((prev) => [...prev, { q, a: res.text }]);
       } else {
-        setError(res.error === "unconfigured" ? t.errorUnconfigured : t.errorGeneric);
+        setError(
+          res.error === "unconfigured"
+            ? t.errorUnconfigured
+            : res.error === "credits"
+              ? t.errorCredits
+              : t.errorGeneric,
+        );
         setInput(q); // restore so they can retry
       }
       inputRef.current?.focus();

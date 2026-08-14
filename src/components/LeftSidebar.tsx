@@ -5,6 +5,7 @@ import { categoryStyle } from "@/lib/category-style";
 import { getCurrentUser } from "@/lib/dal";
 import { MobileSidebar } from "@/components/MobileSidebar";
 import { NavLink } from "@/components/NavLink";
+import { CategoryChips } from "@/components/CategoryChips";
 import type { Category } from "@/generated/prisma/client";
 
 export async function LeftSidebar({
@@ -58,17 +59,27 @@ export async function LeftSidebar({
         {nav.jobs}
       </NavLink>
 
+      <NavLink href={`/${locale}/more`}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 8v8M8 12h8" />
+        </svg>
+        {nav.more}
+      </NavLink>
+
       <div className="group-label">{nav.communities}</div>
-      {categories.map((c) => {
-        const style = categoryStyle(c.slug);
-        return (
-          <NavLink key={c.id} href={`/${locale}/c/${c.slug}`}>
-            <span className="dot" style={{ background: style.color }} />
-            {categoryName(c, locale)}
-            {c.locked && !authed && <span className="lock">🔒</span>}
-          </NavLink>
-        );
-      })}
+      <CategoryChips
+        locale={locale}
+        moreLabel={nav.allTopics}
+        lessLabel={nav.fewerTopics}
+        categories={categories.map((c) => ({
+          id: c.id,
+          slug: c.slug,
+          name: categoryName(c, locale),
+          color: categoryStyle(c.slug).color,
+          showLock: c.locked && !authed,
+        }))}
+      />
 
       <div className="group-label">{nav.resources}</div>
       <a href="#" className="nav-item">{nav.communityRules}</a>

@@ -30,6 +30,7 @@ export default async function AdminUserDetailPage({ params }: PageProps<"/[lang]
         status: true,
         isDonor: true,
         isPro: true,
+        isSupporter: true,
         canAccessAdmin: true,
         canRevealAnon: true,
         isOwner: true,
@@ -41,6 +42,22 @@ export default async function AdminUserDetailPage({ params }: PageProps<"/[lang]
     db.label.findMany({ orderBy: { sortOrder: "asc" } }),
   ]);
   if (!user) notFound();
+
+  // Built-in packages are granted through the User booleans in the form; only
+  // admin-created ones need an explicit grant toggle.
+  const customPackageRows = await db.paidPackage.findMany({
+    where: { isBuiltIn: false },
+    orderBy: { sortOrder: "asc" },
+    select: { id: true, nameEn: true, nameKa: true, icon: true },
+  });
+  const customPackages = customPackageRows.map((p) => ({
+    id: p.id,
+    name: lang === "ka" ? p.nameKa : p.nameEn,
+    icon: p.icon,
+  }));
+  const heldPackageIds = (
+    await db.userPackage.findMany({ where: { userId: id }, select: { packageId: true } })
+  ).map((r) => r.packageId);
 
   return (
     <AdminUserEdit
@@ -60,6 +77,7 @@ export default async function AdminUserDetailPage({ params }: PageProps<"/[lang]
         status: user.status,
         isDonor: user.isDonor,
         isPro: user.isPro,
+        isSupporter: user.isSupporter,
         canAccessAdmin: user.canAccessAdmin,
         canRevealAnon: user.canRevealAnon,
         isOwner: user.isOwner,
@@ -77,6 +95,8 @@ export default async function AdminUserDetailPage({ params }: PageProps<"/[lang]
         bold: l.bold,
       }))}
       assignedLabelIds={user.labels.map((l) => l.id)}
+      customPackages={customPackages}
+      heldPackageIds={heldPackageIds}
     />
   );
 }

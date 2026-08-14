@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal";
 import { hasAiAccess } from "@/lib/perks";
 import { isAiConfigured, runAi } from "@/lib/ai";
+import { checkCredits, chargeCredits } from "@/lib/ai-credits";
 import { pmPlainText } from "@/lib/prosemirror";
 
 type AiActionResult = { ok: true; text: string; cached?: boolean } | { ok: false; error: string };
@@ -15,6 +16,11 @@ export async function summarizePost(postId: string): Promise<AiActionResult> {
   if (!user) return { ok: false, error: "auth" };
   if (!hasAiAccess(user)) return { ok: false, error: "tier" };
   if (!isAiConfigured()) return { ok: false, error: "unconfigured" };
+
+  // Allowance gate. The real cost isn't known until the call returns, so this
+  // only requires a positive balance; the actual cost is deducted afterwards.
+  const credit = await checkCredits(user);
+  if (!credit.ok) return { ok: false, error: credit.reason === "empty" ? "credits" : "tier" };
 
   const post = await db.post.findUnique({
     where: { id: postId },
@@ -54,7 +60,7 @@ export async function summarizePost(postId: string): Promise<AiActionResult> {
     "disagreement. Reply in the same language as the discussion. Do not invent facts not present in the thread.";
 
   try {
-    const { text } = await runAi({
+    const { text, costMicroUsd } = await runAi({
       modelKey: "haiku",
       kind: "summary",
       system,
@@ -67,6 +73,7 @@ export async function summarizePost(postId: string): Promise<AiActionResult> {
       where: { id: post.id },
       data: { aiSummary: text, aiSummaryAt: new Date() },
     });
+    await chargeCredits(user, costMicroUsd);
     return { ok: true, text };
   } catch {
     return { ok: false, error: "failed" };
@@ -81,6 +88,11 @@ export async function askAi(question: string): Promise<AiActionResult> {
   if (!hasAiAccess(user)) return { ok: false, error: "tier" };
   if (!isAiConfigured()) return { ok: false, error: "unconfigured" };
 
+  // Allowance gate. The real cost isn't known until the call returns, so this
+  // only requires a positive balance; the actual cost is deducted afterwards.
+  const credit = await checkCredits(user);
+  if (!credit.ok) return { ok: false, error: credit.reason === "empty" ? "credits" : "tier" };
+
   const q = question.trim().slice(0, 2000);
   if (q.length < 3) return { ok: false, error: "empty" };
 
@@ -92,7 +104,7 @@ export async function askAi(question: string): Promise<AiActionResult> {
     "If you are unsure, say so rather than inventing specifics.";
 
   try {
-    const { text } = await runAi({
+    const { text, costMicroUsd } = await runAi({
       modelKey: "sonnet",
       kind: "ask",
       system,
@@ -101,6 +113,7 @@ export async function askAi(question: string): Promise<AiActionResult> {
       userId: user.id,
     });
     if (!text) return { ok: false, error: "empty" };
+    await chargeCredits(user, costMicroUsd);
     return { ok: true, text };
   } catch {
     return { ok: false, error: "failed" };

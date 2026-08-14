@@ -8,12 +8,25 @@
    Fonts are injected as CSS variables by next/font in layout.tsx.
    ============================================================ */
 :root {
+  color-scheme: light;
+
   --paper: #ffffff;
   --bg: #f5f6f9;
   --ink: #171a21;
   --ink-2: #3d434f;
   --muted: #737a87;
   --line: #e6e9ef;
+
+  /* --raise: the "lift" surface. Anything that rises above --bg on hover or
+     focus (nav items, tabs, ghost buttons, inputs) uses this instead of a
+     literal white, so the same rule reads correctly in dark mode. */
+  --raise: #ffffff;
+  --raise-2: #fbfcfd; /* faintly tinted panel: vote rail, sub-surfaces */
+  /* Text that sits on top of an --ink-colored fill (e.g. the active feed tab).
+     Inverts with the theme, since --ink itself inverts. */
+  --on-ink: #ffffff;
+  /* Translucent scrim for the fixed header / bottom nav (sits over content). */
+  --scrim: rgba(255, 255, 255, 0.92);
 
   --red: #d7263d; /* Georgian cross red */
   --red-deep: #b01c30;
@@ -24,14 +37,100 @@
   --blue-soft: #eaf1fb;
 
   --gold: #c8a24a; /* lock / member-only hint */
+  --amber: #9a6a00; /* warning text */
+  --amber-fill: #f5b301;
+  --ember: #e8590c; /* downvote / alert accent */
+  --green: #2e8b57; /* success fill */
+  --green-ink: #1e6b40; /* success text */
+  --warm-tint: #fffdf3; /* faint parchment panel (tier box) */
 
   --radius: 14px;
   --radius-sm: 10px;
+
+  /* Density-adjustable spacing. Overridden per user by lib/appearance.ts;
+     these defaults reproduce the original "comfortable" layout exactly. */
+  --card-pad: 14px 18px 12px; /* post body */
+  --pad-card: 18px; /* .card-pad */
+  --feed-gap: 14px;
+  --title-size: 16.5px;
   --shadow: 0 1px 2px rgba(23, 26, 33, 0.05), 0 4px 14px rgba(23, 26, 33, 0.05);
   --shadow-hover: 0 2px 4px rgba(23, 26, 33, 0.06), 0 10px 26px rgba(23, 26, 33, 0.09);
 
+  /* ---- background depth (see body::before / body::after) ----
+     The page is never a flat fill. Depth is built from four stacked cues:
+       1. a vertical base gradient        — light falls from above
+       2. three wide "aurora" blooms      — color at different apparent depths
+       3. a vignette                      — edges recede, so the page reads as
+                                            a volume rather than a flat card
+       4. grain + a faint dot mesh        — texture gives the void a scale and
+                                            kills gradient banding
+     The whole stack is fixed and parallaxes slightly on scroll, so content
+     slides *through* the space instead of over a static swatch. */
+  --depth-base: linear-gradient(178deg, #fdfeff 0%, #eef2f9 36%, #dfe6f2 72%, #d3dcec 100%);
+  --aurora-1: rgba(31, 78, 156, 0.26); /* cool, far — upper right */
+  --aurora-2: rgba(215, 38, 61, 0.16); /* warm, near — lower left */
+  --aurora-3: rgba(72, 126, 214, 0.2); /* cool, mid — upper left */
+  --vignette: rgba(24, 40, 74, 0.19);
+  --mesh: rgba(40, 62, 104, 0.075);
+  --grain-url: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.22'/%3E%3C/svg%3E");
+
   --font-display: var(--font-sora), var(--font-noto-ge), "Noto Sans Georgian", sans-serif;
   --font-body: var(--font-inter), var(--font-noto-ge), "Noto Sans Georgian", system-ui, sans-serif;
+}
+
+/* ============================================================
+   DARK THEME
+   Applied by [data-theme="dark"] on <html>, which is set before first
+   paint by the inline script in layout.tsx (cookie, else OS preference).
+   Only tokens are redefined here — component rules stay theme-agnostic.
+   ============================================================ */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --paper: #131b2b; /* card / panel surface */
+  --bg: #090d17; /* page base, beneath the depth washes */
+  --ink: #eaeff8;
+  --ink-2: #bcc6d6;
+  --muted: #7f8a9f;
+  --line: rgba(255, 255, 255, 0.07);
+
+  --raise: #1b2434;
+  --raise-2: #161e2d;
+  --on-ink: #0b0f18;
+  --scrim: rgba(12, 17, 28, 0.88);
+
+  /* Accents are lifted for legibility on dark: the print-weight navy and
+     crimson both fall below contrast minimums against a near-black page. */
+  --red: #ff4d64;
+  --red-deep: #ff7183;
+  --red-soft: rgba(255, 77, 100, 0.14);
+
+  --blue: #7ba5ff;
+  --blue-deep: #a8c3ff;
+  --blue-soft: rgba(123, 165, 255, 0.14);
+
+  --gold: #e0b95f;
+  --amber: #e8b55c;
+  --amber-fill: #f5b301;
+  --ember: #ff8043;
+  --green: #35c07c;
+  --green-ink: #57d493;
+  --warm-tint: rgba(245, 179, 1, 0.07);
+
+  /* Shadows do little on a dark page — depth comes from the raised surface
+     and a hairline top highlight instead. */
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.28);
+  --shadow-hover: 0 2px 6px rgba(0, 0, 0, 0.45), 0 14px 34px rgba(0, 0, 0, 0.4);
+
+  /* Dark leans further into the "deep space" reading: a violet third bloom
+     between the navy and the red, and a much heavier vignette. */
+  --depth-base: linear-gradient(178deg, #131c2e 0%, #0c1220 42%, #080c16 76%, #05070d 100%);
+  --aurora-1: rgba(66, 112, 216, 0.3);
+  --aurora-2: rgba(215, 38, 61, 0.2);
+  --aurora-3: rgba(103, 66, 190, 0.22);
+  --vignette: rgba(0, 0, 0, 0.55);
+  --mesh: rgba(150, 180, 255, 0.05);
+  --grain-url: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.36'/%3E%3C/svg%3E");
 }
 
 /* Expose key tokens to Tailwind utilities (bg-background, text-foreground, etc.)
@@ -58,6 +157,82 @@ body {
   font-size: 15px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+/* --- depth layer 1: atmosphere ---
+   Fixed and over-sized (inset:-15%) so it can drift on scroll without ever
+   exposing an edge. Layer order below is top-to-bottom: the vignette sits
+   over the blooms, which sit over the base gradient. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -15%;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 120% 85% at 50% 42%, transparent 48%, var(--vignette) 100%),
+    radial-gradient(58% 48% at 84% 4%, var(--aurora-1), transparent 64%),
+    radial-gradient(52% 44% at 6% 88%, var(--aurora-2), transparent 66%),
+    radial-gradient(46% 40% at 16% 22%, var(--aurora-3), transparent 68%),
+    var(--depth-base);
+}
+
+/* --- depth layer 2: texture ---
+   A dot mesh gives the empty margins a sense of scale (something to judge
+   distance against), masked so it only shows where the page is emptiest and
+   never crowds the content column. Grain on top removes the plastic
+   flatness of pure gradients and hides banding on wide, low-contrast fades. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  /* Grain strength is baked into --grain-url per theme (a data-URI can't read
+     a custom property), so each theme tunes its own noise level. */
+  background-image:
+    radial-gradient(circle at center, var(--mesh) 1px, transparent 1px),
+    var(--grain-url);
+  background-size: 30px 30px, 180px 180px;
+  /* Fade the texture out behind the centre column, so it reads as distant
+     haze in the margins rather than a pattern laid over the content. */
+  -webkit-mask-image: radial-gradient(ellipse 92% 72% at 50% 32%, transparent 26%, #000 76%);
+  mask-image: radial-gradient(ellipse 92% 72% at 50% 32%, transparent 26%, #000 76%);
+}
+
+/* --- scroll parallax ---
+   The atmosphere drifts a little slower than the content, which is what
+   actually sells "space" while scrolling: the page moves through the scene
+   instead of sliding across a static backdrop. Progressive enhancement —
+   browsers without scroll-driven animations just get the static stack. */
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    body::before {
+      animation: depth-drift linear both;
+      animation-timeline: scroll(root block);
+      will-change: transform;
+    }
+  }
+}
+@keyframes depth-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(0, -7%, 0) scale(1.05);
+  }
+}
+/* Theme swap should feel like a light changing, not a page reload — but never
+   fight a user who has asked the OS to stop animating. */
+@media (prefers-reduced-motion: no-preference) {
+  body,
+  body::before,
+  .header,
+  .post,
+  .card,
+  .nav-item {
+    transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+  }
 }
 a {
   color: var(--blue);
@@ -76,35 +251,16 @@ button {
   border-radius: 4px;
 }
 
-/* ---------- signature: dual-flag ribbon ---------- */
-.flag-ribbon {
-  height: 4px;
-  width: 100%;
-  background: linear-gradient(
-    90deg,
-    var(--red) 0%,
-    var(--red) 33.3%,
-    #ffffff 33.3%,
-    #ffffff 50%,
-    var(--blue) 50%,
-    var(--blue) 100%
-  );
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 60;
-}
-
 /* ============================================================
    HEADER
    ============================================================ */
 .header {
   position: fixed;
-  top: 4px;
+  top: 0;
   left: 0;
   right: 0;
   z-index: 50;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--scrim);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line);
   height: 60px;
@@ -164,8 +320,8 @@ button {
   transition: border-color 0.15s, background 0.15s;
 }
 .search:hover {
-  border-color: #cdd3dd;
-  background: #fff;
+  border-color: color-mix(in srgb, var(--ink) 16%, var(--line));
+  background: var(--raise);
 }
 .search svg {
   flex-shrink: 0;
@@ -185,6 +341,36 @@ button {
   gap: 10px;
   flex-shrink: 0;
 }
+/* Theme switch. Both icons are always in the DOM; CSS picks the one that
+   describes the *other* theme (sun while dark, moon while light), so the
+   button needs no client state and can't mismatch on hydration. */
+.theme-toggle {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--ink-2);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.theme-toggle:hover {
+  background: var(--raise);
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--ink) 16%, var(--line));
+}
+.theme-toggle .icon-sun {
+  display: none;
+}
+[data-theme="dark"] .theme-toggle .icon-sun {
+  display: block;
+}
+[data-theme="dark"] .theme-toggle .icon-moon {
+  display: none;
+}
+
 .lang-toggle {
   display: flex;
   background: var(--bg);
@@ -221,8 +407,8 @@ button {
   color: var(--ink-2);
 }
 .btn-ghost:hover {
-  border-color: #c8cfdb;
-  background: #fff;
+  border-color: color-mix(in srgb, var(--ink) 16%, var(--line));
+  background: var(--raise);
 }
 .btn-primary {
   background: var(--red);
@@ -245,7 +431,7 @@ button {
 .shell {
   max-width: 1240px;
   margin: 0 auto;
-  padding: 84px 20px 96px;
+  padding: 80px 20px 96px;
   display: grid;
   grid-template-columns: 230px minmax(0, 1fr) 300px;
   gap: 24px;
@@ -431,8 +617,8 @@ button {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: #9a6a00;
-  background: color-mix(in srgb, #f5b301 22%, transparent);
+  color: var(--amber);
+  background: color-mix(in srgb, var(--amber-fill) 22%, transparent);
   border-radius: 999px;
   padding: 3px 9px;
 }
@@ -441,8 +627,8 @@ button {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: #1f4e9c;
-  background: color-mix(in srgb, #1f4e9c 14%, transparent);
+  color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 14%, transparent);
   border-radius: 999px;
   padding: 3px 9px;
 }
@@ -492,7 +678,7 @@ button {
 }
 .donate-already {
   font-weight: 700;
-  color: #9a6a00;
+  color: var(--amber);
   margin-top: 16px;
 }
 .donate-note {
@@ -502,7 +688,7 @@ button {
 }
 .ask-donor-tag {
   font-weight: 700;
-  color: #9a6a00;
+  color: var(--amber);
   margin-top: 8px;
 }
 .ask-soon {
@@ -552,8 +738,8 @@ button {
   margin-top: 18px;
 }
 .auth-ok {
-  background: color-mix(in srgb, #2e8b57 14%, transparent);
-  color: #1e6b40;
+  background: color-mix(in srgb, var(--green) 14%, transparent);
+  color: var(--green-ink);
   border-radius: var(--radius);
   padding: 10px 12px;
   font-size: 13px;
@@ -591,7 +777,7 @@ button {
 /* ---------- left nav ---------- */
 .sidenav {
   position: sticky;
-  top: 84px;
+  top: 80px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -605,29 +791,36 @@ button {
   color: var(--muted);
   padding: 14px 12px 6px;
 }
+/* Nav rows read as buttons: each one is a full-width pill with a real
+   (if barely-there) resting surface, so the column looks like a stack of
+   controls rather than a list of links. The active row is lifted — brighter
+   surface, hairline border, shadow — and switches to the brand red. */
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
+  gap: 11px;
+  padding: 10px 14px;
+  border-radius: 12px;
   color: var(--ink-2);
-  font-weight: 500;
-  border: none;
+  font-weight: 550;
+  border: 1px solid transparent;
   background: transparent;
   text-align: left;
   width: 100%;
   font-size: 14px;
-  transition: background 0.12s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
 }
 .nav-item:hover {
-  background: #fff;
+  background: color-mix(in srgb, var(--raise) 62%, transparent);
+  border-color: color-mix(in srgb, var(--line) 70%, transparent);
   text-decoration: none;
 }
 .nav-item.active {
-  background: var(--blue-soft);
-  color: var(--blue);
-  font-weight: 600;
+  background: var(--raise);
+  border-color: var(--line);
+  box-shadow: var(--shadow);
+  color: var(--red);
+  font-weight: 650;
 }
 .nav-item .dot {
   width: 8px;
@@ -643,16 +836,98 @@ button {
 .nav-item svg {
   flex-shrink: 0;
   color: var(--muted);
+  transition: color 0.15s;
+}
+.nav-item:hover svg {
+  color: var(--ink-2);
 }
 .nav-item.active svg {
-  color: var(--blue);
+  color: var(--red);
+}
+
+/* ---------- category chips ----------
+   Communities are compact wrapping chips rather than stacked rows: there are
+   enough of them that a vertical list dominates the column, and each one
+   carries its own accent color (category-style.ts) which reads far better as
+   a tinted pill than as a dot. The accent arrives as --cat, set inline. */
+.cat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 2px 2px 0;
+}
+.cat-chip {
+  --cat: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  /* Text leans hard toward --ink so pale accents (orange, teal) still clear
+     contrast on their own tint; the fill and border carry the color identity. */
+  color: color-mix(in srgb, var(--cat) 48%, var(--ink));
+  background: color-mix(in srgb, var(--cat) 13%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cat) 26%, transparent);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.cat-chip:hover {
+  background: color-mix(in srgb, var(--cat) 22%, transparent);
+  border-color: color-mix(in srgb, var(--cat) 42%, transparent);
+  text-decoration: none;
+}
+.cat-chip.active {
+  background: color-mix(in srgb, var(--cat) 30%, transparent);
+  border-color: color-mix(in srgb, var(--cat) 60%, transparent);
+  color: color-mix(in srgb, var(--cat) 84%, var(--ink));
+}
+.cat-chip .lock {
+  color: var(--gold);
+  font-size: 10px;
+}
+/* On dark the tints sit on near-black, so both fill and text need more
+   presence than the light-mode mix gives. */
+/* On dark, --ink is near-white, so the same mix reads as a pale tint of the
+   accent — bright enough to pass contrast while keeping each category's hue. */
+[data-theme="dark"] .cat-chip {
+  color: color-mix(in srgb, var(--cat) 50%, var(--ink));
+  background: color-mix(in srgb, var(--cat) 17%, transparent);
+  border-color: color-mix(in srgb, var(--cat) 32%, transparent);
+}
+[data-theme="dark"] .cat-chip:hover {
+  background: color-mix(in srgb, var(--cat) 27%, transparent);
+}
+[data-theme="dark"] .cat-chip.active {
+  background: color-mix(in srgb, var(--cat) 34%, transparent);
+  color: color-mix(in srgb, var(--cat) 40%, var(--ink));
+}
+/* "+ all topics" — a chip that reads as an affordance, not a category. */
+.cat-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+  background: transparent;
+  border: 1px dashed var(--line);
+  transition: color 0.15s, border-color 0.15s;
+}
+.cat-more:hover {
+  color: var(--ink-2);
+  border-color: color-mix(in srgb, var(--ink) 22%, var(--line));
+  text-decoration: none;
 }
 
 /* ---------- feed ---------- */
 .feed {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--feed-gap);
   min-width: 0;
 }
 
@@ -708,7 +983,7 @@ button {
   gap: 3px;
   font-size: 11px;
   font-weight: 600;
-  color: #9a6a00;
+  color: var(--amber);
   background: color-mix(in srgb, var(--gold) 22%, transparent);
   border-radius: 999px;
   padding: 1px 8px;
@@ -740,7 +1015,7 @@ button {
 }
 .composer input:focus {
   border-color: var(--blue);
-  background: #fff;
+  background: var(--raise);
 }
 
 .feed-tabs {
@@ -761,13 +1036,13 @@ button {
   gap: 6px;
 }
 .tab:hover {
-  background: #fff;
+  background: var(--raise);
   border-color: var(--line);
   text-decoration: none;
 }
 .tab.active {
   background: var(--ink);
-  color: #fff;
+  color: var(--on-ink);
 }
 .feed-tabs .spacer {
   flex: 1;
@@ -780,7 +1055,7 @@ button {
   font-size: 13px;
   font-weight: 600;
   color: var(--ink-2);
-  background: #fff;
+  background: var(--raise);
 }
 
 /* ---------- post card ---------- */
@@ -801,12 +1076,12 @@ button {
   gap: 2px;
   padding: 16px 0;
   border-left: 1px solid var(--line);
-  background: #fbfcfd;
+  background: var(--raise-2);
 }
 .vote-btn {
   border: none;
   background: transparent;
-  color: #9aa1ad;
+  color: var(--muted);
   border-radius: 8px;
   width: 30px;
   height: 28px;
@@ -820,14 +1095,14 @@ button {
   color: var(--blue);
 }
 .vote-btn.down:hover {
-  background: color-mix(in srgb, #e8590c 14%, transparent);
-  color: #e8590c;
+  background: color-mix(in srgb, var(--ember) 14%, transparent);
+  color: var(--ember);
 }
 .vote-btn.voted {
   color: var(--blue);
 }
 .vote-btn.down.voted {
-  color: #e8590c;
+  color: var(--ember);
 }
 .vote-count {
   font-size: 13px;
@@ -839,7 +1114,7 @@ button {
 }
 
 .post-body {
-  padding: 14px 18px 12px;
+  padding: var(--card-pad);
   min-width: 0;
 }
 .post-meta {
@@ -879,7 +1154,7 @@ button {
   border: 1px solid var(--line);
 }
 .post-meta .sep {
-  color: #cfd4dd;
+  color: color-mix(in srgb, var(--muted) 45%, transparent);
 }
 .pin {
   color: var(--red);
@@ -892,7 +1167,7 @@ button {
 .post-title {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 16.5px;
+  font-size: var(--title-size);
   line-height: 1.35;
   letter-spacing: -0.01em;
   color: var(--ink);
@@ -948,7 +1223,7 @@ button {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 8px 12px;
-  background: #fffdf3;
+  background: var(--warm-tint);
 }
 .tier-box .checkbox-row {
   margin: 0;
@@ -1006,7 +1281,7 @@ button {
   color: var(--red);
 }
 .mod-bar .action:hover:not(:disabled) {
-  background: #fff;
+  background: var(--raise);
 }
 .mod-action {
   color: var(--red) !important;
@@ -1577,7 +1852,7 @@ button {
 /* ---------- right rail ---------- */
 .rail {
   position: sticky;
-  top: 84px;
+  top: 80px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -1590,7 +1865,7 @@ button {
   overflow: hidden;
 }
 .card-pad {
-  padding: 18px;
+  padding: var(--pad-card);
 }
 .card h3 {
   font-family: var(--font-display);
@@ -1685,7 +1960,7 @@ button {
   border: 1px solid var(--blue);
   border-radius: 999px;
   padding: 3px 12px;
-  background: #fff;
+  background: var(--raise);
 }
 .comm .join:hover {
   background: var(--blue-soft);
@@ -1751,7 +2026,7 @@ button {
   font-weight: 600;
 }
 .ask-ai:hover {
-  border-color: #c8cfdb;
+  border-color: color-mix(in srgb, var(--ink) 16%, var(--line));
 }
 .ask-ai .spark {
   color: var(--red);
@@ -1836,7 +2111,7 @@ button {
 }
 .input:focus {
   border-color: var(--blue);
-  background: #fff;
+  background: var(--raise);
 }
 .input[aria-invalid="true"] {
   border-color: var(--red);
@@ -1852,7 +2127,7 @@ button {
 .auth-alert {
   background: var(--red-soft);
   color: var(--red-deep);
-  border: 1px solid #f3c7cf;
+  border: 1px solid color-mix(in srgb, var(--red) 35%, var(--line));
   border-radius: 10px;
   padding: 10px 12px;
   font-size: 13px;
@@ -1939,7 +2214,7 @@ button {
   font-size: 14px;
 }
 .rte-btn:hover {
-  background: #fff;
+  background: var(--raise);
 }
 .rte-btn.active {
   background: var(--blue-soft);
@@ -2062,7 +2337,7 @@ button {
 .create-wrap {
   max-width: 760px;
   margin: 0 auto;
-  padding: 84px 20px 96px;
+  padding: 80px 20px 96px;
 }
 .create-title-input {
   width: 100%;
@@ -2290,7 +2565,7 @@ button {
   left: 0;
   right: 0;
   z-index: 50;
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--scrim);
   backdrop-filter: blur(12px);
   border-top: 1px solid var(--line);
   padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
@@ -2340,10 +2615,21 @@ button {
     display: none;
   }
 }
+
+/* Pages that render no right rail (the tier pages) opt out of the rail column,
+   otherwise the grid reserves 300px for a column that is never filled. */
+.shell-wide {
+  grid-template-columns: 230px minmax(0, 1fr);
+}
+@media (max-width: 1080px) {
+  .shell-wide {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 @media (max-width: 840px) {
   .shell {
     grid-template-columns: minmax(0, 1fr);
-    padding-top: 76px;
+    padding-top: 72px;
   }
   .rail {
     display: none;
@@ -2479,15 +2765,15 @@ a.biz-card:hover {
 }
 
 .biz-verified {
-  color: #1f9d55;
+  color: var(--green-ink);
   font-weight: 800;
 }
 .biz-featured {
   font-family: var(--font-body);
   font-size: 10.5px;
   font-weight: 700;
-  color: #9a6a00;
-  background: color-mix(in srgb, #f5b301 22%, transparent);
+  color: var(--amber);
+  background: color-mix(in srgb, var(--amber-fill) 22%, transparent);
   border-radius: 999px;
   padding: 2px 7px;
 }
@@ -2500,7 +2786,7 @@ a.biz-card:hover {
   font-size: 13px;
 }
 .stars-on {
-  color: #f5b301;
+  color: var(--amber-fill);
   letter-spacing: 1px;
 }
 .stars-off {
@@ -2661,7 +2947,7 @@ a.biz-card:hover {
   padding: 0;
 }
 .star-pick.on {
-  color: #f5b301;
+  color: var(--amber-fill);
 }
 .review-form .btn,
 .job-form .btn {
@@ -2777,7 +3063,7 @@ a.biz-card:hover {
   color: var(--line);
 }
 .bar-pin.on {
-  color: #f5b301;
+  color: var(--amber-fill);
 }
 .bar-row-main {
   min-width: 0;
@@ -3153,7 +3439,7 @@ a.biz-card:hover {
   max-width: 280px;
 }
 .dm-msg.mine .dm-post-ref {
-  background: color-mix(in srgb, #fff 88%, var(--blue));
+  background: color-mix(in srgb, var(--paper) 88%, var(--blue));
 }
 .dm-post-ref-cat {
   font-size: 11px;
@@ -3423,14 +3709,14 @@ a.biz-card:hover {
   padding: 8px 14px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: var(--surface, #fff);
+  background: var(--paper);
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
-  color: var(--brand, #1d4ed8);
+  color: var(--blue);
 }
 .ai-summary-btn:hover:not(:disabled) {
-  background: var(--bg-soft, #f4f6fb);
+  background: var(--bg);
 }
 .ai-summary-btn:disabled {
   opacity: 0.6;
@@ -3440,12 +3726,12 @@ a.biz-card:hover {
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 14px 16px;
-  background: linear-gradient(180deg, rgba(29, 78, 216, 0.05), transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--blue) 7%, transparent), transparent);
 }
 .ai-summary-head {
   font-weight: 700;
   font-size: 13px;
-  color: var(--brand, #1d4ed8);
+  color: var(--blue);
   margin-bottom: 6px;
 }
 .ai-summary-text {
@@ -3461,7 +3747,7 @@ a.biz-card:hover {
   gap: 14px;
 }
 .ask-intro {
-  color: var(--muted, #667);
+  color: var(--muted);
   margin: 0;
 }
 .ask-turn {
@@ -3472,7 +3758,7 @@ a.biz-card:hover {
 .ask-q {
   align-self: flex-end;
   max-width: 85%;
-  background: var(--brand, #1d4ed8);
+  background: var(--blue);
   color: #fff;
   padding: 8px 14px;
   border-radius: 16px 16px 4px 16px;
@@ -3481,7 +3767,7 @@ a.biz-card:hover {
 .ask-a {
   align-self: flex-start;
   max-width: 95%;
-  background: var(--bg-soft, #f4f6fb);
+  background: var(--bg);
   padding: 10px 14px;
   border-radius: 16px 16px 16px 4px;
   line-height: 1.6;
@@ -3507,7 +3793,7 @@ a.biz-card:hover {
 }
 .ask-disclaimer {
   font-size: 12px;
-  color: var(--muted, #889);
+  color: var(--muted);
   margin: 0;
 }
 
@@ -3522,20 +3808,20 @@ a.biz-card:hover {
   padding: 9px 16px;
   font-weight: 600;
   font-size: 14px;
-  color: var(--muted, #667);
+  color: var(--muted);
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
   text-decoration: none;
 }
 .admin-tab:hover {
-  color: var(--text, #111);
+  color: var(--ink);
 }
 .admin-tab.active {
-  color: var(--brand, #1d4ed8);
-  border-bottom-color: var(--brand, #1d4ed8);
+  color: var(--blue);
+  border-bottom-color: var(--blue);
 }
 .admin-link {
-  color: var(--brand, #1d4ed8);
+  color: var(--blue);
   font-weight: 600;
   text-decoration: none;
 }
@@ -3546,12 +3832,12 @@ a.biz-card:hover {
   opacity: 0.6;
 }
 .sub-badge {
-  color: var(--muted, #889);
+  color: var(--muted);
   font-size: 12px;
   font-weight: 600;
 }
 .usage-over {
-  color: #d11;
+  color: var(--red);
   font-weight: 700;
 }
 
@@ -3567,7 +3853,7 @@ a.biz-card:hover {
   padding: 16px;
 }
 .crop-modal {
-  background: var(--paper, #fff);
+  background: var(--paper);
   border-radius: 16px;
   width: min(560px, 100%);
   max-height: 92vh;
@@ -3597,14 +3883,14 @@ a.biz-card:hover {
   padding: 5px 12px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: var(--paper, #fff);
+  background: var(--paper);
   font-weight: 600;
   font-size: 13px;
   cursor: pointer;
 }
 .crop-aspect.active {
-  background: var(--brand, #1d4ed8);
-  border-color: var(--brand, #1d4ed8);
+  background: var(--blue);
+  border-color: var(--blue);
   color: #fff;
 }
 .crop-zoom {
@@ -3619,4 +3905,515 @@ a.biz-card:hover {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+/* ============================================================
+   PAID TIERS — the "მეტი" hub (/[lang]/more) and each tier page
+   ============================================================ */
+.supporter-badge {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--green-ink);
+  background: color-mix(in srgb, var(--green) 16%, transparent);
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+
+.more-hero {
+  margin-bottom: 4px;
+}
+.more-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.more-sub {
+  color: var(--muted);
+  margin-top: 6px;
+  max-width: 62ch;
+}
+.more-note {
+  color: var(--muted);
+  font-size: 12.5px;
+  text-align: center;
+  margin-top: 4px;
+}
+
+/* Three abreast on the hub; the grid collapses before the cards get too
+   narrow to read the perk list. */
+.tier-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+@media (max-width: 1080px) {
+  .tier-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* --tier is the per-tier accent, set inline from the tier definition. */
+.tier-card {
+  --tier: var(--blue);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--tier);
+  border-radius: var(--radius);
+  padding: 18px 16px 16px;
+  box-shadow: var(--shadow);
+}
+.tier-card.featured {
+  border-color: color-mix(in srgb, var(--tier) 40%, var(--line));
+  box-shadow: var(--shadow-hover);
+}
+.tier-card.held {
+  border-color: color-mix(in srgb, var(--green) 45%, var(--line));
+}
+.tier-flag {
+  position: absolute;
+  top: -1px;
+  right: 12px;
+  transform: translateY(-50%);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--on-ink);
+  background: var(--tier);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+.tier-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.tier-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+.tier-name {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.tier-price {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+.tier-price strong {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--tier);
+}
+.tier-per {
+  color: var(--muted);
+  font-size: 13px;
+}
+.tier-blurb {
+  color: var(--ink-2);
+  font-size: 13.5px;
+}
+.tier-perks {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 2px 0 auto;
+  font-size: 13.5px;
+}
+.tier-perks li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--ink-2);
+}
+.tier-tick {
+  color: var(--tier);
+  font-weight: 800;
+  flex-shrink: 0;
+  line-height: 1.45;
+}
+/* An excluded perk is shown, not hidden: for the entry bracket "no AI" is a
+   defining property, so it needs to be legible rather than merely missing. */
+.tier-perk-off {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--muted) 55%, transparent);
+}
+.tier-perk-off .tier-tick {
+  color: var(--muted);
+  text-decoration: none;
+}
+.tier-cta {
+  margin-top: 12px;
+  text-align: center;
+}
+.tier-cta:hover {
+  text-decoration: none;
+}
+.tier-held {
+  margin-top: 12px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--green-ink);
+}
+
+/* --- single tier page --- */
+.tier-back {
+  align-self: flex-start;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.tier-back:hover {
+  color: var(--ink-2);
+  text-decoration: none;
+}
+.tier-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.tier-pitch {
+  color: var(--ink-2);
+  max-width: 66ch;
+}
+.tier-note {
+  color: var(--muted);
+  font-size: 12.5px;
+  text-align: center;
+}
+
+/* ---------- admin: paid packages ("მეტი") ---------- */
+.admin-sub {
+  color: var(--admin-fg-dim, var(--muted));
+  font-size: 13px;
+  margin-top: 2px;
+}
+.admin-section {
+  margin-top: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.admin-section-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+}
+.admin-table-wrap {
+  overflow-x: auto; /* the package table is wide; never scroll the page body */
+}
+/* Deactivated rows stay readable but visibly out of play. */
+.row-off {
+  opacity: 0.5;
+}
+.pkg-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pkg-dot {
+  width: 4px;
+  align-self: stretch;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.pkg-name {
+  font-weight: 700;
+}
+.pkg-tag {
+  margin-left: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  opacity: 0.7;
+}
+.pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  white-space: nowrap;
+}
+.pill-live {
+  color: var(--green-ink);
+}
+.pill-off {
+  opacity: 0.6;
+}
+/* Two columns on wide screens, stacking the EN/KA pairs side by side. */
+.pkg-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 900px) {
+  .pkg-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.pkg-form {
+  max-width: 900px;
+}
+.pkg-preview {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 18px;
+}
+.pkg-preview s {
+  opacity: 0.55;
+  font-size: 15px;
+}
+.perk-picker {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.perk-picker li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 6px 8px;
+  border-radius: 8px;
+}
+.perk-picker li.on {
+  background: color-mix(in srgb, currentColor 7%, transparent);
+}
+.perk-excl {
+  font-size: 12px;
+  opacity: 0.8;
+}
+.feature-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  padding-top: 8px;
+}
+.feature-form .field {
+  min-width: 200px;
+  flex: 1;
+}
+
+/* ---------- public: discounted price on a package card ---------- */
+.tier-price-was {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.tier-deal {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: -4px;
+}
+.tier-deal-badge {
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: var(--on-ink);
+  background: var(--tier);
+}
+.tier-deal-until {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ---------- appearance settings (self-only customization) ---------- */
+.appearance-card {
+  margin-top: 16px;
+}
+.appearance-head {
+  margin-bottom: 14px;
+}
+.appearance-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.appearance-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--ink-2);
+  display: block;
+  margin-bottom: 7px;
+}
+.appearance-upsell {
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  font-size: 13.5px;
+  margin-bottom: 14px;
+}
+.swatch-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+.swatch {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  /* The ring sits outside the colour so the swatch reads true. */
+  box-shadow: 0 0 0 1px var(--line);
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.swatch:hover:not(:disabled) {
+  transform: scale(1.08);
+}
+.swatch.active {
+  box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--ink);
+}
+.swatch:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+/* The custom swatch wraps a colour input; hide the native control. */
+.swatch-custom {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.swatch-custom input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  border: none;
+  padding: 0;
+}
+.choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.choice {
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.choice:hover:not(:disabled) {
+  background: var(--raise);
+}
+.choice.active {
+  background: var(--red-soft);
+  border-color: color-mix(in srgb, var(--red) 40%, transparent);
+  color: var(--red);
+}
+.choice:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* ---------- AI packages (admin) ---------- */
+.ai-pkg-grid {
+  display: grid;
+  gap: 14px;
+}
+.ai-pkg-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+/* Derived figures: the cost consequence of the numbers above, before saving. */
+.ai-derived {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+.ai-derived strong {
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--ink);
+}
+
+/* ---------- AI allowance (user-facing) ---------- */
+.ai-allowance {
+  margin-bottom: 14px;
+}
+.ai-allowance-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.ai-allowance-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.ai-allowance-pct {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+}
+.ai-allowance-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.ai-allowance-bar span {
+  display: block;
+  height: 100%;
+  background: var(--blue);
+  transition: width 0.3s ease;
+}
+.ai-allowance.out .ai-allowance-bar span {
+  background: var(--ember);
+}
+.ai-allowance-note {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
 }

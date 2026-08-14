@@ -156,3 +156,107 @@ export const ReviewSchema = z.object({
   rating: z.coerce.number().int().min(1, { error: "Pick a rating." }).max(5),
   body: z.string().trim().max(2000).optional(),
 });
+
+// --- Paid packages ("მეტი") ----------------------------------------------
+// Prices are entered in whole currency units in the admin form and stored as
+// cents, so a price is never subject to float rounding.
+const dollarsToCents = z.coerce
+  .number()
+  .min(0, { error: "Price cannot be negative." })
+  .transform((v) => Math.round(v * 100));
+
+// datetime-local inputs submit "" when cleared; treat that as "no date".
+const optionalDate = z
+  .string()
+  .trim()
+  .optional()
+  .transform((v) => (v ? new Date(v) : undefined))
+  .refine((d) => d === undefined || !Number.isNaN(d.getTime()), { error: "Invalid date." });
+
+export const PackageSchema = z
+  .object({
+    nameEn: z.string().min(1, { error: "English name is required." }).trim(),
+    nameKa: z.string().min(1, { error: "Georgian name is required." }).trim(),
+    blurbEn: z.string().min(1, { error: "English short description is required." }).trim(),
+    blurbKa: z.string().min(1, { error: "Georgian short description is required." }).trim(),
+    pitchEn: z.string().trim().max(2000).default(""),
+    pitchKa: z.string().trim().max(2000).default(""),
+    icon: z.string().trim().max(8).optional(),
+    accent: hexColor.optional(),
+    priceCents: dollarsToCents,
+    discountType: z.enum(["PERCENT", "FIXED"]).optional(),
+    discountPercent: z.coerce
+      .number()
+      .int()
+      .min(1, { error: "Discount must be at least 1%." })
+      .max(99, { error: "Use at most 99%." })
+      .optional(),
+    discountPriceCents: dollarsToCents.optional(),
+    discountStartsAt: optionalDate,
+    discountEndsAt: optionalDate,
+    isActive: z.boolean().optional(),
+    featured: z.boolean().optional(),
+    sortOrder: z.coerce.number().int().optional(),
+  })
+  // A discount is only meaningful with its matching value, and an end date
+  // before the start date would silently never apply.
+  .refine((d) => d.discountType !== "PERCENT" || d.discountPercent != null, {
+    error: "Enter a discount percentage.",
+    path: ["discountPercent"],
+  })
+  .refine((d) => d.discountType !== "FIXED" || d.discountPriceCents != null, {
+    error: "Enter the discounted price.",
+    path: ["discountPriceCents"],
+  })
+  .refine((d) => d.discountType !== "FIXED" || d.discountPriceCents == null || d.discountPriceCents < d.priceCents, {
+    error: "The promo price must be lower than the normal price.",
+    path: ["discountPriceCents"],
+  })
+  .refine(
+    (d) => !d.discountStartsAt || !d.discountEndsAt || d.discountStartsAt < d.discountEndsAt,
+    { error: "The end date must be after the start date.", path: ["discountEndsAt"] },
+  );
+
+export const FeatureSchema = z.object({
+  nameEn: z.string().min(1, { error: "English name is required." }).trim(),
+  nameKa: z.string().min(1, { error: "Georgian name is required." }).trim(),
+  // Optional on create (derived from the name) and ignored on update, since
+  // gating references it.
+  key: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z][A-Za-z0-9_]*$/, { error: "Use letters, digits and underscores." })
+    .optional(),
+  isActive: z.boolean().optional(),
+  sortOrder: z.coerce.number().int().optional(),
+});
+
+// --- Appearance preferences -------------------------------------------------
+export const AppearanceSchema = z.object({
+  themePalette: z.string().trim().min(1),
+  // Only meaningful when the palette is "custom"; validated regardless so a
+  // stale value can never reach the stylesheet.
+  themeAccent: hexColor.optional(),
+  themeDensity: z.enum(["comfortable", "compact"]),
+  themeRadius: z.enum(["rounded", "soft", "square"]),
+  themeDepth: z.enum(["full", "subtle", "flat"]),
+});
+
+// --- AI packages ------------------------------------------------------------
+export const AiPackageSchema = z.object({
+  nameEn: z.string().min(1, { error: "English name is required." }).trim(),
+  nameKa: z.string().min(1, { error: "Georgian name is required." }).trim(),
+  // Empty string = granted to nobody (the AI-User placeholder ships this way).
+  tier: z.enum(["SUPPORTER", "DONOR", "PRO"]).optional(),
+  isActive: z.boolean().optional(),
+  // Entered in dollars, stored as micro-USD.
+  monthlyBudgetMicroUsd: z.coerce
+    .number()
+    .min(0, { error: "Cannot be negative." })
+    .transform((v) => Math.round(v * 1_000_000)),
+  rolloverPercent: z.coerce
+    .number()
+    .int()
+    .min(0, { error: "Cannot be negative." })
+    .max(100, { error: "Roll over at most 100% of the unused amount." }),
+});

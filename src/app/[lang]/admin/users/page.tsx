@@ -16,7 +16,7 @@ export default async function AdminUsersPage({ params }: PageProps<"/[lang]/admi
     db.user
       .findMany({
         orderBy: { createdAt: "desc" },
-        select: { id: true, forumName: true, email: true, role: true, status: true, isDonor: true, isPro: true, canAccessAdmin: true },
+        select: { id: true, forumName: true, email: true, role: true, status: true, isDonor: true, isPro: true, isSupporter: true, canAccessAdmin: true },
         take: 200,
       })
       .catch(() => []),

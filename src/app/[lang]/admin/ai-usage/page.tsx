@@ -6,6 +6,16 @@ import { requireRole } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { isAiConfigured } from "@/lib/ai";
 import { billingPeriodStart } from "@/lib/subscriptions";
+import {
+  getPackages,
+  resolvePackage,
+  project,
+  ceilingFor,
+  maxCarryFor,
+  seedAiPackages,
+  aiPackagesNeedSeeding,
+} from "@/lib/ai-credits";
+import { AiPackageAdmin, type AdminAiPackage } from "@/components/admin/AiPackageAdmin";
 import type { Dictionary } from "@/i18n/dictionaries";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +37,11 @@ export default async function AdminAiUsagePage({
   const base = `/${lang}/admin`;
 
   const sp = await searchParams;
-  const tab = sp.tab === "per-user" ? "per-user" : "overview";
+  const tab =
+    sp.tab === "per-user" ? "per-user" : sp.tab === "packages" ? "packages" : "overview";
+
+  // First visit creates the three AI packages (AI-User ships switched off).
+  if (await aiPackagesNeedSeeding()) await seedAiPackages();
 
   return (
     <div>
@@ -48,9 +62,21 @@ export default async function AdminAiUsagePage({
         >
           {t.aiTabPerUser}
         </Link>
+        <Link
+          href={`${base}/ai-usage?tab=packages`}
+          className={`admin-tab${tab === "packages" ? " active" : ""}`}
+        >
+          {t.ai.tabPackages}
+        </Link>
       </div>
 
-      {tab === "overview" ? <Overview t={t} /> : <PerUser t={t} lang={lang} />}
+      {tab === "overview" ? (
+        <Overview t={t} />
+      ) : tab === "packages" ? (
+        <Packages dict={dict} lang={lang} />
+      ) : (
+        <PerUser t={t} lang={lang} />
+      )}
     </div>
   );
 }
@@ -201,22 +227,59 @@ async function PerUser({ t, lang }: { t: Dictionary["admin"]; lang: string }) {
 
   const tierLabel = (tier: string) => (tier === "PRO" ? t.aiTierPro : t.aiTierDonor);
 
-  const rows = subs.map((s) => {
-    const active = s.status === "ACTIVE";
+  // Live bucket per user: allocation, balance and rolling spend. Read-only —
+  // accrual is projected here, not written.
+  const aiPackages = await getPackages();
+  const [balanceRows, tierUsers] = await Promise.all([
+    db.aiBalance.findMany({ where: { userId: { in: userIds } } }),
+    db.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, isPro: true, isDonor: true, isSupporter: true },
+    }),
+  ]);
+  const balanceOf = new Map(balanceRows.map((b) => [b.userId, b]));
+  const flagsOf = new Map(tierUsers.map((u) => [u.id, u]));
+
+  function bucketFor(userId: string) {
+    const flags = flagsOf.get(userId);
+    if (!flags) return null;
+    const pkg = resolvePackage(flags, aiPackages);
+    if (!pkg) return null;
+    const stored = balanceOf.get(userId) ?? {
+      balanceMicroUsd: maxCarryFor(pkg),
+      lastRefillAt: now,
+      packageKey: pkg.key,
+      spentThisPeriodMicroUsd: 0,
+      carriedInMicroUsd: maxCarryFor(pkg),
+      periodStartedAt: now,
+    };
+    const p = project(stored, pkg, now);
+    const ceiling = ceilingFor(pkg);
+    return {
+      allocation: pkg.monthlyBudgetMicroUsd,
+      balance: p.balance,
+      allocatedPct: ceiling > 0 ? (p.balance / ceiling) * 100 : 0,
+      spent: p.spent,
+      spentPct:
+        pkg.monthlyBudgetMicroUsd > 0 ? (p.spent / pkg.monthlyBudgetMicroUsd) * 100 : 0,
+    };
+  }
+
+  const rows = subs.map((sub) => {
+    const active = sub.status === "ACTIVE";
     // Active → current billing period to now. Canceled → its final period.
-    const windowEnd = active ? now : s.endedAt ?? now;
-    const windowStart = billingPeriodStart(s.startedAt, windowEnd);
+    const windowEnd = active ? now : (sub.endedAt ?? now);
+    const windowStart = billingPeriodStart(sub.startedAt, windowEnd);
     const spentMicro = usage.reduce(
       (sum, u) =>
-        u.userId === s.userId && u.createdAt >= windowStart && u.createdAt <= windowEnd
+        u.userId === sub.userId && u.createdAt >= windowStart && u.createdAt <= windowEnd
           ? sum + u.costMicroUsd
           : sum,
       0,
     );
-    const spentUsd = spentMicro / 1_000_000;
-    const paidUsd = s.priceCents / 100;
-    const pct = paidUsd > 0 ? (spentUsd / paidUsd) * 100 : 0;
-    return { s, active, spentMicro, pct };
+    const paidUsd = sub.priceCents / 100;
+    const pct = paidUsd > 0 ? (spentMicro / 1_000_000 / paidUsd) * 100 : 0;
+    return { s: sub, active, spentMicro, pct };
   });
 
   return (
@@ -230,6 +293,11 @@ async function PerUser({ t, lang }: { t: Dictionary["admin"]; lang: string }) {
             <th>{t.aiPaid}</th>
             <th>{t.aiSpent}</th>
             <th>{t.aiUsagePct}</th>
+            <th>{t.ai.colAllocation}</th>
+            <th>{t.ai.colBalance}</th>
+            <th>{t.ai.colAllocatedPct}</th>
+            <th>{t.ai.colCreditSpend}</th>
+            <th>{t.ai.colSpendPct}</th>
           </tr>
         </thead>
         <tbody>
@@ -250,10 +318,59 @@ async function PerUser({ t, lang }: { t: Dictionary["admin"]; lang: string }) {
               <td>{usdCents(s.priceCents)}</td>
               <td>{usd(spentMicro)}</td>
               <td className={pct > 100 ? "usage-over" : undefined}>{pct.toFixed(0)}%</td>
+              {(() => {
+                const bkt = bucketFor(s.userId);
+                if (!bkt) {
+                  return (
+                    <td colSpan={5} className="muted-sm">
+                      {t.ai.noPackage}
+                    </td>
+                  );
+                }
+                return (
+                  <>
+                    <td>{usd(bkt.allocation)}</td>
+                    <td>{usd(Math.max(0, bkt.balance))}</td>
+                    <td>{bkt.allocatedPct.toFixed(0)}%</td>
+                    <td>{usd(bkt.spent)}</td>
+                    <td className={bkt.spentPct > 100 ? "usage-over" : undefined}>
+                      {bkt.spentPct.toFixed(0)}%
+                    </td>
+                  </>
+                );
+              })()}
             </tr>
           ))}
         </tbody>
       </table>
     </div>
   );
+}
+
+async function Packages({ dict, lang }: { dict: Dictionary; lang: "en" | "ka" }) {
+  const rows = await db.aiPackage.findMany({ orderBy: { sortOrder: "asc" } });
+
+  // Holder counts come from the tier each package is mapped to, since that is
+  // what resolvePackage actually keys on.
+  const [pro, donor, supporter] = await Promise.all([
+    db.user.count({ where: { isPro: true } }),
+    db.user.count({ where: { isDonor: true, isPro: false } }),
+    db.user.count({ where: { isSupporter: true, isDonor: false, isPro: false } }),
+  ]);
+  const holdersFor = (tier: string | null) =>
+    tier === "PRO" ? pro : tier === "DONOR" ? donor : tier === "SUPPORTER" ? supporter : 0;
+
+  const packages: AdminAiPackage[] = rows.map((r) => ({
+    id: r.id,
+    key: r.key,
+    nameEn: r.nameEn,
+    nameKa: r.nameKa,
+    tier: r.tier,
+    isActive: r.isActive,
+    monthlyBudgetMicroUsd: r.monthlyBudgetMicroUsd,
+    rolloverPercent: r.rolloverPercent,
+    holders: r.isActive ? holdersFor(r.tier) : 0,
+  }));
+
+  return <AiPackageAdmin packages={packages} dict={dict} locale={lang} />;
 }

@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { AskAiChat } from "@/components/AskAiChat";
+import { AiAllowance } from "@/components/AiAllowance";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +41,8 @@ export default async function AskPage({ params }: PageProps<"/[lang]/ask">) {
             <p className="ask-donor-tag">💛 {t.donorAccess}</p>
           </div>
           <div className="card card-pad" style={{ marginTop: 16 }}>
+            {/* Usage % and refill time only — no credit counts or costs. */}
+            <AiAllowance user={user} dict={dict} locale={lang} />
             <AskAiChat dict={dict} />
           </div>
         </main>
