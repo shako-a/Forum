@@ -5,6 +5,7 @@ import { categoryName, adTitle } from "@/i18n/localize";
 import { categoryStyle } from "@/lib/category-style";
 import { getForumStats } from "@/lib/forum-data";
 import { pickRotatingAd } from "@/lib/ad-rotation";
+import { SidebarAdImage } from "@/components/SidebarAdImage";
 import type { Category, AdCard } from "@/generated/prisma/client";
 
 // Compact count: 4 → "4", 12400 → "12.4k".
@@ -15,21 +16,12 @@ function fmtCount(n: number): string {
 // A sidebar ad: video takes priority over image; optional title + click-through.
 function AdMediaCard({ ad, locale }: { ad: AdCard; locale: Locale }) {
   const title = adTitle(ad, locale);
+  // Callers only pass ads that have media (see RightSidebar), so one of these
+  // is always set; the client wrapper handles a URL that fails to load.
+  const mediaSrc = ad.videoUrl ?? ad.imageUrl ?? "";
   const inner = (
     <>
-      {ad.videoUrl ? (
-        <video
-          className="sidebar-ad-media"
-          src={ad.videoUrl}
-          muted
-          loop
-          autoPlay
-          playsInline
-        />
-      ) : ad.imageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img className="sidebar-ad-media" src={ad.imageUrl} alt="" />
-      ) : null}
+      <SidebarAdImage src={mediaSrc} isVideo={!!ad.videoUrl} />
       {title && (
         <div className="sidebar-ad-title" style={{ color: ad.titleColor, fontSize: ad.titleSize }}>
           {title}
@@ -60,8 +52,12 @@ export async function RightSidebar({
   ads: AdCard[];
 }) {
   const stats = await getForumStats();
+  // An ad with neither an image nor a video would render as a blank card, so
+  // only rotate through ads that actually have media; the rest fall through to
+  // the popular-communities card below.
+  const usableAds = ads.filter((a) => a.imageUrl || a.videoUrl);
   // Show one sidebar ad per view, rotating in position order across refreshes.
-  const rotatingAd = pickRotatingAd(ads);
+  const rotatingAd = pickRotatingAd(usableAds);
   return (
     <aside className="rail">
       {/* Welcome / hero card */}
