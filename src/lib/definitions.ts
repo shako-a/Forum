@@ -38,6 +38,21 @@ export const LoginFormSchema = z.object({
   password: z.string().min(1, { error: "Password is required." }),
 });
 
+// Password recovery.
+export const RequestResetSchema = z.object({
+  email: z.email({ error: "Please enter a valid email." }).trim(),
+});
+
+export const ResetPasswordSchema = z.object({
+  token: z.string().min(1),
+  password: z
+    .string()
+    .min(8, { error: "Be at least 8 characters long." })
+    .regex(/[a-zA-Z]/, { error: "Contain at least one letter." })
+    .regex(/[0-9]/, { error: "Contain at least one number." })
+    .trim(),
+});
+
 // Account settings: the editable profile fields (same mandatory set as sign-up,
 // minus the password — changing the password is a separate flow).
 export const ProfileFormSchema = z.object({

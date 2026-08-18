@@ -4465,3 +4465,69 @@ a.biz-card:hover {
   font-size: 12px;
   color: var(--muted);
 }
+
+/* ---------- email verification: soft-nudge banner ---------- */
+/* Fixed strip pinned above the header. VerifyBanner adds `has-verify-banner`
+   to <body> while shown, which pushes the fixed header and the page content
+   down by the banner height. The message truncates rather than wraps, so the
+   banner height stays constant and the offsets below are reliable. */
+.verify-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  background: color-mix(in srgb, var(--amber-fill) 22%, var(--paper));
+  border-bottom: 1px solid color-mix(in srgb, var(--amber-fill) 45%, var(--line));
+  color: var(--ink);
+  font-size: 13px;
+}
+.verify-banner .vb-text {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}
+.verify-banner .vb-cta {
+  flex-shrink: 0;
+  border: none;
+  background: var(--ink);
+  color: var(--on-ink);
+  font-weight: 700;
+  font-size: 12.5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+}
+.verify-banner .vb-x {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+.verify-banner .vb-x:hover {
+  color: var(--ink);
+}
+
+/* Offsets applied only while the banner is present. */
+body.has-verify-banner .header {
+  top: 40px;
+}
+body.has-verify-banner .shell {
+  padding-top: 120px;
+}
+@media (max-width: 840px) {
+  body.has-verify-banner .shell {
+    padding-top: 112px;
+  }
+}

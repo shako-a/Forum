@@ -7,6 +7,7 @@ export type HeaderUser = {
   isDonor: boolean;
   isPro: boolean;
   isSupporter: boolean;
+  emailVerified: boolean;
   // Perks from admin-created packages. Without these the header would show
   // "Ask AI" as locked for someone who genuinely has access through a package,
   // disagreeing with the page itself.
@@ -24,6 +25,7 @@ export function toHeaderUser(
     isDonor: boolean;
     isPro: boolean;
     isSupporter: boolean;
+    emailVerified: boolean;
     featureKeys?: string[];
     themePalette?: string;
     themeAccent?: string | null;
@@ -40,6 +42,7 @@ export function toHeaderUser(
         isDonor: user.isDonor,
         isPro: user.isPro,
         isSupporter: user.isSupporter,
+        emailVerified: user.emailVerified,
         featureKeys: user.featureKeys ?? [],
         prefs: {
           themePalette: user.themePalette ?? DEFAULT_PREFS.themePalette,

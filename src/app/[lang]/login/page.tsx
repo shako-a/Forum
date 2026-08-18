@@ -21,7 +21,7 @@ export default async function LoginPage({ params, searchParams }: PageProps<"/[l
 
   return (
     <main className="auth-wrap">
-      <LoginForm locale={lang} dict={dict} next={next} />
+      <LoginForm locale={lang} dict={dict} next={next} justReset={sp.reset === "1"} />
     </main>
   );
 }

@@ -125,6 +125,12 @@ model User {
   aiBalance     AiBalance?
   subscriptions Subscription[]
   packages      UserPackage[]
+  authTokens    AuthToken[]
+
+  // Email confirmation. New signups start false and get a verification email;
+  // access is not blocked (soft nudge — a dismissible banner). Existing accounts
+  // are grandfathered to true in the migration, since they predate this.
+  emailVerified Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -734,6 +740,28 @@ model UserPackage {
 
   @@unique([userId, packageId])
   @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Single-use tokens for password reset and email verification. Only the SHA-256
+// hash of the token is stored — the raw token exists only in the emailed link,
+// so a database leak can't be used to reset accounts. Rows are deleted on use
+// and expired ones are ignored (and swept opportunistically).
+enum AuthTokenType {
+  PASSWORD_RESET
+  EMAIL_VERIFY
+}
+
+model AuthToken {
+  id        String        @id @default(cuid())
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  type      AuthTokenType
+  tokenHash String        @unique
+  expiresAt DateTime
+  createdAt DateTime      @default(now())
+
+  @@index([userId, type])
 }
 
 // ---------------------------------------------------------------------------

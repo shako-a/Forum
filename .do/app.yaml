@@ -64,6 +64,23 @@ services:
         type: SECRET
         value: REPLACE_WITH_ANTHROPIC_API_KEY
 
+      # Resend (transactional email: password reset + email verification).
+      # Set the secret in the dashboard; both email flows degrade gracefully
+      # until RESEND_API_KEY + EMAIL_FROM both exist. Use a verified subdomain
+      # sender. APP_URL makes email links point at the canonical domain (falls
+      # back to the request host if unset — update it when the custom domain
+      # goes live).
+      - key: RESEND_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_WITH_RESEND_API_KEY
+      - key: EMAIL_FROM
+        scope: RUN_TIME
+        value: GeoGlobally <noreply@send.geoglobally.com>
+      - key: APP_URL
+        scope: RUN_TIME
+        value: https://shark-app-7ngpy.ondigitalocean.app
+
 # ---------------------------------------------------------------------------
 # Pre-deploy job: apply migrations before each new version goes live.
 # Runs from /migrate (isolated Prisma CLI). `sh -c` because Dockerfile

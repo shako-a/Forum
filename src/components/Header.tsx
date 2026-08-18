@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { VerifyBanner } from "@/components/VerifyBanner";
 import { UserTheme } from "@/components/UserTheme";
 import { logout } from "@/app/actions/auth";
 import type { Dictionary } from "@/i18n/dictionaries";
@@ -38,6 +39,14 @@ export async function Header({
       {/* User appearance overrides. Header renders on every user-facing page
           with the user already loaded, so this costs no extra query. */}
       <UserTheme prefs={user?.prefs ?? null} />
+      {user && !user.emailVerified && (
+        <VerifyBanner
+          locale={locale}
+          text={dict.auth.bannerText}
+          cta={dict.auth.bannerCta}
+          dismissLabel={dict.auth.bannerDismiss}
+        />
+      )}
       <header className="header">
       {/* Logo */}
       <Link className="logo" href={`/${locale}`} aria-label={`${t.appName} home`}>

@@ -7,6 +7,7 @@ import { createSession, deleteSession } from "@/lib/session";
 import { SignupFormSchema, LoginFormSchema, type FormState } from "@/lib/definitions";
 import { defaultLocale, isLocale } from "@/i18n/config";
 import { postAuthDestination } from "@/lib/redirects";
+import { sendVerificationEmail } from "@/app/actions/account-recovery";
 
 function localeFrom(formData: FormData): string {
   const raw = String(formData.get("locale") ?? "");
@@ -52,6 +53,10 @@ export async function signup(_state: FormState, formData: FormData): Promise<For
     data: { email, forumName, passwordHash, ...rest },
     select: { id: true, role: true },
   });
+
+  // Fire off a verification email (best-effort — a delivery hiccup must not
+  // block signup, and access isn't gated on it: soft nudge only).
+  if (isLocale(locale)) await sendVerificationEmail(user.id, email, locale);
 
   await createSession(user.id, user.role);
   redirect(postAuthDestination(nextFrom(formData), locale));

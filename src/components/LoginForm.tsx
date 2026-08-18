@@ -11,10 +11,13 @@ export function LoginForm({
   locale,
   dict,
   next,
+  justReset = false,
 }: {
   locale: Locale;
   dict: Dictionary;
   next?: string;
+  /** Arrived here right after a successful password reset. */
+  justReset?: boolean;
 }) {
   const t = dict.auth;
   const [state, action, pending] = useActionState(login, undefined);
@@ -24,6 +27,12 @@ export function LoginForm({
       <AuthBrand locale={locale} appName={dict.common.appName} />
       <h1 className="auth-title">{t.loginTitle}</h1>
       <p className="auth-sub">{dict.common.tagline}</p>
+
+      {justReset && (
+        <p className="auth-ok" role="status">
+          {t.resetDone}
+        </p>
+      )}
 
       <form action={action}>
         <input type="hidden" name="locale" value={locale} />
@@ -62,6 +71,10 @@ export function LoginForm({
           {t.submitLogin}
         </button>
       </form>
+
+      <p className="auth-foot">
+        <Link href={`/${locale}/forgot`}>{t.forgotLink}</Link>
+      </p>
 
       <p className="auth-foot">
         {t.noAccount}{" "}

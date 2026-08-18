@@ -8,7 +8,10 @@ const SESSION_COOKIE = "session";
 
 // Pages reachable without logging in (everything else is gated). These are the
 // first path segment after the locale, e.g. /ka/login -> "login".
-const PUBLIC_SUBPATHS = new Set(["login", "signup"]);
+// forgot/reset are used by logged-OUT people (that's the whole point), and
+// verify is followed from an email link on any device, so all three must stay
+// public — otherwise the guard bounces exactly the users who need them to login.
+const PUBLIC_SUBPATHS = new Set(["login", "signup", "forgot", "reset", "verify"]);
 
 // Honor the visitor's saved choice (NEXT_LOCALE cookie); otherwise default to
 // Georgian. We intentionally don't sniff Accept-Language — this is a Georgian

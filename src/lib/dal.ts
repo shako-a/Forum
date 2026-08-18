@@ -47,6 +47,7 @@ export const getCurrentUser = cache(async () => {
       isDonor: true,
       isPro: true,
       isSupporter: true,
+      emailVerified: true,
       themePalette: true,
       themeAccent: true,
       themeDensity: true,
