@@ -2652,6 +2652,45 @@ button {
   .search {
     padding: 8px 14px;
   }
+  /* The header must never be wider than the screen, or its right-hand buttons
+     land off-screen and the whole page can be pinch-zoomed out. Everything
+     hidden here is reachable from the bottom nav (home / search / create /
+     inbox / profile) or the ☰ drawer, so nothing becomes unreachable. */
+  /* Scoped to .header-actions so these beat the base .header-inbox /
+     .header-profile rules that appear later in the file (equal specificity
+     would otherwise let source order win and keep them visible). */
+  .header-actions .header-inbox,
+  .header-actions .header-profile,
+  .header-actions .btn-primary {
+    display: none;
+  }
+  /* Keep Ask AI and Admin as icons only — present but compact. */
+  .ask-ai-text,
+  .header-admin-text {
+    display: none;
+  }
+  .ask-ai {
+    padding: 8px 10px;
+  }
+  .header-actions {
+    gap: 6px;
+    min-width: 0;
+  }
+  /* Rows that would otherwise force the page wider than the phone: the feed
+     sort bar (its native <select> sizes to the widest Georgian category name)
+     and the post action row (extra moderator buttons for staff). Let them wrap
+     rather than overflow — clipping would hide real controls. */
+  .feed-tabs {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+  .feed-tabs select {
+    max-width: 100%;
+  }
+  .post-actions {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   * {

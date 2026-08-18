@@ -85,7 +85,7 @@ export async function Header({
           className={`ask-ai${askAiLocked ? " ask-ai-locked" : ""}`}
           title={askAiLocked ? t.askAiDonorOnly : undefined}
         >
-          <span className="spark">✦</span> {t.askAi}
+          <span className="spark">✦</span> <span className="ask-ai-text">{t.askAi}</span>
           {askAiLocked && <span className="ask-ai-lock" aria-hidden="true">🔒</span>}
         </Link>
 
@@ -97,7 +97,7 @@ export async function Header({
           <>
             {showAdmin && (
               <Link href={`/${locale}/admin`} className="btn btn-ghost header-admin">
-                <span aria-hidden="true">🛡</span> {t.admin}
+                <span aria-hidden="true">🛡</span> <span className="header-admin-text">{t.admin}</span>
               </Link>
             )}
             <Link

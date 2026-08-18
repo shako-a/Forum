@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Sora, Inter, Noto_Sans_Georgian } from "next/font/google";
 import { notFound } from "next/navigation";
 import "../globals.css";
@@ -16,6 +16,16 @@ const notoGe = Noto_Sans_Georgian({
 export const metadata: Metadata = {
   title: "GeoGlobally",
   description: "A community forum for Georgians, worldwide.",
+};
+
+// Lock the layout to the device width. Without this the page can be pinch-zoomed
+// out to reveal empty space beside the content; pinning to device-width (with no
+// maximum-scale, so zoom stays available for accessibility) keeps the content
+// filling the screen. The remaining fix is not letting anything overflow that
+// width — see the mobile header rules in globals.css.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 // Pre-render a static shell for every supported locale.
