@@ -6,12 +6,29 @@ import { locales, defaultLocale, isLocale } from "@/i18n/config";
 const LOCALE_COOKIE = "NEXT_LOCALE";
 const SESSION_COOKIE = "session";
 
-// Pages reachable without logging in (everything else is gated). These are the
-// first path segment after the locale, e.g. /ka/login -> "login".
-// forgot/reset are used by logged-OUT people (that's the whole point), and
-// verify is followed from an email link on any device, so all three must stay
-// public — otherwise the guard bounces exactly the users who need them to login.
-const PUBLIC_SUBPATHS = new Set(["login", "signup", "forgot", "reset", "verify"]);
+// The forum is publicly readable: guests can browse feeds, categories, threads,
+// profiles and the /more pages. Only the sections below require a login — these
+// are the first path segment after the locale, e.g. /ka/create -> "create".
+// Everything else is open; locked/hidden content is already filtered out of the
+// read queries when there's no viewer, so guests never see private sections.
+//
+// This proxy check is defense-in-depth: each of these pages ALSO calls
+// requireUser()/requireAdminPanel() itself (that's the real gate), and every
+// mutating server action re-checks auth independently. So a guest who reaches a
+// gated page some other way still can't do anything.
+const GATED_SECTIONS = new Set(["create", "account", "inbox", "ask", "admin"]);
+
+// Does this path require a logged-in user? `segments` is ["", locale, sub, ...].
+function requiresLogin(segments: string[]): boolean {
+  const sub = segments[2] ?? "";
+  if (GATED_SECTIONS.has(sub)) return true;
+  // Edit screens live under otherwise-public sections (p/<slug>/edit,
+  // business/<slug>/edit) — gate them by their trailing segment.
+  if (segments[segments.length - 1] === "edit") return true;
+  // The business section is public to read, but creating/managing a listing is not.
+  if (sub === "business" && (segments[3] === "new" || segments[3] === "mine")) return true;
+  return false;
+}
 
 // Honor the visitor's saved choice (NEXT_LOCALE cookie); otherwise default to
 // Georgian. We intentionally don't sniff Accept-Language — this is a Georgian
@@ -46,7 +63,6 @@ export async function proxy(request: NextRequest) {
   if (hasLocale) {
     const segments = pathname.split("/"); // ["", locale, sub, ...]
     const locale = segments[1];
-    const sub = segments[2] ?? "";
 
     // Enforce the language preference: visitors who haven't explicitly chosen a
     // language (no NEXT_LOCALE cookie) always get the default (ka), even when
@@ -59,14 +75,14 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // Auth pages stay public; the whole forum is otherwise behind login.
-    if (PUBLIC_SUBPATHS.has(sub)) return NextResponse.next();
-    if (await hasValidSession(request)) return NextResponse.next();
-
-    const url = request.nextUrl.clone();
-    url.pathname = `/${locale}/login`;
-    url.search = `?next=${encodeURIComponent(pathname)}`;
-    return NextResponse.redirect(url);
+    // Public by default; only the gated sections bounce guests to login.
+    if (requiresLogin(segments) && !(await hasValidSession(request))) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/${locale}/login`;
+      url.search = `?next=${encodeURIComponent(pathname)}`;
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
   }
 
   // Redirect e.g. /categories -> /ka/categories (the locale'd path then runs
