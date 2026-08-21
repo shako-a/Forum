@@ -3,7 +3,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { VerifyBanner } from "@/components/VerifyBanner";
 import { UserTheme } from "@/components/UserTheme";
-import { logout } from "@/app/actions/auth";
+import { ProfileMenu } from "@/components/ProfileMenu";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import type { HeaderUser } from "@/lib/header-user";
@@ -123,22 +123,12 @@ export async function Header({
             <Link href={`/${locale}/create`} className="btn btn-primary">
               {t.create}
             </Link>
-            <Link
-              href={`/${locale}/u/${user.forumName}`}
-              className="header-profile"
-              title={user.forumName}
-            >
-              <span className="header-avatar" aria-hidden="true">
-                {user.forumName.charAt(0).toUpperCase()}
-              </span>
-              <span className="header-profile-name">{user.forumName}</span>
-            </Link>
-            <form action={logout}>
-              <input type="hidden" name="locale" value={locale} />
-              <button type="submit" className="btn btn-ghost login">
-                {t.logout}
-              </button>
-            </form>
+            <ProfileMenu
+              locale={locale}
+              forumName={user.forumName}
+              profileLabel={t.profile}
+              logoutLabel={t.logout}
+            />
           </>
         ) : (
           <>
