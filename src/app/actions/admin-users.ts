@@ -4,7 +4,13 @@ import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { authorize } from "@/lib/dal";
-import { ProfileFormSchema, SetPasswordSchema, zodErrors, type FormState } from "@/lib/definitions";
+import {
+  AdminCreateUserSchema,
+  ProfileFormSchema,
+  SetPasswordSchema,
+  zodErrors,
+  type FormState,
+} from "@/lib/definitions";
 import { syncSubscription } from "@/lib/subscriptions";
 import type { Role, UserStatus } from "@/generated/prisma/client";
 
@@ -33,6 +39,55 @@ export async function setUserPassword(_state: FormState, formData: FormData): Pr
 
 const ROLES: Role[] = ["USER", "MODERATOR", "ADMIN"];
 const STATUSES: UserStatus[] = ["ACTIVE", "ARCHIVED"];
+
+// Admin creates an account directly (e.g. for a team member), bypassing the
+// mandatory profile fields the public sign-up form collects. Only email, forum
+// name and password are required; the rest are stored blank and can be filled
+// in later. The account is created already email-verified (no nudge banner) and
+// ACTIVE, so the person can log in immediately with the shared credentials.
+export async function adminCreateUser(_state: FormState, formData: FormData): Promise<FormState> {
+  const actor = await authorize("ADMIN");
+  if (!actor) return { message: "You do not have permission to do this." };
+
+  const parsed = AdminCreateUserSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+    forumName: formData.get("forumName"),
+  });
+  if (!parsed.success) return { errors: zodErrors(parsed.error) };
+
+  const { email, password, forumName } = parsed.data;
+  const roleRaw = String(formData.get("role") ?? "USER");
+  const role: Role = ROLES.includes(roleRaw as Role) ? (roleRaw as Role) : "USER";
+
+  // Friendly errors for the unique fields before hitting the DB constraint.
+  const [emailTaken, nameTaken] = await Promise.all([
+    db.user.findUnique({ where: { email }, select: { id: true } }),
+    db.user.findUnique({ where: { forumName }, select: { id: true } }),
+  ]);
+  if (emailTaken) return { errors: { email: ["An account with this email already exists."] } };
+  if (nameTaken) return { errors: { forumName: ["This forum name is taken."] } };
+
+  const passwordHash = await bcrypt.hash(password, 10);
+  await db.user.create({
+    data: {
+      email,
+      forumName,
+      passwordHash,
+      role,
+      emailVerified: true, // admin-created — skip the verify nudge
+      // Bypassed profile fields: required in the DB, left blank for the user.
+      firstName: "",
+      lastName: "",
+      phone: "",
+      state: "",
+    },
+    select: { id: true },
+  });
+
+  revalidatePath("/[lang]/admin/users", "page");
+  return { ok: true, message: "User created." };
+}
 
 export async function setUserRole(userId: string, role: Role): Promise<void> {
   const actor = await authorize("ADMIN");

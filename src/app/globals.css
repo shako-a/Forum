@@ -1749,6 +1749,42 @@ button {
   margin-bottom: 16px;
 }
 
+/* users page: title row with the "Add User" button */
+.admin-users-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* inline "new user" form (admin creates an account, bypassing profile fields) */
+.admin-add-user {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.admin-add-user-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+.admin-add-user-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.admin-add-user-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
 /* dashboard stat cards */
 .admin-stats {
   display: grid;

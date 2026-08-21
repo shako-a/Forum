@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useTransition } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import {
+  adminCreateUser,
   setUserRole,
   setUserStatus,
   setUserDonor,
@@ -139,6 +140,62 @@ function UserRow({
   );
 }
 
+function AddUserForm({ dict, onDone }: { dict: Dictionary; onDone: () => void }) {
+  const t = dict.admin;
+  const a = dict.auth;
+  const [state, action, pending] = useActionState(adminCreateUser, undefined);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Close and reset once the account is created (the table revalidates itself).
+  useEffect(() => {
+    if (state?.ok) {
+      formRef.current?.reset();
+      onDone();
+    }
+  }, [state, onDone]);
+
+  const err = state?.errors;
+  return (
+    <form ref={formRef} action={action} className="admin-add-user">
+      <p className="muted-sm" style={{ margin: "0 0 12px" }}>{t.addUserHint}</p>
+      <div className="admin-add-user-grid">
+        <label>
+          <span>{a.email}</span>
+          <input className="input" type="email" name="email" autoComplete="off" required />
+          {err?.email && <span className="field-error">{err.email[0]}</span>}
+        </label>
+        <label>
+          <span>{a.forumName}</span>
+          <input className="input" type="text" name="forumName" autoComplete="off" required />
+          {err?.forumName && <span className="field-error">{err.forumName[0]}</span>}
+        </label>
+        <label>
+          <span>{a.password}</span>
+          <input className="input" type="text" name="password" autoComplete="off" required />
+          {err?.password && <span className="field-error">{err.password[0]}</span>}
+        </label>
+        <label>
+          <span>{t.roleLabel}</span>
+          <select className="input" name="role" defaultValue="USER">
+            <option value="USER">{dict.roles.user}</option>
+            <option value="MODERATOR">{dict.roles.moderator}</option>
+            <option value="ADMIN">{dict.roles.admin}</option>
+          </select>
+        </label>
+      </div>
+      {state?.message && !state.ok && <p className="field-error">{state.message}</p>}
+      <div className="admin-add-user-actions">
+        <button type="submit" className="btn btn-primary" disabled={pending}>
+          {t.create}
+        </button>
+        <button type="button" className="btn" onClick={onDone} disabled={pending}>
+          {t.cancel}
+        </button>
+      </div>
+    </form>
+  );
+}
+
 export function UserAdmin({
   dict,
   users,
@@ -151,9 +208,18 @@ export function UserAdmin({
   locale: Locale;
 }) {
   const t = dict.admin;
+  const [adding, setAdding] = useState(false);
   return (
     <div>
-      <h1 className="admin-h1">{t.users}</h1>
+      <div className="admin-users-head">
+        <h1 className="admin-h1" style={{ margin: 0 }}>{t.users}</h1>
+        {!adding && (
+          <button type="button" className="btn btn-primary" onClick={() => setAdding(true)}>
+            + {t.addUser}
+          </button>
+        )}
+      </div>
+      {adding && <AddUserForm dict={dict} onDone={() => setAdding(false)} />}
       <table className="admin-table">
         <thead>
           <tr>

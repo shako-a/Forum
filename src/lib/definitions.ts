@@ -23,6 +23,24 @@ export const SignupFormSchema = z.object({
   hideRealName: z.boolean().optional(),
 });
 
+// Admin creates an account directly. Only the functional essentials are
+// required (email to log in, a unique forum name, a password) — the profile
+// fields the public sign-up form mandates (real name, phone, state) are
+// deliberately bypassed here and left blank for the user to fill in later.
+export const AdminCreateUserSchema = z.object({
+  email: z.email({ error: "Please enter a valid email." }).trim(),
+  password: z
+    .string()
+    .min(8, { error: "Be at least 8 characters long." })
+    .regex(/[a-zA-Z]/, { error: "Contain at least one letter." })
+    .regex(/[0-9]/, { error: "Contain at least one number." })
+    .trim(),
+  forumName: z
+    .string()
+    .min(2, { error: "Name on the forum must be at least 2 characters." })
+    .trim(),
+});
+
 // Admin-set password (same strength rule as signup).
 export const SetPasswordSchema = z.object({
   password: z
