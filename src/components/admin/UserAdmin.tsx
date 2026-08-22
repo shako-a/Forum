@@ -11,6 +11,7 @@ import {
   setUserSupporter,
   setUserAdminAccess,
 } from "@/app/actions/admin-users";
+import { IdCell } from "@/components/admin/IdCell";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import type { Role, UserStatus } from "@/generated/prisma/client";
@@ -44,6 +45,7 @@ function UserRow({
 
   return (
     <tr>
+      <td><IdCell id={user.id} /></td>
       <td>
         <Link href={`/${locale}/admin/users/${user.id}`} className="admin-user-link">
           {user.forumName}
@@ -156,9 +158,9 @@ function AddUserForm({ dict, onDone }: { dict: Dictionary; onDone: () => void })
 
   const err = state?.errors;
   return (
-    <form ref={formRef} action={action} className="admin-add-user">
+    <form ref={formRef} action={action} className="admin-add-form">
       <p className="muted-sm" style={{ margin: "0 0 12px" }}>{t.addUserHint}</p>
-      <div className="admin-add-user-grid">
+      <div className="admin-add-grid">
         <label>
           <span>{a.email}</span>
           <input className="input" type="email" name="email" autoComplete="off" required />
@@ -184,7 +186,7 @@ function AddUserForm({ dict, onDone }: { dict: Dictionary; onDone: () => void })
         </label>
       </div>
       {state?.message && !state.ok && <p className="field-error">{state.message}</p>}
-      <div className="admin-add-user-actions">
+      <div className="admin-add-actions">
         <button type="submit" className="btn btn-primary" disabled={pending}>
           {t.create}
         </button>
@@ -211,7 +213,7 @@ export function UserAdmin({
   const [adding, setAdding] = useState(false);
   return (
     <div>
-      <div className="admin-users-head">
+      <div className="admin-list-head">
         <h1 className="admin-h1" style={{ margin: 0 }}>{t.users}</h1>
         {!adding && (
           <button type="button" className="btn btn-primary" onClick={() => setAdding(true)}>
@@ -223,6 +225,7 @@ export function UserAdmin({
       <table className="admin-table">
         <thead>
           <tr>
+            <th>{t.id}</th>
             <th>{dict.auth.forumName}</th>
             <th>{dict.auth.email}</th>
             <th>{t.role}</th>
@@ -240,7 +243,7 @@ export function UserAdmin({
           ))}
           {users.length === 0 && (
             <tr>
-              <td colSpan={8} style={{ textAlign: "center", color: "var(--muted)", padding: 24 }}>
+              <td colSpan={9} style={{ textAlign: "center", color: "var(--muted)", padding: 24 }}>
                 {t.empty}
               </td>
             </tr>

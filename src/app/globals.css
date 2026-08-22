@@ -1802,8 +1802,8 @@ button.header-profile {
   margin-bottom: 16px;
 }
 
-/* users page: title row with the "Add User" button */
-.admin-users-head {
+/* list page: title row with an "Add" button (users, businesses) */
+.admin-list-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1811,20 +1811,20 @@ button.header-profile {
   margin-bottom: 16px;
 }
 
-/* inline "new user" form (admin creates an account, bypassing profile fields) */
-.admin-add-user {
+/* inline "new record" form (admin creates a user/business, bypassing fields) */
+.admin-add-form {
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface);
   padding: 16px;
   margin-bottom: 20px;
 }
-.admin-add-user-grid {
+.admin-add-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 12px;
 }
-.admin-add-user-grid label {
+.admin-add-grid label {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -1832,10 +1832,35 @@ button.header-profile {
   font-weight: 600;
   color: var(--muted);
 }
-.admin-add-user-actions {
+.admin-add-actions {
   display: flex;
   gap: 8px;
   margin-top: 16px;
+}
+
+/* click-to-copy ID cell in admin tables */
+.id-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--muted);
+}
+.id-cell:hover {
+  background: var(--bg);
+  color: var(--ink);
+}
+.id-cell code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+}
+.id-copy {
+  font-size: 11px;
+  opacity: 0.6;
 }
 
 /* dashboard stat cards */

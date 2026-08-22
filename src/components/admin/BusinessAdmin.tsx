@@ -1,9 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useTransition } from "react";
-import { setBusinessVerified, setBusinessFeatured, removeBusiness } from "@/app/actions/admin-business";
-import { businessCategoryLabel } from "@/lib/business-categories";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import {
+  adminCreateBusiness,
+  setBusinessVerified,
+  setBusinessFeatured,
+  removeBusiness,
+} from "@/app/actions/admin-business";
+import { IdCell } from "@/components/admin/IdCell";
+import { BUSINESS_CATEGORIES, businessCategoryLabel } from "@/lib/business-categories";
+import { StateSelect } from "@/components/StateSelect";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 
@@ -23,6 +30,7 @@ function Row({ b, dict, locale }: { b: AdminBusiness; dict: Dictionary; locale: 
   const [pending, startTransition] = useTransition();
   return (
     <tr>
+      <td><IdCell id={b.id} /></td>
       <td>
         <Link href={`/${locale}/business/${b.slug}`} className="admin-user-link">{b.name}</Link>
       </td>
@@ -64,6 +72,73 @@ function Row({ b, dict, locale }: { b: AdminBusiness; dict: Dictionary; locale: 
   );
 }
 
+function AddBusinessForm({ dict, locale, onDone }: { dict: Dictionary; locale: Locale; onDone: () => void }) {
+  const t = dict.admin;
+  const tb = dict.business;
+  const [state, action, pending] = useActionState(adminCreateBusiness, undefined);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (state?.ok) {
+      formRef.current?.reset();
+      onDone();
+    }
+  }, [state, onDone]);
+
+  const err = state?.errors;
+  return (
+    <form ref={formRef} action={action} className="admin-add-form">
+      <p className="muted-sm" style={{ margin: "0 0 12px" }}>{t.addBusinessHint}</p>
+      <div className="admin-add-grid">
+        <label>
+          <span>{tb.name}</span>
+          <input className="input" type="text" name="name" autoComplete="off" required />
+          {err?.name && <span className="field-error">{err.name[0]}</span>}
+        </label>
+        <label>
+          <span>{tb.category}</span>
+          <select className="input" name="category" defaultValue="">
+            <option value="" disabled>—</option>
+            {BUSINESS_CATEGORIES.map((c) => (
+              <option key={c.key} value={c.key}>
+                {c.icon} {locale === "ka" ? c.ka : c.en}
+              </option>
+            ))}
+          </select>
+          {err?.category && <span className="field-error">{err.category[0]}</span>}
+        </label>
+        <StateSelect
+          name="state"
+          label={dict.auth.state}
+          locale={locale}
+          usGroupLabel={dict.auth.usStates}
+          error={err?.state}
+        />
+        <label>
+          <span>{tb.owner}</span>
+          <input
+            className="input"
+            type="text"
+            name="ownerForumName"
+            autoComplete="off"
+            placeholder={t.ownerPlaceholder}
+          />
+          {err?.ownerForumName && <span className="field-error">{err.ownerForumName[0]}</span>}
+        </label>
+      </div>
+      {state?.message && !state.ok && <p className="field-error">{state.message}</p>}
+      <div className="admin-add-actions">
+        <button type="submit" className="btn btn-primary" disabled={pending}>
+          {t.create}
+        </button>
+        <button type="button" className="btn" onClick={onDone} disabled={pending}>
+          {t.cancel}
+        </button>
+      </div>
+    </form>
+  );
+}
+
 export function BusinessAdmin({
   dict,
   locale,
@@ -74,12 +149,22 @@ export function BusinessAdmin({
   businesses: AdminBusiness[];
 }) {
   const t = dict.business;
+  const [adding, setAdding] = useState(false);
   return (
     <div>
-      <h1 className="admin-h1">{t.directory}</h1>
+      <div className="admin-list-head">
+        <h1 className="admin-h1" style={{ margin: 0 }}>{t.directory}</h1>
+        {!adding && (
+          <button type="button" className="btn btn-primary" onClick={() => setAdding(true)}>
+            + {dict.admin.addBusiness}
+          </button>
+        )}
+      </div>
+      {adding && <AddBusinessForm dict={dict} locale={locale} onDone={() => setAdding(false)} />}
       <table className="admin-table">
         <thead>
           <tr>
+            <th>{dict.admin.id}</th>
             <th>{t.name}</th>
             <th>{t.category}</th>
             <th>{t.owner}</th>
@@ -94,7 +179,7 @@ export function BusinessAdmin({
           ))}
           {businesses.length === 0 && (
             <tr>
-              <td colSpan={6} style={{ textAlign: "center", color: "var(--muted)", padding: 24 }}>
+              <td colSpan={7} style={{ textAlign: "center", color: "var(--muted)", padding: 24 }}>
                 {dict.admin.empty}
               </td>
             </tr>
