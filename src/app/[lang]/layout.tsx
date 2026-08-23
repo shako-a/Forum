@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import "../globals.css";
 import { locales, isLocale } from "@/i18n/config";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
-import { Analytics } from "@/components/Analytics";
 
 const sora = Sora({ variable: "--font-sora", subsets: ["latin"], weight: ["600", "700", "800"] });
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
@@ -51,7 +50,6 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
       </head>
       <body>
         {children}
-        <Analytics />
       </body>
     </html>
   );

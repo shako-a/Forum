@@ -81,18 +81,6 @@ services:
         scope: RUN_TIME
         value: https://shark-app-7ngpy.ondigitalocean.app
 
-      # Self-hosted Umami web analytics. The tracking beacon renders only when
-      # BOTH are set; unset = no beacon. Cookieless, so no consent banner.
-      # UMAMI_SRC is the Umami server's script URL; UMAMI_WEBSITE_ID is the
-      # website UUID from the Umami dashboard. See .do/umami.yaml for the
-      # separate app that runs the Umami server itself.
-      - key: UMAMI_SRC
-        scope: RUN_TIME
-        value: https://analytics.geoglobally.com/script.js
-      - key: UMAMI_WEBSITE_ID
-        scope: RUN_TIME
-        value: REPLACE_WITH_UMAMI_WEBSITE_UUID
-
 # ---------------------------------------------------------------------------
 # Pre-deploy job: apply migrations before each new version goes live.
 # Runs from /migrate (isolated Prisma CLI). `sh -c` because Dockerfile
