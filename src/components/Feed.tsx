@@ -23,6 +23,7 @@ export function Feed({
   posts,
   sort = "hot",
   aliases,
+  actingAs,
   canDelete = false,
 }: {
   locale: Locale;
@@ -31,6 +32,7 @@ export function Feed({
   posts: FeedPost[];
   sort?: "hot" | "new" | "top";
   aliases: AliasOption[];
+  actingAs?: string | null;
   canDelete?: boolean;
 }) {
   const base = `/${locale}`;
@@ -38,7 +40,7 @@ export function Feed({
     <main className="feed">
       {/* Composer: inline quick-post for members; login prompt for guests */}
       {user ? (
-        <QuickPostComposer locale={locale} dict={dict} realName={user.forumName} aliases={aliases} />
+        <QuickPostComposer locale={locale} dict={dict} realName={user.forumName} aliases={aliases} actingAs={actingAs} />
       ) : (
         <div className="composer">
           <span className="avatar" style={{ background: "var(--blue)" }}>

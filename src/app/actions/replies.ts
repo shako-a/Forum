@@ -7,6 +7,7 @@ import { getCurrentUser, canModerateCategory } from "@/lib/dal";
 import { defaultLocale, isLocale } from "@/i18n/config";
 import { buildReplyDoc, safeUrl } from "@/lib/prosemirror";
 import { createNotification, notifyMentions } from "@/lib/notify";
+import { getActingBusiness } from "@/lib/acting-as";
 import type { FormState } from "@/lib/definitions";
 
 function localeFrom(formData: FormData): string {
@@ -53,23 +54,26 @@ export async function createReply(_state: FormState, formData: FormData): Promis
     parentAuthorId = parent.authorId;
   }
 
+  // Acting as a business overrides the anon-alias choice (see posts.ts).
+  const acting = await getActingBusiness();
   await db.$transaction([
     db.reply.create({
       data: {
         postId,
         parentId,
         authorId: user.id,
-        anonAlias,
+        anonAlias: acting ? null : anonAlias,
+        authorBusinessId: acting?.id ?? null,
         body: buildReplyDoc(text, image) as unknown as Prisma.InputJsonValue,
       },
     }),
     db.post.update({ where: { id: postId }, data: { lastActivity: new Date() } }),
   ]);
 
-  // Notifications (best-effort, after the write). Anonymous replies don't reveal
-  // the author, so the notification's actor is omitted in that case.
+  // Notifications (best-effort, after the write). Anonymous replies — and replies
+  // made as a business — don't reveal the human, so the actor is omitted.
   const replyUrl = `/p/${slug}`;
-  const actorId = anonAlias ? null : user.id;
+  const actorId = anonAlias || acting ? null : user.id;
   const notified = new Set<string>();
   if (parentAuthorId && parentAuthorId !== user.id) {
     await createNotification({

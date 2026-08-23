@@ -12,13 +12,29 @@ export function IdentityPicker({
   realName,
   aliases,
   dict,
+  actingAs,
 }: {
   realName: string;
   aliases: AliasOption[];
   dict: Dictionary;
+  /** Business name when the user is acting as a business — the identity is then
+   *  fixed to that business (the server attributes the post to it regardless). */
+  actingAs?: string | null;
 }) {
   const [open, setOpen] = useState(false);
   const [sel, setSel] = useState<number | null>(null); // null = real identity
+
+  // Acting as a business: identity is locked, no chooser (and no anonAlias).
+  if (actingAs) {
+    return (
+      <div className="identity-picker identity-acting">
+        <span className="avatar" style={{ background: "var(--blue)" }} aria-hidden="true">
+          🏢
+        </span>
+        <span className="identity-name">{actingAs}</span>
+      </div>
+    );
+  }
 
   const selected = aliases.find((a) => a.index === sel);
   const current = selected

@@ -8,6 +8,7 @@ import { hasAiAccess } from "@/lib/perks";
 import { getPostView } from "@/lib/forum-data";
 import { startConversation } from "@/app/actions/inbox";
 import { resolveAuthor, aliasOptions } from "@/lib/anon";
+import { getActingBusiness } from "@/lib/acting-as";
 import { categoryName } from "@/i18n/localize";
 import { categoryStyle } from "@/lib/category-style";
 import { timeAgo } from "@/lib/format";
@@ -42,11 +43,18 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
   const { post, canModerate, canReveal, postMyVote, replyCount, roots } = data;
   const postAuthor = resolveAuthor(
     lang,
-    { authorId: post.authorId, forumName: post.author.forumName, anonAlias: post.anonAlias },
+    {
+      authorId: post.authorId,
+      forumName: post.author.forumName,
+      anonAlias: post.anonAlias,
+      authorBusiness: post.authorBusiness,
+    },
     canReveal,
   );
   const replyRealName = user?.forumName ?? "";
   const replyAliases = user ? aliasOptions(user.id) : [];
+  const acting = user ? await getActingBusiness() : null;
+  const replyActingAs = acting?.name ?? null;
 
   // Hidden posts: only moderators of this category (or admins) may view them.
   if (post.hidden && !canModerate) notFound();
@@ -166,6 +174,7 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
                 dict={dict}
                 realName={replyRealName}
                 aliases={replyAliases}
+                actingAs={replyActingAs}
               />
             </div>
           )}
@@ -184,6 +193,7 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
             shareTitle={post.title}
             realName={replyRealName}
             aliases={replyAliases}
+            actingAs={replyActingAs}
           />
         </section>
       </main>

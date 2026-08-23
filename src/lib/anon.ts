@@ -52,15 +52,35 @@ export type DisplayAuthor = {
   name: string;
   anonymous: boolean;
   color: string | null; // avatar/badge accent for anon
-  href: string | null; // profile link — real authors only
+  href: string | null; // profile link — real authors (and businesses)
   realName: string | null; // revealed real forum name (authorized staff)
+  isBusiness: boolean; // authored while acting as a business
+  logoUrl: string | null; // business logo, when isBusiness
 };
 
 export function resolveAuthor(
   locale: Locale,
-  a: { authorId: string; forumName: string; anonAlias: number | null },
+  a: {
+    authorId: string;
+    forumName: string;
+    anonAlias: number | null;
+    authorBusiness?: { name: string; slug: string; logoUrl: string | null } | null;
+  },
   canReveal = false,
 ): DisplayAuthor {
+  // A business identity takes priority: the content is attributed to the
+  // business, but a moderator can still see which human posted it.
+  if (a.authorBusiness) {
+    return {
+      name: a.authorBusiness.name,
+      anonymous: false,
+      color: null,
+      href: `/${locale}/business/${a.authorBusiness.slug}`,
+      realName: canReveal ? a.forumName : null,
+      isBusiness: true,
+      logoUrl: a.authorBusiness.logoUrl,
+    };
+  }
   if (a.anonAlias == null) {
     return {
       name: a.forumName,
@@ -68,6 +88,8 @@ export function resolveAuthor(
       color: null,
       href: `/${locale}/u/${a.forumName}`,
       realName: null,
+      isBusiness: false,
+      logoUrl: null,
     };
   }
   const id = anonIdentity(a.authorId, a.anonAlias);
@@ -77,5 +99,7 @@ export function resolveAuthor(
     color: id.color,
     href: null,
     realName: canReveal ? a.forumName : null,
+    isBusiness: false,
+    logoUrl: null,
   };
 }

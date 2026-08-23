@@ -5,6 +5,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { getCurrentUser } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { aliasOptions } from "@/lib/anon";
+import { getActingBusiness } from "@/lib/acting-as";
 import { categoryName } from "@/i18n/localize";
 import { Header } from "@/components/Header";
 import { CreatePostForm } from "@/components/CreatePostForm";
@@ -27,6 +28,7 @@ export default async function CreatePostPage({ params, searchParams }: PageProps
   const sp = await searchParams;
   const slug = typeof sp.category === "string" ? sp.category : undefined;
   const defaultCategoryId = slug ? cats.find((c) => c.slug === slug)?.id : undefined;
+  const acting = await getActingBusiness();
 
   return (
     <>
@@ -39,6 +41,7 @@ export default async function CreatePostPage({ params, searchParams }: PageProps
           defaultCategoryId={defaultCategoryId}
           realName={user.forumName}
           aliases={aliasOptions(user.id)}
+          actingAs={acting?.name ?? null}
         />
       </main>
     </>

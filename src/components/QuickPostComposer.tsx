@@ -15,11 +15,13 @@ export function QuickPostComposer({
   dict,
   realName,
   aliases,
+  actingAs,
 }: {
   locale: Locale;
   dict: Dictionary;
   realName: string;
   aliases: AliasOption[];
+  actingAs?: string | null;
 }) {
   const [state, action, pending] = useActionState(quickPost, undefined);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -36,7 +38,7 @@ export function QuickPostComposer({
       <input type="hidden" name="locale" value={locale} />
 
       <div className="quick-composer-row">
-        <IdentityPicker realName={realName} aliases={aliases} dict={dict} />
+        <IdentityPicker realName={realName} aliases={aliases} dict={dict} actingAs={actingAs} />
         <input
           ref={inputRef}
           name="text"

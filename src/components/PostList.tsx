@@ -25,6 +25,7 @@ export type FeedPost = {
   anonAlias: number | null;
   quickPosted: boolean;
   author: { forumName: string };
+  authorBusiness: { name: string; slug: string; logoUrl: string | null } | null;
   category: { nameEn: string; nameKa: string; slug: string };
   _count: { replies: number; votes: number };
 };
@@ -57,6 +58,7 @@ function PostCard({
     authorId: post.authorId,
     forumName: post.author.forumName,
     anonAlias: post.anonAlias,
+    authorBusiness: post.authorBusiness,
   });
 
   return (

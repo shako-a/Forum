@@ -108,6 +108,7 @@ model User {
   labels              Label[]     @relation("UserLabels")
   savedPosts          SavedPost[]
   businesses          Business[]       @relation("BusinessOwner")
+  managedBusinesses   BusinessManager[] @relation("BusinessManagerUser")
   businessReviews     BusinessReview[]
   notifications       Notification[]            @relation("UserNotifications")
   notificationsActed  Notification[]            @relation("NotificationActor")
@@ -191,6 +192,12 @@ model Post {
   // moderation (revealed only to authorized staff).
   anonAlias Int?
 
+  // Posted while "acting as" a business the author manages: the post is
+  // attributed to the business (name/logo/link), while authorId still records
+  // the human who wrote it (for moderation). Mutually exclusive with anonAlias.
+  authorBusiness   Business? @relation("PostBusinessAuthor", fields: [authorBusinessId], references: [id], onDelete: SetNull)
+  authorBusinessId String?
+
   // Quick-posted from the home composer: auto-filed under Discussions, flagged
   // so it shows a "may be moved to a fitting community" notice for moderators.
   quickPosted Boolean @default(false)
@@ -245,6 +252,10 @@ model Reply {
 
   // Anonymous reply: null = real author; 1/2/3 = which generated alias.
   anonAlias Int?
+
+  // Replied while acting as a business (see Post.authorBusinessId).
+  authorBusiness   Business? @relation("ReplyBusinessAuthor", fields: [authorBusinessId], references: [id], onDelete: SetNull)
+  authorBusinessId String?
 
   // Self-relation for nested threads.
   parent   Reply?  @relation("ReplyThread", fields: [parentId], references: [id])
@@ -410,12 +421,33 @@ model Business {
   reviews BusinessReview[]
   jobs    JobPosting[]
 
+  // Additional forum users the owner has delegated to manage this business.
+  managers BusinessManager[]
+
+  // Content this business has authored while someone acted as it.
+  authoredPosts   Post[]  @relation("PostBusinessAuthor")
+  authoredReplies Reply[] @relation("ReplyBusinessAuthor")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([category])
   @@index([state])
   @@index([featured])
+}
+
+// Delegated management: forum users (besides the owner) allowed to act as and
+// manage a business. The owner isn't listed here — ownership is Business.ownerId;
+// canManageBusiness() checks owner OR a row here OR admin.
+model BusinessManager {
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId String
+  user       User     @relation("BusinessManagerUser", fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  createdAt  DateTime @default(now())
+
+  @@id([businessId, userId])
+  @@index([userId])
 }
 
 model BusinessReview {
@@ -427,6 +459,10 @@ model BusinessReview {
 
   rating Int // 1..5
   body   String?
+
+  // The business's public reply to this piece of feedback (owner/manager).
+  ownerReply   String?
+  ownerReplyAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -20,10 +20,11 @@ type Common = {
   shareTitle: string;
   realName: string;
   aliases: AliasOption[];
+  actingAs?: string | null;
 };
 
 function ReplyNode({ node, common }: { node: ThreadReply; common: Common }) {
-  const { locale, slug, postId, dict, canVote, canReply, canModerate, isLoggedIn, loginHref, shareTitle, realName, aliases } =
+  const { locale, slug, postId, dict, canVote, canReply, canModerate, isLoggedIn, loginHref, shareTitle, realName, aliases, actingAs } =
     common;
 
   // Tombstone for author-deleted replies that still have a sub-thread.
@@ -75,6 +76,7 @@ function ReplyNode({ node, common }: { node: ThreadReply; common: Common }) {
         dict={dict}
         realName={realName}
         aliases={aliases}
+        actingAs={actingAs}
       />
       {node.children.length > 0 && (
         <CollapsibleChildren count={node.children.length} dict={dict}>

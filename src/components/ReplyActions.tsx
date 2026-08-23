@@ -32,6 +32,7 @@ export function ReplyActions({
   dict,
   realName,
   aliases,
+  actingAs,
 }: {
   replyId: string;
   locale: Locale;
@@ -52,6 +53,7 @@ export function ReplyActions({
   dict: Dictionary;
   realName: string;
   aliases: AliasOption[];
+  actingAs?: string | null;
 }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -130,6 +132,7 @@ export function ReplyActions({
           autoFocus
           realName={realName}
           aliases={aliases}
+          actingAs={actingAs}
           onDone={() => setOpen(false)}
         />
       )}

@@ -23,6 +23,8 @@
     "register": "Join",
     "logout": "Log out",
     "profile": "Profile",
+    "actingAs": "Acting as",
+    "you": "You",
     "create": "Create",
     "post": "Post",
     "save": "Save",

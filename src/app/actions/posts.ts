@@ -10,6 +10,7 @@ import { pmHasContent, textToPmDoc, safeImageUrl, appendImage } from "@/lib/pros
 import { slugify } from "@/lib/slug";
 import type { FormState } from "@/lib/definitions";
 import { flagGaEvent } from "@/lib/ga-server";
+import { getActingBusiness } from "@/lib/acting-as";
 
 function localeFrom(formData: FormData): string {
   const raw = String(formData.get("locale") ?? "");
@@ -60,6 +61,9 @@ export async function createPost(_state: FormState, formData: FormData): Promise
 
   const finalBody = imageUrl ? appendImage(body, imageUrl) : body;
   const slug = await uniqueSlug(title);
+  // Acting as a business overrides the anon-alias choice: the post is attributed
+  // to the business, with authorId kept as the human for moderation.
+  const acting = await getActingBusiness();
   await db.post.create({
     data: {
       slug,
@@ -67,7 +71,8 @@ export async function createPost(_state: FormState, formData: FormData): Promise
       body: finalBody as Prisma.InputJsonValue,
       categoryId,
       authorId: user.id,
-      anonAlias,
+      anonAlias: acting ? null : anonAlias,
+      authorBusinessId: acting?.id ?? null,
       lastActivity: new Date(),
     },
   });
@@ -148,6 +153,7 @@ export async function quickPost(_state: FormState, formData: FormData): Promise<
   // Long text: keep the full text in the body, use a trimmed title.
   const title = text.length > 120 ? `${text.slice(0, 119)}…` : text;
   const slug = await uniqueSlug(title);
+  const acting = await getActingBusiness();
   await db.post.create({
     data: {
       slug,
@@ -155,7 +161,8 @@ export async function quickPost(_state: FormState, formData: FormData): Promise<
       body: textToPmDoc(text) as unknown as Prisma.InputJsonValue,
       categoryId: category.id,
       authorId: user.id,
-      anonAlias,
+      anonAlias: acting ? null : anonAlias,
+      authorBusinessId: acting?.id ?? null,
       quickPosted: true,
       lastActivity: new Date(),
     },

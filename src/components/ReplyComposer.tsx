@@ -19,6 +19,7 @@ export function ReplyComposer({
   onDone,
   realName,
   aliases,
+  actingAs,
 }: {
   locale: Locale;
   slug: string;
@@ -29,6 +30,7 @@ export function ReplyComposer({
   onDone?: () => void;
   realName: string;
   aliases: AliasOption[];
+  actingAs?: string | null;
 }) {
   const [state, action, pending] = useActionState(createReply, undefined);
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -65,7 +67,7 @@ export function ReplyComposer({
       {image && <input type="hidden" name="image" value={image} />}
 
       <div className="reply-identity-row">
-        <IdentityPicker realName={realName} aliases={aliases} dict={dict} />
+        <IdentityPicker realName={realName} aliases={aliases} dict={dict} actingAs={actingAs} />
       </div>
 
       <textarea

@@ -6,6 +6,13 @@ import { resolveAuthor, type DisplayAuthor } from "@/lib/anon";
 import type { Locale } from "@/i18n/config";
 import { Prisma, type Role } from "@/generated/prisma/client";
 
+// Author fields needed to render an authored post/reply: the real author (for
+// forumName / anon resolution) plus the business it was posted as, if any.
+const AUTHOR_INCLUDE = {
+  author: { select: { forumName: true } },
+  authorBusiness: { select: { name: true, slug: true, logoUrl: true } },
+} as const;
+
 // Home feed sort tabs: hot = most-discussed, new = most recent, top = highest score.
 export type FeedSort = "hot" | "new" | "top";
 
@@ -33,7 +40,7 @@ export async function getHomeData(viewer: { id: string } | null, sort: FeedSort 
         orderBy: feedOrderBy(sort),
         take: 20,
         include: {
-          author: { select: { forumName: true } },
+          ...AUTHOR_INCLUDE,
           category: true,
           _count: { select: { replies: true, votes: true } },
         },
@@ -126,7 +133,7 @@ export async function getFeedPage(viewer: { id: string } | null, sort: "popular"
             : { createdAt: "desc" },
         take: 50,
         include: {
-          author: { select: { forumName: true } },
+          ...AUTHOR_INCLUDE,
           category: true,
           _count: { select: { replies: true, votes: true } },
         },
@@ -177,7 +184,7 @@ export type PopularTopic = {
 };
 
 const POST_CARD_INCLUDE = {
-  author: { select: { forumName: true } },
+  ...AUTHOR_INCLUDE,
   category: true,
   _count: { select: { replies: true, votes: true } },
 } as const;
@@ -341,7 +348,7 @@ export async function getPostView(
   const post = await db.post.findUnique({
     where: { slug },
     include: {
-      author: { select: { forumName: true } },
+      ...AUTHOR_INCLUDE,
       category: true,
       _count: { select: { replies: true } },
     },
@@ -356,7 +363,7 @@ export async function getPostView(
   const replies = await db.reply.findMany({
     where: { postId: post.id, ...(canModerate ? {} : { hidden: false }) },
     orderBy: { createdAt: "asc" },
-    include: { author: { select: { forumName: true } } },
+    include: { ...AUTHOR_INCLUDE },
   });
 
   // Viewer's existing votes (post + each reply).
@@ -386,7 +393,12 @@ export async function getPostView(
       parentId: r.parentId,
       author: resolveAuthor(
         locale,
-        { authorId: r.authorId, forumName: r.author.forumName, anonAlias: r.anonAlias },
+        {
+          authorId: r.authorId,
+          forumName: r.author.forumName,
+          anonAlias: r.anonAlias,
+          authorBusiness: r.authorBusiness,
+        },
         canReveal,
       ),
       bodyHtml: deleted ? "" : pmToHtml(r.body),

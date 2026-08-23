@@ -9,6 +9,8 @@ import type { Locale } from "@/i18n/config";
 import type { HeaderUser } from "@/lib/header-user";
 import { hasAiAccess } from "@/lib/perks";
 import { getInboxUnread } from "@/lib/inbox-data";
+import { getManageableBusinesses } from "@/lib/business-manage";
+import { getActingBusiness } from "@/lib/acting-as";
 
 export async function Header({
   locale,
@@ -21,6 +23,10 @@ export async function Header({
 }) {
   const t = dict.common;
   const unread = user ? (await getInboxUnread()).total : 0;
+  // Businesses this user can act as, and which one is active (if any).
+  const [manageable, acting] = user
+    ? await Promise.all([getManageableBusinesses(user.id), getActingBusiness()])
+    : [[], null];
   // "Ask AI" is a paid perk (Donor or Professional). Guests → login; logged-in
   // users without a paid tier → the upgrade page; paid → the Ask AI feature.
   const aiAccess = hasAiAccess(user);
@@ -128,6 +134,11 @@ export async function Header({
               forumName={user.forumName}
               profileLabel={t.profile}
               logoutLabel={t.logout}
+              businesses={manageable.map((b) => ({ id: b.id, name: b.name, slug: b.slug }))}
+              actingId={acting?.id ?? null}
+              actingName={acting?.name ?? null}
+              actingAsLabel={t.actingAs}
+              selfLabel={t.you}
             />
           </>
         ) : (

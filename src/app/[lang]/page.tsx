@@ -5,6 +5,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { getCurrentUser } from "@/lib/dal";
 import { getHomeData } from "@/lib/forum-data";
 import { aliasOptions } from "@/lib/anon";
+import { getActingBusiness } from "@/lib/acting-as";
 import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { RightSidebar } from "@/components/RightSidebar";
@@ -25,6 +26,7 @@ export default async function HomePage({ params, searchParams }: PageProps<"/[la
   const [dict, user] = await Promise.all([getDictionary(lang), getCurrentUser()]);
   const data = await getHomeData(user ? { id: user.id } : null, sort);
   const headerUser = toHeaderUser(user);
+  const acting = user ? await getActingBusiness() : null;
 
   return (
     <>
@@ -40,6 +42,7 @@ export default async function HomePage({ params, searchParams }: PageProps<"/[la
             posts={data.posts}
             sort={sort}
             aliases={user ? aliasOptions(user.id) : []}
+            actingAs={acting?.name ?? null}
             canDelete={user?.role === "ADMIN"}
           />
         </div>

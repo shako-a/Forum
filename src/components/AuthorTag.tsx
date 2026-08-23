@@ -13,6 +13,17 @@ export function AuthorTag({ author }: { author: DisplayAuthor }) {
       </span>
     );
   }
+  // Business identity: a small badge/logo + link to the business page. Staff may
+  // see which human posted it (realName).
+  if (author.isBusiness && author.href) {
+    return (
+      <Link href={author.href} className="author author-business">
+        <span className="author-biz-badge" aria-hidden="true">🏢</span>
+        {author.name}
+        {author.realName && <span className="author-reveal"> ({author.realName})</span>}
+      </Link>
+    );
+  }
   return author.href ? (
     <Link href={author.href} className="author">
       {author.name}

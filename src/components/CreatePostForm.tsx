@@ -17,6 +17,7 @@ export function CreatePostForm({
   defaultCategoryId,
   realName,
   aliases,
+  actingAs,
 }: {
   locale: Locale;
   dict: Dictionary;
@@ -24,6 +25,7 @@ export function CreatePostForm({
   defaultCategoryId?: string;
   realName: string;
   aliases: AliasOption[];
+  actingAs?: string | null;
 }) {
   const [state, action, pending] = useActionState(createPost, undefined);
   const err = state?.errors;
@@ -39,7 +41,7 @@ export function CreatePostForm({
 
       <div className="field">
         <label>{dict.post.postingAs}</label>
-        <IdentityPicker realName={realName} aliases={aliases} dict={dict} />
+        <IdentityPicker realName={realName} aliases={aliases} dict={dict} actingAs={actingAs} />
       </div>
 
       <div className="field">

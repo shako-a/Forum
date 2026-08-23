@@ -3,6 +3,7 @@ import { DEFAULT_PREFS, type AppearancePrefs } from "@/lib/appearance";
 
 // The slice of the current user the Header (and the components it feeds) need.
 export type HeaderUser = {
+  id: string;
   forumName: string;
   isDonor: boolean;
   isPro: boolean;
@@ -21,6 +22,7 @@ export type HeaderUser = {
 // Build it from a loaded user (getCurrentUser result) or null for guests.
 export function toHeaderUser(
   user: {
+    id: string;
     forumName: string;
     isDonor: boolean;
     isPro: boolean;
@@ -38,6 +40,7 @@ export function toHeaderUser(
 ): HeaderUser {
   return user
     ? {
+        id: user.id,
         forumName: user.forumName,
         isDonor: user.isDonor,
         isPro: user.isPro,

@@ -826,6 +826,40 @@ button.header-profile {
 .profile-menu-logout:hover {
   color: var(--red);
 }
+.profile-menu-item.active {
+  color: var(--ink);
+  background: var(--blue-soft);
+}
+.profile-menu-check {
+  float: right;
+  color: var(--blue);
+}
+.profile-menu-label {
+  padding: 6px 11px 3px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.profile-menu-sep {
+  height: 1px;
+  background: var(--line);
+  margin: 5px 4px;
+}
+/* header trigger while acting as a business */
+.header-profile-biz .header-avatar {
+  background: var(--tier, var(--blue));
+}
+/* business author byline */
+.author-business {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.author-biz-badge {
+  font-size: 0.9em;
+}
 
 /* ---------- left nav ---------- */
 .sidenav {
@@ -1728,6 +1762,19 @@ button.header-profile {
   padding: 4px 12px 4px 4px;
   cursor: pointer;
   font-size: 13px;
+  color: var(--ink);
+}
+/* Fixed identity chip shown in the composer while acting as a business. */
+.identity-acting {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 12px 4px 4px;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--ink);
 }
 .identity-trigger:hover {
