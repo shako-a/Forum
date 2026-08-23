@@ -3,7 +3,10 @@ import { Sora, Inter, Noto_Sans_Georgian } from "next/font/google";
 import { notFound } from "next/navigation";
 import "../globals.css";
 import { locales, isLocale } from "@/i18n/config";
+import { getDictionary } from "@/i18n/dictionaries";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
+import { Analytics } from "@/components/Analytics";
+import { ConsentBanner } from "@/components/ConsentBanner";
 
 const sora = Sora({ variable: "--font-sora", subsets: ["latin"], weight: ["600", "700", "800"] });
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
@@ -36,6 +39,7 @@ export function generateStaticParams() {
 export default async function RootLayout({ children, params }: LayoutProps<"/[lang]">) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
+  const dict = await getDictionary(lang);
 
   return (
     <html
@@ -50,6 +54,12 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
       </head>
       <body>
         {children}
+        <Analytics />
+        <ConsentBanner
+          message={dict.consent.message}
+          accept={dict.consent.accept}
+          decline={dict.consent.decline}
+        />
       </body>
     </html>
   );

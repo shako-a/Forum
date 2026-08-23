@@ -81,6 +81,14 @@ services:
         scope: RUN_TIME
         value: https://shark-app-7ngpy.ondigitalocean.app
 
+      # Google Analytics 4 (+ Consent Mode). The tag only renders when this is
+      # set. Consent defaults to DENIED in the EEA + UK (a banner offers opt-in
+      # there) and GRANTED elsewhere, so US visitors are tracked with no banner.
+      # NEXT_PUBLIC_* must be inlined at build, so scope is RUN_AND_BUILD_TIME.
+      - key: NEXT_PUBLIC_GA_ID
+        scope: RUN_AND_BUILD_TIME
+        value: REPLACE_WITH_GA_MEASUREMENT_ID
+
 # ---------------------------------------------------------------------------
 # Pre-deploy job: apply migrations before each new version goes live.
 # Runs from /migrate (isolated Prisma CLI). `sh -c` because Dockerfile

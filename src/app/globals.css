@@ -1863,6 +1863,45 @@ button.header-profile {
   opacity: 0.6;
 }
 
+/* EU-only cookie-consent banner (fixed to the bottom) */
+.consent-banner {
+  position: fixed;
+  z-index: 200;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  width: min(680px, calc(100% - 24px));
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-hover);
+}
+.consent-text {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-2);
+  flex: 1;
+}
+.consent-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+@media (max-width: 560px) {
+  .consent-banner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .consent-actions {
+    justify-content: flex-end;
+  }
+}
+
 /* dashboard stat cards */
 .admin-stats {
   display: grid;

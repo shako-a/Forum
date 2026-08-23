@@ -1,4 +1,9 @@
 {
+  "consent": {
+    "message": "We use cookies for analytics to understand how the forum is used. Is that okay?",
+    "accept": "Accept",
+    "decline": "Decline"
+  },
   "common": {
     "appName": "GeoGlobally",
     "tagline": "Georgians, worldwide",
