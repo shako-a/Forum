@@ -2394,6 +2394,47 @@ button.header-profile {
   background: var(--raise);
 }
 
+/* emoji picker (used in the rich editor toolbar and the reply composer) */
+.emoji-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.emoji-menu {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 268px;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-hover);
+  padding: 8px;
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+}
+.emoji-item {
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  padding: 3px;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.emoji-item:hover {
+  background: var(--raise);
+}
+/* reply composer: keep the emoji + image controls on one row */
+.reply-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* Shared typography for the editable surface and rendered posts */
 .ProseMirror,
 .prose {

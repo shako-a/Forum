@@ -5,6 +5,7 @@ import { useEditor, useEditorState, EditorContent, type Editor } from "@tiptap/r
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import { LineHeight } from "@/lib/tiptap-line-height";
+import { EmojiPicker } from "@/components/EmojiPicker";
 
 const EMPTY_DOC = '{"type":"doc","content":[{"type":"paragraph"}]}';
 
@@ -132,6 +133,7 @@ function Toolbar({ editor, spacing }: { editor: Editor; spacing: SpacingLabels }
         <option value="1.9">{spacing.relaxed}</option>
       </select>
       <span className="rte-sep" />
+      <EmojiPicker title="Emoji" onPick={(e) => editor.chain().focus().insertContent(e).run()} />
       <Btn title="Link" active={s.link} onClick={addLink}>
         🔗
       </Btn>

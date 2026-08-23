@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { createReply } from "@/app/actions/replies";
 import { track } from "@/lib/track";
+import { EmojiPicker } from "@/components/EmojiPicker";
 import { ImagePicker } from "@/components/ImagePicker";
 import { IdentityPicker, type AliasOption } from "@/components/IdentityPicker";
 import type { Dictionary } from "@/i18n/dictionaries";
@@ -42,6 +43,19 @@ export function ReplyComposer({
     }
   }, [state, onDone]);
 
+  // Insert an emoji at the textarea's caret (uncontrolled — the form reads the
+  // DOM value on submit, so writing it directly is enough).
+  function insertEmoji(emoji: string) {
+    const ta = ref.current;
+    if (!ta) return;
+    const start = ta.selectionStart ?? ta.value.length;
+    const end = ta.selectionEnd ?? ta.value.length;
+    ta.value = ta.value.slice(0, start) + emoji + ta.value.slice(end);
+    const caret = start + emoji.length;
+    ta.setSelectionRange(caret, caret);
+    ta.focus();
+  }
+
   return (
     <form action={action} className="reply-composer">
       <input type="hidden" name="locale" value={locale} />
@@ -63,7 +77,10 @@ export function ReplyComposer({
         autoFocus={autoFocus}
       />
 
-      <ImagePicker value={image} onChange={setImage} dict={dict} />
+      <div className="reply-tools">
+        <EmojiPicker title="Emoji" onPick={insertEmoji} />
+        <ImagePicker value={image} onChange={setImage} dict={dict} />
+      </div>
 
       {state?.message && <p className="field-error">{state.message}</p>}
       {state?.errors?.body && <p className="field-error">{state.errors.body.join(" ")}</p>}
