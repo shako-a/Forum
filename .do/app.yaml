@@ -87,7 +87,7 @@ services:
       # NEXT_PUBLIC_* must be inlined at build, so scope is RUN_AND_BUILD_TIME.
       - key: NEXT_PUBLIC_GA_ID
         scope: RUN_AND_BUILD_TIME
-        value: REPLACE_WITH_GA_MEASUREMENT_ID
+        value: G-WTRM1VZ2QW
 
 # ---------------------------------------------------------------------------
 # Pre-deploy job: apply migrations before each new version goes live.
