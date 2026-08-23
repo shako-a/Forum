@@ -6,13 +6,17 @@ import { getCurrentUser } from "@/lib/dal";
 import { toHeaderUser } from "@/lib/header-user";
 import { db } from "@/lib/db";
 import { getBusinessProfile, avgRating } from "@/lib/business-data";
+import { getBusinessPosts } from "@/lib/forum-data";
+import { canManageBusiness } from "@/lib/business-manage";
 import { businessCategoryLabel, businessCategoryIcon } from "@/lib/business-categories";
 import { stateLabel } from "@/lib/us-states";
 import { timeAgo } from "@/lib/format";
 import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
+import { PostList } from "@/components/PostList";
 import { Stars } from "@/components/business/Stars";
 import { ReviewForm } from "@/components/business/ReviewForm";
+import { ReviewReply } from "@/components/business/ReviewReply";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +34,9 @@ export default async function BusinessProfilePage({ params }: PageProps<"/[lang]
   const t = dict.business;
 
   const isOwner = !!user && user.id === biz.owner.id;
-  const canManage = isOwner || user?.role === "ADMIN"; // admins can manage any business
+  // Owner, a delegated manager, or an admin can manage this business.
+  const canManage = user ? await canManageBusiness(user.id, biz.id, user.role === "ADMIN") : false;
+  const businessPosts = await getBusinessPosts(biz.id, user?.id ?? null);
   const myReview = user ? biz.reviews.find((r) => r.authorId === user.id) : undefined;
   const location = [biz.city, stateLabel(biz.state, lang)].filter(Boolean).join(", ");
   const website = biz.website;
@@ -65,7 +71,7 @@ export default async function BusinessProfilePage({ params }: PageProps<"/[lang]
               <Stars value={avgRating(biz)} count={biz.ratingCount} />
             </div>
             {canManage && (
-              <Link href={`/${lang}/business/${biz.slug}/edit`} className="btn btn-ghost biz-manage">
+              <Link href={`/${lang}/business/${biz.slug}/manage`} className="btn btn-ghost biz-manage">
                 {t.manage}
               </Link>
             )}
@@ -84,6 +90,21 @@ export default async function BusinessProfilePage({ params }: PageProps<"/[lang]
           {biz.description && (
             <div className="card card-pad biz-section">
               <p className="biz-description">{biz.description}</p>
+            </div>
+          )}
+
+          {/* Posts authored by the business */}
+          {businessPosts.length > 0 && (
+            <div className="biz-section">
+              <h2 className="biz-section-title" style={{ padding: "0 4px 8px" }}>📝 {t.posts}</h2>
+              <PostList
+                locale={lang}
+                dict={dict}
+                posts={businessPosts}
+                canVote={!!user}
+                loginHref={`/${lang}/login?next=/${lang}/business/${biz.slug}`}
+                canDelete={user?.role === "ADMIN"}
+              />
             </div>
           )}
 
@@ -135,6 +156,17 @@ export default async function BusinessProfilePage({ params }: PageProps<"/[lang]
                       <span className="biz-review-time">{timeAgo(new Date(r.createdAt), lang)}</span>
                     </div>
                     {r.body && <p className="biz-review-body">{r.body}</p>}
+
+                    {/* The business's public response */}
+                    {r.ownerReply && (
+                      <div className="biz-review-owner">
+                        <span className="biz-review-owner-label">🏢 {t.businessReplied}</span>
+                        <p className="biz-review-owner-body">{r.ownerReply}</p>
+                      </div>
+                    )}
+                    {canManage && (
+                      <ReviewReply locale={lang} reviewId={r.id} existing={r.ownerReply} dict={dict} />
+                    )}
                   </li>
                 ))}
               </ul>

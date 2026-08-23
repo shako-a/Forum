@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal";
+import { canManageBusiness } from "@/lib/business-manage";
 import { canRegisterBusiness } from "@/lib/perks";
 import { slugify } from "@/lib/slug";
 import { createNotification } from "@/lib/notify";
@@ -63,7 +64,7 @@ export async function updateBusiness(_state: FormState, formData: FormData): Pro
   const id = String(formData.get("businessId") ?? "");
   const biz = await db.business.findUnique({ where: { id }, select: { ownerId: true, slug: true } });
   if (!biz) return { message: "Business not found." };
-  if (biz.ownerId !== user.id && user.role !== "ADMIN") return { message: "Not allowed." };
+  if (!(await canManageBusiness(user.id, id, user.role === "ADMIN"))) return { message: "Not allowed." };
 
   const parsed = parseBusiness(formData);
   if (!parsed.success) return { errors: zodErrors(parsed.error) };
@@ -87,10 +88,11 @@ export async function deleteBusiness(businessId: string, locale: string): Promis
 }
 
 // --- Jobs ---------------------------------------------------------------
+// A business the user may manage (owner, delegated manager, or admin), or null.
 async function ownsBusiness(businessId: string, userId: string, isAdmin: boolean) {
   const biz = await db.business.findUnique({ where: { id: businessId }, select: { ownerId: true, slug: true } });
   if (!biz) return null;
-  if (biz.ownerId !== userId && !isAdmin) return null;
+  if (!(await canManageBusiness(userId, businessId, isAdmin))) return null;
   return biz;
 }
 
@@ -124,9 +126,9 @@ export async function deleteJob(jobId: string, locale: string): Promise<void> {
   if (!user) return;
   const job = await db.jobPosting.findUnique({
     where: { id: jobId },
-    select: { business: { select: { ownerId: true, slug: true } } },
+    select: { businessId: true, business: { select: { slug: true } } },
   });
-  if (!job || (job.business.ownerId !== user.id && user.role !== "ADMIN")) return;
+  if (!job || !(await canManageBusiness(user.id, job.businessId, user.role === "ADMIN"))) return;
   await db.jobPosting.delete({ where: { id: jobId } });
   revalidatePath(`/${locale}/business/${job.business.slug}`, "page");
   revalidatePath(`/${locale}/jobs`, "page");
@@ -142,7 +144,9 @@ export async function submitReview(_state: FormState, formData: FormData): Promi
     select: { ownerId: true, slug: true, name: true },
   });
   if (!biz) return { message: "Business not found." };
-  if (biz.ownerId === user.id) return { message: "You can't review your own business." };
+  // Owner and delegated managers can't review their own business.
+  if (await canManageBusiness(user.id, businessId, false))
+    return { message: "You can't review your own business." };
 
   const parsed = ReviewSchema.safeParse({
     rating: formData.get("rating"),
@@ -208,4 +212,71 @@ export async function deleteReview(reviewId: string, locale: string): Promise<vo
     });
   });
   revalidatePath(`/${locale}/business/${review.business.slug}`, "page");
+}
+
+// --- Review replies (business owner/manager answering feedback) ------------
+export async function replyToReview(_state: FormState, formData: FormData): Promise<FormState> {
+  const user = await getCurrentUser();
+  if (!user) return { message: "You must be logged in." };
+  const reviewId = String(formData.get("reviewId") ?? "");
+  const text = String(formData.get("text") ?? "").trim();
+
+  const review = await db.businessReview.findUnique({
+    where: { id: reviewId },
+    select: { businessId: true, business: { select: { slug: true } } },
+  });
+  if (!review) return { message: "Review not found." };
+  if (!(await canManageBusiness(user.id, review.businessId, user.role === "ADMIN")))
+    return { message: "Not allowed." };
+
+  await db.businessReview.update({
+    where: { id: reviewId },
+    // Empty text clears the reply.
+    data: { ownerReply: text || null, ownerReplyAt: text ? new Date() : null },
+  });
+
+  const locale = String(formData.get("locale") ?? "en");
+  revalidatePath(`/${locale}/business/${review.business.slug}`, "page");
+  return { ok: true };
+}
+
+// --- Manager assignment (owner only) --------------------------------------
+async function ownerOf(businessId: string, userId: string, isAdmin: boolean) {
+  const biz = await db.business.findUnique({ where: { id: businessId }, select: { ownerId: true, slug: true } });
+  if (!biz) return null;
+  if (biz.ownerId !== userId && !isAdmin) return null;
+  return biz;
+}
+
+export async function addBusinessManager(_state: FormState, formData: FormData): Promise<FormState> {
+  const user = await getCurrentUser();
+  if (!user) return { message: "You must be logged in." };
+  const businessId = String(formData.get("businessId") ?? "");
+  const forumName = String(formData.get("forumName") ?? "").trim();
+
+  const biz = await ownerOf(businessId, user.id, user.role === "ADMIN");
+  if (!biz) return { message: "Only the owner can manage this." };
+
+  const target = await db.user.findUnique({ where: { forumName }, select: { id: true } });
+  if (!target) return { errors: { forumName: ["No member with that forum name."] } };
+  if (target.id === biz.ownerId) return { errors: { forumName: ["The owner already manages this business."] } };
+
+  await db.businessManager.upsert({
+    where: { businessId_userId: { businessId, userId: target.id } },
+    update: {},
+    create: { businessId, userId: target.id },
+  });
+
+  const locale = String(formData.get("locale") ?? "en");
+  revalidatePath(`/${locale}/business/${biz.slug}/manage`, "page");
+  return { ok: true };
+}
+
+export async function removeBusinessManager(businessId: string, userId: string, locale: string): Promise<void> {
+  const actor = await getCurrentUser();
+  if (!actor) return;
+  const biz = await ownerOf(businessId, actor.id, actor.role === "ADMIN");
+  if (!biz) return;
+  await db.businessManager.delete({ where: { businessId_userId: { businessId, userId } } }).catch(() => {});
+  revalidatePath(`/${locale}/business/${biz.slug}/manage`, "page");
 }

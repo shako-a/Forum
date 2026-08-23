@@ -60,6 +60,21 @@ export async function getBusinessProfile(slug: string) {
   });
 }
 
+// A business with its managers and all jobs — for the owner/manager admin pages.
+export async function getBusinessForManage(slug: string) {
+  return db.business.findUnique({
+    where: { slug },
+    include: {
+      owner: { select: { id: true, forumName: true } },
+      managers: {
+        include: { user: { select: { id: true, forumName: true } } },
+        orderBy: { createdAt: "asc" },
+      },
+      jobs: { orderBy: { createdAt: "desc" } },
+    },
+  });
+}
+
 // Businesses owned by a given user (their management list).
 export async function getMyBusinesses(ownerId: string) {
   return db.business.findMany({

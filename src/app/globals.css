@@ -3292,6 +3292,62 @@ a.biz-card:hover {
   margin-top: 4px;
   white-space: pre-wrap;
 }
+/* business's public response to a review */
+.biz-review-owner {
+  margin: 8px 0 0 16px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--blue);
+  background: var(--bg);
+  border-radius: 0 8px 8px 0;
+}
+.biz-review-owner-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--blue);
+}
+.biz-review-owner-body {
+  color: var(--ink-2);
+  font-size: 13.5px;
+  margin-top: 3px;
+  white-space: pre-wrap;
+}
+.biz-review-replybtn {
+  margin-top: 6px;
+}
+.biz-review-replyform {
+  margin-top: 8px;
+}
+.biz-review-replyactions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+/* manage page */
+.biz-manage-links {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.biz-managers {
+  list-style: none;
+  margin: 8px 0 16px;
+}
+.biz-manager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+.biz-addmanager {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.biz-addmanager .input {
+  flex: 1;
+}
 
 /* Pro gate + danger zone */
 .biz-gate {

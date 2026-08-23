@@ -6,15 +6,14 @@ import { requireUser } from "@/lib/dal";
 import { canManageBusiness } from "@/lib/business-manage";
 import { toHeaderUser } from "@/lib/header-user";
 import { db } from "@/lib/db";
-import { deleteBusiness } from "@/app/actions/business";
+import { getBusinessForManage } from "@/lib/business-data";
 import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
-import { BusinessForm } from "@/components/business/BusinessForm";
-import { ConfirmButton } from "@/components/business/ConfirmButton";
+import { ManagersAdmin } from "@/components/business/ManagersAdmin";
 
 export const dynamic = "force-dynamic";
 
-export default async function EditBusinessPage({ params }: PageProps<"/[lang]/business/[slug]/edit">) {
+export default async function ManageBusinessPage({ params }: PageProps<"/[lang]/business/[slug]/manage">) {
   const { lang, slug } = await params;
   if (!isLocale(lang)) notFound();
   const user = await requireUser(lang);
@@ -22,7 +21,7 @@ export default async function EditBusinessPage({ params }: PageProps<"/[lang]/bu
 
   const [allCategories, biz] = await Promise.all([
     db.category.findMany({ orderBy: { sortOrder: "asc" } }),
-    db.business.findUnique({ where: { slug } }),
+    getBusinessForManage(slug),
   ]);
   if (!biz) notFound();
   if (!(await canManageBusiness(user.id, biz.id, user.role === "ADMIN"))) redirect(`/${lang}/business/${slug}`);
@@ -36,40 +35,34 @@ export default async function EditBusinessPage({ params }: PageProps<"/[lang]/bu
         <LeftSidebar locale={lang} dict={dict} categories={allCategories} />
         <main className="feed">
           <Link href={`/${lang}/business/${biz.slug}`} className="btn btn-ghost btn-sm biz-back">
-            ‹ {t.back}
+            ‹ {biz.name}
           </Link>
           <div className="account-head">
-            <h1 className="account-title">{t.editTitle}</h1>
+            <h1 className="account-title">⚙️ {t.manageTitle}</h1>
             <p className="account-sub">{biz.name}</p>
           </div>
 
-          <BusinessForm
-            locale={lang}
-            dict={dict}
-            mode="edit"
-            values={{
-              id: biz.id,
-              name: biz.name,
-              category: biz.category,
-              tagline: biz.tagline ?? "",
-              description: biz.description ?? "",
-              city: biz.city ?? "",
-              state: biz.state,
-              website: biz.website ?? "",
-              email: biz.email ?? "",
-              phone: biz.phone ?? "",
-              logoUrl: biz.logoUrl ?? "",
-            }}
-          />
+          {/* Quick links */}
+          <div className="card card-pad biz-section biz-manage-links">
+            <Link href={`/${lang}/business/${biz.slug}/edit`} className="btn btn-ghost">
+              ✏️ {t.editProfile}
+            </Link>
+            <Link href={`/${lang}/business/${biz.slug}/jobs`} className="btn btn-ghost">
+              💼 {t.manageJobs}
+            </Link>
+          </div>
 
-          {/* Danger zone — owner only */}
+          {/* Managers (owner only) */}
           {isOwner && (
-            <div className="card card-pad biz-danger">
-              <ConfirmButton
-                action={deleteBusiness.bind(null, biz.id, lang)}
-                label={t.deleteBusiness}
-                confirmText={t.confirmDeleteBusiness}
-                className="btn btn-danger"
+            <div className="card card-pad biz-section">
+              <h2 className="biz-section-title">👥 {t.managers}</h2>
+              <p className="account-sub" style={{ marginTop: 0 }}>{t.managersSub}</p>
+              <ManagersAdmin
+                locale={lang}
+                businessId={biz.id}
+                ownerName={biz.owner.forumName}
+                managers={biz.managers.map((m) => ({ userId: m.user.id, forumName: m.user.forumName }))}
+                dict={dict}
               />
             </div>
           )}

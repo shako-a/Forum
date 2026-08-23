@@ -189,6 +189,23 @@ const POST_CARD_INCLUDE = {
   _count: { select: { replies: true, votes: true } },
 } as const;
 
+// Posts a business has authored (for its forum profile), newest-active first,
+// with the viewer's vote/save state attached so the cards are interactive.
+export async function getBusinessPosts(businessId: string, viewerId: string | null) {
+  try {
+    const found = await db.post.findMany({
+      where: { authorBusinessId: businessId, hidden: false },
+      orderBy: { lastActivity: "desc" },
+      take: 50,
+      include: POST_CARD_INCLUDE,
+    });
+    return attachSaved(await attachMyVotes(found, viewerId), viewerId);
+  } catch (error) {
+    console.error("getBusinessPosts failed:", error);
+    return [];
+  }
+}
+
 // Attach the viewer's own vote (-1/0/1) to each post so list cards can render
 // interactive, stateful vote controls.
 async function attachMyVotes<T extends { id: string }>(
