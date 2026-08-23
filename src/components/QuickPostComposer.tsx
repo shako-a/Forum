@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { quickPost } from "@/app/actions/posts";
+import { track } from "@/lib/track";
 import { IdentityPicker, type AliasOption } from "@/components/IdentityPicker";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
@@ -24,7 +25,10 @@ export function QuickPostComposer({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (state?.ok && inputRef.current) inputRef.current.value = "";
+    if (state?.ok) {
+      if (inputRef.current) inputRef.current.value = "";
+      track("post_created", { method: "quick" });
+    }
   }, [state]);
 
   return (

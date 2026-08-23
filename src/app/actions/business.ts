@@ -8,6 +8,7 @@ import { canRegisterBusiness } from "@/lib/perks";
 import { slugify } from "@/lib/slug";
 import { createNotification } from "@/lib/notify";
 import { BusinessSchema, JobSchema, ReviewSchema, zodErrors, type FormState } from "@/lib/definitions";
+import { flagGaEvent } from "@/lib/ga-server";
 
 async function uniqueBusinessSlug(name: string): Promise<string> {
   const base = slugify(name) || "business";
@@ -51,6 +52,7 @@ export async function createBusiness(_state: FormState, formData: FormData): Pro
 
   const locale = String(formData.get("locale") ?? "en");
   revalidatePath(`/${locale}/business`, "page");
+  await flagGaEvent("business_created");
   redirect(`/${locale}/business/${slug}`);
 }
 

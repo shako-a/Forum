@@ -9,6 +9,7 @@ import { defaultLocale, isLocale } from "@/i18n/config";
 import { pmHasContent, textToPmDoc, safeImageUrl, appendImage } from "@/lib/prosemirror";
 import { slugify } from "@/lib/slug";
 import type { FormState } from "@/lib/definitions";
+import { flagGaEvent } from "@/lib/ga-server";
 
 function localeFrom(formData: FormData): string {
   const raw = String(formData.get("locale") ?? "");
@@ -71,6 +72,7 @@ export async function createPost(_state: FormState, formData: FormData): Promise
     },
   });
 
+  await flagGaEvent("post_created");
   redirect(`/${locale}/p/${slug}`);
 }
 

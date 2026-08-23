@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { TierCta } from "@/components/TierCta";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import type { PublicPackage } from "@/lib/packages";
@@ -76,12 +76,7 @@ export function TierCard({
         (held ? (
           <p className="tier-held">✓ {t.youHaveThis}</p>
         ) : (
-          <Link
-            href={`/${locale}/more/${pkg.slug}`}
-            className="btn btn-primary btn-full tier-cta"
-          >
-            {t.learnMore}
-          </Link>
+          <TierCta href={`/${locale}/more/${pkg.slug}`} slug={pkg.slug} label={t.learnMore} />
         ))}
     </div>
   );

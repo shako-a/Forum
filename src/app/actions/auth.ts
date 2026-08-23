@@ -8,6 +8,7 @@ import { SignupFormSchema, LoginFormSchema, type FormState } from "@/lib/definit
 import { defaultLocale, isLocale } from "@/i18n/config";
 import { postAuthDestination } from "@/lib/redirects";
 import { sendVerificationEmail } from "@/app/actions/account-recovery";
+import { flagGaEvent } from "@/lib/ga-server";
 
 function localeFrom(formData: FormData): string {
   const raw = String(formData.get("locale") ?? "");
@@ -59,6 +60,7 @@ export async function signup(_state: FormState, formData: FormData): Promise<For
   if (isLocale(locale)) await sendVerificationEmail(user.id, email, locale);
 
   await createSession(user.id, user.role);
+  await flagGaEvent("sign_up"); // fires on the page the redirect lands on
   redirect(postAuthDestination(nextFrom(formData), locale));
 }
 

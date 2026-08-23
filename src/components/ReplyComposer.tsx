@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { createReply } from "@/app/actions/replies";
+import { track } from "@/lib/track";
 import { ImagePicker } from "@/components/ImagePicker";
 import { IdentityPicker, type AliasOption } from "@/components/IdentityPicker";
 import type { Dictionary } from "@/i18n/dictionaries";
@@ -36,6 +37,7 @@ export function ReplyComposer({
     if (state?.ok) {
       if (ref.current) ref.current.value = "";
       setImage("");
+      track("reply_created");
       onDone?.();
     }
   }, [state, onDone]);

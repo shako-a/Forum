@@ -2,6 +2,7 @@
 
 import { useState, useRef, useTransition } from "react";
 import { askAi } from "@/app/actions/ai";
+import { track } from "@/lib/track";
 import type { Dictionary } from "@/i18n/dictionaries";
 
 type Turn = { q: string; a: string };
@@ -22,6 +23,7 @@ export function AskAiChat({ dict }: { dict: Dictionary }) {
     start(async () => {
       const res = await askAi(q);
       if (res.ok) {
+        track("ask_ai_used");
         setTurns((prev) => [...prev, { q, a: res.text }]);
       } else {
         setError(

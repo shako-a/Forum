@@ -7,6 +7,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { Analytics } from "@/components/Analytics";
 import { ConsentBanner } from "@/components/ConsentBanner";
+import { GaEventFlash } from "@/components/GaEventFlash";
 
 const sora = Sora({ variable: "--font-sora", subsets: ["latin"], weight: ["600", "700", "800"] });
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
@@ -55,6 +56,7 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
       <body>
         {children}
         <Analytics />
+        <GaEventFlash />
         <ConsentBanner
           enabled={!!process.env.NEXT_PUBLIC_GA_ID}
           message={dict.consent.message}
