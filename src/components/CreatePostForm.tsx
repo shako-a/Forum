@@ -76,7 +76,16 @@ export function CreatePostForm({
 
       <div className="field">
         <label>{dict.post.body}</label>
-        <RichTextEditor name="body" placeholder={dict.post.body} />
+        <RichTextEditor
+          name="body"
+          placeholder={dict.post.body}
+          spacing={{
+            label: dict.post.lineSpacing,
+            normal: dict.post.spacingNormal,
+            tight: dict.post.spacingTight,
+            relaxed: dict.post.spacingRelaxed,
+          }}
+        />
         {err?.body && <span className="field-error">{err.body.join(" ")}</span>}
       </div>
 

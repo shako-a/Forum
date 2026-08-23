@@ -4,8 +4,17 @@ import { useState, useCallback } from "react";
 import { useEditor, useEditorState, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
+import { LineHeight } from "@/lib/tiptap-line-height";
 
 const EMPTY_DOC = '{"type":"doc","content":[{"type":"paragraph"}]}';
+
+export type SpacingLabels = { label: string; normal: string; tight: string; relaxed: string };
+const DEFAULT_SPACING: SpacingLabels = {
+  label: "Line spacing",
+  normal: "Normal",
+  tight: "Tight",
+  relaxed: "Relaxed",
+};
 
 // Toolbar button.
 function Btn({
@@ -34,7 +43,7 @@ function Btn({
   );
 }
 
-function Toolbar({ editor }: { editor: Editor }) {
+function Toolbar({ editor, spacing }: { editor: Editor; spacing: SpacingLabels }) {
   // Reactive active-states (Tiptap v3 requires useEditorState for this).
   const s = useEditorState({
     editor,
@@ -48,8 +57,23 @@ function Toolbar({ editor }: { editor: Editor }) {
       ordered: e.isActive("orderedList"),
       quote: e.isActive("blockquote"),
       link: e.isActive("link"),
+      lineHeight:
+        (e.getAttributes("paragraph").lineHeight as string | null) ||
+        (e.getAttributes("heading").lineHeight as string | null) ||
+        "",
     }),
   });
+
+  // Apply line spacing to the paragraph/heading at the cursor (empty = default).
+  const setSpacing = (value: string) => {
+    const lh = value || null;
+    editor
+      .chain()
+      .focus()
+      .updateAttributes("paragraph", { lineHeight: lh })
+      .updateAttributes("heading", { lineHeight: lh })
+      .run();
+  };
 
   const addLink = useCallback(() => {
     const prev = editor.getAttributes("link").href as string | undefined;
@@ -96,6 +120,18 @@ function Toolbar({ editor }: { editor: Editor }) {
         ❝
       </Btn>
       <span className="rte-sep" />
+      <select
+        className="rte-select"
+        title={spacing.label}
+        aria-label={spacing.label}
+        value={s.lineHeight || ""}
+        onChange={(e) => setSpacing(e.target.value)}
+      >
+        <option value="">{spacing.normal}</option>
+        <option value="1.2">{spacing.tight}</option>
+        <option value="1.9">{spacing.relaxed}</option>
+      </select>
+      <span className="rte-sep" />
       <Btn title="Link" active={s.link} onClick={addLink}>
         🔗
       </Btn>
@@ -119,10 +155,12 @@ export function RichTextEditor({
   name,
   placeholder,
   initialDoc,
+  spacing = DEFAULT_SPACING,
 }: {
   name: string;
   placeholder?: string;
   initialDoc?: string; // ProseMirror JSON string, for editing
+  spacing?: SpacingLabels;
 }) {
   const [doc, setDoc] = useState(initialDoc || EMPTY_DOC);
 
@@ -139,6 +177,7 @@ export function RichTextEditor({
     extensions: [
       StarterKit.configure({ link: { openOnClick: false } }),
       Image.configure({ inline: false }),
+      LineHeight,
     ],
     content: initialContent,
     immediatelyRender: false, // avoid SSR hydration mismatch
@@ -150,7 +189,7 @@ export function RichTextEditor({
 
   return (
     <div className="rte">
-      {editor && <Toolbar editor={editor} />}
+      {editor && <Toolbar editor={editor} spacing={spacing} />}
       <EditorContent editor={editor} />
       <input type="hidden" name={name} value={doc} />
     </div>

@@ -82,16 +82,29 @@ function applyMarks(text: string, marks?: PMMark[]): string {
   return html;
 }
 
+// The only line-height values the editor's line-spacing control can set. The
+// output is dangerouslySetInnerHTML'd, so this allow-list is what keeps a bad
+// attribute value out of the style string. 1.5 is the CSS default (no inline
+// style needed), so only the non-default choices are here. Keep in sync with
+// the RichTextEditor line-spacing options and the LineHeight extension.
+const ALLOWED_LINE_HEIGHTS = new Set(["1.2", "1.9"]);
+
+function lineHeightStyle(value: unknown): string {
+  return typeof value === "string" && ALLOWED_LINE_HEIGHTS.has(value)
+    ? ` style="line-height:${value}"`
+    : "";
+}
+
 function renderNode(node: PMNode): string {
   switch (node.type) {
     case "doc":
       return (node.content ?? []).map(renderNode).join("");
     case "paragraph":
-      return `<p>${(node.content ?? []).map(renderNode).join("")}</p>`;
+      return `<p${lineHeightStyle(node.attrs?.lineHeight)}>${(node.content ?? []).map(renderNode).join("")}</p>`;
     case "heading": {
       const level = Math.min(Math.max(Number(node.attrs?.level) || 2, 1), 3);
       const inner = (node.content ?? []).map(renderNode).join("");
-      return `<h${level}>${inner}</h${level}>`;
+      return `<h${level}${lineHeightStyle(node.attrs?.lineHeight)}>${inner}</h${level}>`;
     }
     case "text":
       return applyMarks(node.text ?? "", node.marks);

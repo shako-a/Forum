@@ -2379,6 +2379,20 @@ button.header-profile {
   background: var(--line);
   margin: 4px 4px;
 }
+.rte-select {
+  height: 32px;
+  border: 1px solid var(--line);
+  background: transparent;
+  border-radius: 8px;
+  padding: 0 6px;
+  color: var(--ink-2);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.rte-select:hover {
+  background: var(--raise);
+}
 
 /* Shared typography for the editable surface and rendered posts */
 .ProseMirror,
