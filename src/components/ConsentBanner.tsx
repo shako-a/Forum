@@ -49,10 +49,15 @@ async function detectCountry(): Promise<string | null> {
 }
 
 export function ConsentBanner({
+  enabled,
   message,
   accept,
   decline,
 }: {
+  // Whether analytics is configured — resolved on the server (the root layout)
+  // and passed in, because a client component can't reliably read a NEXT_PUBLIC
+  // env that was only set at run time.
+  enabled: boolean;
   message: string;
   accept: string;
   decline: string;
@@ -61,7 +66,7 @@ export function ConsentBanner({
 
   useEffect(() => {
     // Nothing to consent to if analytics isn't configured.
-    if (!process.env.NEXT_PUBLIC_GA_ID) return;
+    if (!enabled) return;
 
     let choice: string | null = null;
     try {
@@ -82,7 +87,7 @@ export function ConsentBanner({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [enabled]);
 
   if (!show) return null;
 

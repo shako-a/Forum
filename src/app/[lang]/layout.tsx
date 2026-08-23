@@ -56,6 +56,7 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
         {children}
         <Analytics />
         <ConsentBanner
+          enabled={!!process.env.NEXT_PUBLIC_GA_ID}
           message={dict.consent.message}
           accept={dict.consent.accept}
           decline={dict.consent.decline}
