@@ -110,6 +110,7 @@ model User {
   businesses          Business[]       @relation("BusinessOwner")
   managedBusinesses   BusinessManager[] @relation("BusinessManagerUser")
   businessReviews     BusinessReview[]
+  propertyListings    PropertyListing[] @relation("ListingOwner")
   notifications       Notification[]            @relation("UserNotifications")
   notificationsActed  Notification[]            @relation("NotificationActor")
   conversations       ConversationParticipant[]
@@ -487,6 +488,59 @@ model JobPosting {
 
   @@index([active, createdAt])
   @@index([businessId])
+}
+
+// ---------------------------------------------------------------------------
+// Real estate — sale & rental listings, posted by Professional-tier users
+// (same perk bracket as business profiles and job postings). Public directory
+// with search filters; each listing has a photo gallery, feature checklist,
+// address (linked to Google Maps) and contact details.
+// ---------------------------------------------------------------------------
+
+model PropertyListing {
+  id      String @id @default(cuid())
+  slug    String @unique
+  owner   User   @relation("ListingOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String
+
+  kind         String // "SALE" | "RENT"
+  propertyType String // key from the curated property-types list (lib/estate.ts)
+  title        String
+  description  String?
+
+  // Whole dollars. For RENT this is the monthly rate.
+  price Int
+
+  // Facts — all optional so land/commercial listings aren't forced to lie.
+  bedrooms  Int?
+  bathrooms Int?
+  rooms     Int? // total rooms
+  areaSqFt  Int?
+  yearBuilt Int?
+
+  // Location — street address is required (it feeds the map view); state reuses
+  // the profile State/Country picker values.
+  address String
+  city    String?
+  state   String
+
+  features String[] // keys from the curated features list (lib/estate.ts)
+  photos   String[] // ordered image URLs; photos[0] is the hero shot
+
+  // Contact — profile is implicit (the owner); these are extra channels.
+  contactName String?
+  phone       String?
+  email       String?
+
+  active Boolean @default(true) // owner can unlist without deleting
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([kind])
+  @@index([propertyType])
+  @@index([state])
+  @@index([active, createdAt])
 }
 
 // ---------------------------------------------------------------------------

@@ -28,6 +28,12 @@ export function canRegisterBusiness(u: Viewer): boolean {
   return !!u && (u.isPro || hasFeature(u, "business"));
 }
 
+// Posting real-estate listings rides the same Professional bracket as business
+// profiles and job postings (they're sold as one perk set).
+export function canPostListing(u: Viewer): boolean {
+  return canRegisterBusiness(u);
+}
+
 // Profile and feed customization: the Supporter bracket's headline perk, and
 // included in both higher tiers (paying more never gives you less).
 export function canCustomize(u: Viewer): boolean {

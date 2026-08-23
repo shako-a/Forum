@@ -1,5 +1,6 @@
 import * as z from "zod";
 import { isBusinessCategory } from "@/lib/business-categories";
+import { isPropertyType } from "@/lib/estate";
 
 // Sign-up: mirrors the required profile fields from the spec.
 // First/last name + forum name + phone + email + state are mandatory; city optional.
@@ -188,6 +189,32 @@ export const JobSchema = z.object({
 export const ReviewSchema = z.object({
   rating: z.coerce.number().int().min(1, { error: "Pick a rating." }).max(5),
   body: z.string().trim().max(2000).optional(),
+});
+
+// --- Real estate ----------------------------------------------------------
+// Optional numeric facts: number inputs submit "" when left blank.
+const optionalCount = z
+  .union([z.literal(""), z.coerce.number().int().min(0).max(1_000_000)])
+  .optional()
+  .transform((v) => (v === "" || v === undefined ? undefined : v));
+
+export const ListingSchema = z.object({
+  kind: z.enum(["SALE", "RENT"], { error: "Choose sale or rent." }),
+  propertyType: z.string().refine(isPropertyType, { error: "Pick a property type." }),
+  title: z.string().min(1, { error: "Title is required." }).trim().max(140),
+  description: z.string().trim().max(8000).optional(),
+  price: z.coerce.number({ error: "Price is required." }).int().min(1, { error: "Price is required." }).max(1_000_000_000),
+  bedrooms: optionalCount,
+  bathrooms: optionalCount,
+  rooms: optionalCount,
+  areaSqFt: optionalCount,
+  yearBuilt: optionalCount,
+  address: z.string().min(1, { error: "Address is required." }).trim().max(200),
+  city: z.string().trim().optional(),
+  state: z.string().min(1, { error: "State / Country is required." }).trim(),
+  contactName: z.string().trim().max(100).optional(),
+  phone: z.string().trim().optional(),
+  email: z.email({ error: "Enter a valid email." }).or(z.literal("")).optional(),
 });
 
 // --- Paid packages ("მეტი") ----------------------------------------------
