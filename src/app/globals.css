@@ -2384,7 +2384,7 @@ button.header-profile {
 .ProseMirror,
 .prose {
   color: var(--ink);
-  line-height: 1.65;
+  line-height: 1.5;
   font-size: 15px;
 }
 .ProseMirror {
@@ -2401,7 +2401,7 @@ button.header-profile {
 }
 .ProseMirror p,
 .prose p {
-  margin: 0 0 12px;
+  margin: 0 0 7px;
 }
 .ProseMirror h1,
 .prose h1,
@@ -2427,15 +2427,26 @@ button.header-profile {
   font-size: 17px;
 }
 .ProseMirror ul,
-.prose ul,
+.prose ul {
+  list-style: disc outside;
+  padding-left: 1.4em;
+  margin: 0 0 8px;
+}
 .ProseMirror ol,
 .prose ol {
+  list-style: decimal outside;
   padding-left: 1.4em;
-  margin: 0 0 12px;
+  margin: 0 0 8px;
 }
 .ProseMirror li,
 .prose li {
-  margin: 3px 0;
+  margin: 2px 0;
+}
+/* Tiptap wraps each list item's text in a <p>; kill its margin so list rows
+   don't inherit the paragraph gap. */
+.ProseMirror li > p,
+.prose li > p {
+  margin: 0;
 }
 .ProseMirror blockquote,
 .prose blockquote {
