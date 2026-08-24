@@ -5023,20 +5023,16 @@ body.has-verify-banner .shell {
   background: #fff;
 }
 
-/* Directory filters */
+/* Directory filters — paired rows: sale/rent + type, beds + baths,
+   min + max price, then location + the search button. */
 .re-filters {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   margin-bottom: 16px;
 }
 .re-filters .re-filter-q {
   grid-column: 1 / -1;
-}
-@media (max-width: 640px) {
-  .re-filters {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
 /* Detail page */

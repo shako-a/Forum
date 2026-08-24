@@ -89,14 +89,6 @@ export default async function RealEstatePage({
                 <option key={p.key} value={p.key}>{p.icon} {lang === "ka" ? p.ka : p.en}</option>
               ))}
             </select>
-            <select className="input" name="state" defaultValue={filters.state ?? ""}>
-              <option value="">{t.anywhere}</option>
-              <option value={GEORGIA_VALUE}>{GEORGIA_FLAG} {georgiaName(lang)}</option>
-              <option value={USA_VALUE}>{USA_FLAG} {usaName(lang)}</option>
-              {US_STATES.map((s) => (
-                <option key={s.abbr} value={s.abbr}>{s.name}</option>
-              ))}
-            </select>
             <select className="input" name="beds" defaultValue={filters.minBedrooms?.toString() ?? ""}>
               <option value="">{t.anyBeds}</option>
               {[1, 2, 3, 4, 5].map((n) => (
@@ -111,6 +103,14 @@ export default async function RealEstatePage({
             </select>
             <input className="input" name="minPrice" type="number" min={0} placeholder={t.minPrice} defaultValue={filters.minPrice ?? ""} />
             <input className="input" name="maxPrice" type="number" min={0} placeholder={t.maxPrice} defaultValue={filters.maxPrice ?? ""} />
+            <select className="input" name="state" defaultValue={filters.state ?? ""}>
+              <option value="">{t.anywhere}</option>
+              <option value={GEORGIA_VALUE}>{GEORGIA_FLAG} {georgiaName(lang)}</option>
+              <option value={USA_VALUE}>{USA_FLAG} {usaName(lang)}</option>
+              {US_STATES.map((s) => (
+                <option key={s.abbr} value={s.abbr}>{s.name}</option>
+              ))}
+            </select>
             <button type="submit" className="btn btn-ghost">{dict.business.search}</button>
           </form>
 
