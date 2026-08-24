@@ -17,6 +17,8 @@ const FEATURES = [
   { key: "badgeDonor", nameEn: "Donor badge on your profile", nameKa: "დონორის ნიშანი შენს პროფილზე" },
   { key: "badgePro", nameEn: "Professional badge on your profile", nameKa: "პროფესიონალის ნიშანი შენს პროფილზე" },
   { key: "business", nameEn: "Register a business in the directory", nameKa: "ბიზნესის რეგისტრაცია კატალოგში" },
+  { key: "jobPosting", nameEn: "Post job openings", nameKa: "ვაკანსიების განთავსება" },
+  { key: "realEstate", nameEn: "Post real-estate listings", nameKa: "უძრავი ქონების განცხადებების განთავსება" },
   { key: "support", nameEn: "Help keep the community running", nameKa: "დაეხმარე საზოგადოების ფუნქციონირებას" },
 ];
 
@@ -76,7 +78,7 @@ const PACKAGES = [
     priceCents: 7900,
     featured: false,
     sortOrder: 2,
-    included: ["business", "askAi", "profileCustom", "feedCustom", "badgePro", "support"],
+    included: ["business", "jobPosting", "realEstate", "askAi", "profileCustom", "feedCustom", "badgePro", "support"],
     excluded: [],
   },
 ];
@@ -125,4 +127,58 @@ export async function seedPaidPackages(): Promise<void> {
 // import once rather than on every visit.
 export async function packagesNeedSeeding(): Promise<boolean> {
   return (await db.paidPackage.count()) === 0;
+}
+
+// Perks added after the original launch. seedPaidPackages() deliberately never
+// touches an already-seeded catalogue, so features shipped later need this
+// additive path: upsert the feature row and append it to the named built-in
+// packages when the link is missing. Idempotent — runs on every admin visit.
+const FEATURE_ADDITIONS: Array<{
+  feature: { key: string; nameEn: string; nameKa: string };
+  addTo: string[]; // package keys
+}> = [
+  {
+    feature: { key: "jobPosting", nameEn: "Post job openings", nameKa: "ვაკანსიების განთავსება" },
+    addTo: ["PRO"],
+  },
+  {
+    feature: {
+      key: "realEstate",
+      nameEn: "Post real-estate listings",
+      nameKa: "უძრავი ქონების განცხადებების განთავსება",
+    },
+    addTo: ["PRO"],
+  },
+];
+
+export async function ensureFeatureAdditions(): Promise<void> {
+  for (const add of FEATURE_ADDITIONS) {
+    // Only act the first time the feature appears; after that the admin owns
+    // the catalogue (removing the perk from a package must stick).
+    const existing = await db.feature.findUnique({ where: { key: add.feature.key } });
+    if (existing) continue;
+    const last = await db.feature.aggregate({ _max: { sortOrder: true } });
+    const feature = await db.feature.create({
+      data: { ...add.feature, sortOrder: (last._max.sortOrder ?? 0) + 1 },
+    });
+    for (const pkgKey of add.addTo) {
+      const pkg = await db.paidPackage.findUnique({ where: { key: pkgKey }, select: { id: true } });
+      if (!pkg) continue;
+      const last = await db.packageFeature.aggregate({
+        where: { packageId: pkg.id },
+        _max: { sortOrder: true },
+      });
+      await db.packageFeature.createMany({
+        data: [
+          {
+            packageId: pkg.id,
+            featureId: feature.id,
+            included: true,
+            sortOrder: (last._max.sortOrder ?? 0) + 1,
+          },
+        ],
+        skipDuplicates: true, // no-op when the admin already linked (or unlinked+relinked) it
+      });
+    }
+  }
 }

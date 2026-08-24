@@ -4,7 +4,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { requireRole } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { priceAt } from "@/lib/packages";
-import { seedPaidPackages, packagesNeedSeeding } from "@/lib/packages-seed";
+import { seedPaidPackages, packagesNeedSeeding, ensureFeatureAdditions } from "@/lib/packages-seed";
 import { PackageAdmin, type AdminPackage, type AdminFeature } from "@/components/admin/PackageAdmin";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +18,8 @@ export default async function AdminMorePage({ params }: PageProps<"/[lang]/admin
   // First visit on a fresh database imports the packages that used to be
   // hardcoded, so the admin lands on real rows instead of an empty screen.
   if (await packagesNeedSeeding()) await seedPaidPackages();
+  // Perks shipped after launch (job posting, real estate) self-install once.
+  await ensureFeatureAdditions();
 
   const [pkgRows, featureRows] = await Promise.all([
     db.paidPackage.findMany({

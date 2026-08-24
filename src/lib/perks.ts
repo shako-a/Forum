@@ -29,9 +29,10 @@ export function canRegisterBusiness(u: Viewer): boolean {
 }
 
 // Posting real-estate listings rides the same Professional bracket as business
-// profiles and job postings (they're sold as one perk set).
+// profiles and job postings, and has its own feature key so an admin-created
+// package can grant it separately.
 export function canPostListing(u: Viewer): boolean {
-  return canRegisterBusiness(u);
+  return canRegisterBusiness(u) || hasFeature(u, "realEstate");
 }
 
 // Profile and feed customization: the Supporter bracket's headline perk, and
