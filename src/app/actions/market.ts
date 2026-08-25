@@ -9,7 +9,8 @@ import { canSellOnMarket } from "@/lib/perks";
 import { slugify } from "@/lib/slug";
 import { defaultLocale, isLocale } from "@/i18n/config";
 import { MarketListingSchema, zodErrors, type FormState } from "@/lib/definitions";
-import { canRenew, MARKET_STATUSES, type MarketStatus } from "@/lib/market";
+import { canRenew, MARKET_STATUSES, isMarketReportReason, type MarketStatus } from "@/lib/market";
+import { hasConversationBetween } from "@/lib/market-data";
 import { deleteUploadsByUrl } from "@/lib/media";
 import { flagGaEvent } from "@/lib/ga-server";
 
@@ -138,6 +139,8 @@ export async function setMarketStatus(id: string, status: MarketStatus, locale: 
   if (!user || !MARKET_STATUSES.includes(status)) return;
   const listing = await ownedListing(id, user);
   if (!listing) return;
+  // Staff-removed listings stay removed until staff restores them.
+  if (listing.status === "REMOVED" && user.role !== "ADMIN") return;
   await db.marketListing.update({
     where: { id },
     data: { status, ...(status === "ACTIVE" ? { bumpedAt: new Date() } : {}) },
@@ -152,7 +155,7 @@ export async function renewMarketListing(id: string, locale: string): Promise<vo
   const user = await getCurrentUser();
   if (!user) return;
   const listing = await ownedListing(id, user);
-  if (!listing || !canRenew(listing.bumpedAt)) return;
+  if (!listing || !canRenew(listing.bumpedAt) || listing.status === "REMOVED") return;
   await db.marketListing.update({ where: { id }, data: { bumpedAt: new Date(), status: "ACTIVE" } });
   const lang = safeLocale(locale);
   revalidatePath(`/${lang}/market/${listing.slug}`, "page");
@@ -185,4 +188,83 @@ export async function toggleMarketFavorite(listingId: string): Promise<boolean> 
   if (!listing) return false;
   await db.marketFavorite.create({ data: { userId: user.id, listingId } });
   return true;
+}
+
+// --- Reports -------------------------------------------------------------
+// Report a listing to staff. Stores the reason key (plus optional details)
+// and a snapshot of the listing so the report still reads after edits.
+export async function reportMarketListing(_state: FormState, formData: FormData): Promise<FormState> {
+  const user = await getCurrentUser();
+  if (!user) return { message: "You must be logged in." };
+  const listingId = String(formData.get("listingId") ?? "");
+  const reasonKey = String(formData.get("reason") ?? "");
+  const details = String(formData.get("details") ?? "").trim().slice(0, 500);
+  if (!isMarketReportReason(reasonKey)) return { errors: { reason: ["Pick a reason."] } };
+
+  const listing = await db.marketListing.findUnique({
+    where: { id: listingId },
+    select: { id: true, sellerId: true, title: true, price: true, priceType: true, description: true },
+  });
+  if (!listing) return { message: "Not found." };
+  if (listing.sellerId === user.id) return { message: "You can't report your own listing." };
+
+  const dupe = await db.report.findFirst({
+    where: { reporterId: user.id, marketListingId: listingId, status: "OPEN" },
+    select: { id: true },
+  });
+  if (dupe) return { ok: true };
+
+  const priceLabel = listing.priceType === "FREE" ? "free" : `$${listing.price}`;
+  await db.report.create({
+    data: {
+      reporterId: user.id,
+      reportedUserId: listing.sellerId,
+      marketListingId: listingId,
+      reason: details ? `${reasonKey} — ${details}` : reasonKey,
+      context: `${listing.title} (${priceLabel}) — ${listing.description}`.slice(0, 280),
+    },
+  });
+  return { ok: true };
+}
+
+// --- Seller ratings -------------------------------------------------------
+// One rating per reviewer per seller (upsert). Only members who have a DM
+// thread with the seller can rate — proof of at least some contact.
+export async function rateSeller(_state: FormState, formData: FormData): Promise<FormState> {
+  const user = await getCurrentUser();
+  if (!user) return { message: "You must be logged in." };
+  const sellerId = String(formData.get("sellerId") ?? "");
+  const listingId = String(formData.get("listingId") ?? "") || null;
+  const rating = Number(formData.get("rating"));
+  const body = String(formData.get("body") ?? "").trim().slice(0, 1000) || null;
+  if (!sellerId || sellerId === user.id) return { message: "Invalid review." };
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) return { errors: { rating: ["Pick a rating."] } };
+
+  const seller = await db.user.findUnique({ where: { id: sellerId }, select: { id: true } });
+  if (!seller) return { message: "Seller not found." };
+  if (!(await hasConversationBetween(user.id, sellerId))) {
+    return { message: "Message the seller first — reviews are for people who've been in touch." };
+  }
+  if (listingId) {
+    const owns = await db.marketListing.findFirst({ where: { id: listingId, sellerId }, select: { id: true } });
+    if (!owns) return { message: "Invalid review." };
+  }
+
+  await db.marketSellerReview.upsert({
+    where: { sellerId_reviewerId: { sellerId, reviewerId: user.id } },
+    create: { sellerId, reviewerId: user.id, listingId, rating, body },
+    update: { rating, body, ...(listingId ? { listingId } : {}) },
+  });
+  const locale = localeFrom(formData);
+  revalidatePath(`/${locale}/market`, "layout");
+  return { ok: true };
+}
+
+export async function deleteSellerReview(reviewId: string, locale: string): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) return;
+  const review = await db.marketSellerReview.findUnique({ where: { id: reviewId }, select: { reviewerId: true } });
+  if (!review || (review.reviewerId !== user.id && user.role !== "ADMIN")) return;
+  await db.marketSellerReview.delete({ where: { id: reviewId } });
+  revalidatePath(`/${safeLocale(locale)}/market`, "layout");
 }

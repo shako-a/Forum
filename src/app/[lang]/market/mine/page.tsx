@@ -31,6 +31,7 @@ export default async function MyMarketListingsPage({ params }: PageProps<"/[lang
     { key: "expired", label: t.statusExpired, items: listings.filter((l) => l.status === "ACTIVE" && isMarketExpired(l.bumpedAt)) },
     { key: "paused", label: t.statusPaused, items: listings.filter((l) => l.status === "PAUSED") },
     { key: "sold", label: t.statusSold, items: listings.filter((l) => l.status === "SOLD") },
+    { key: "removed", label: t.statusRemoved, items: listings.filter((l) => l.status === "REMOVED") },
   ];
 
   return (
@@ -76,16 +77,20 @@ export default async function MyMarketListingsPage({ params }: PageProps<"/[lang
                             <div className="muted-sm mk-stats">
                               👁 {t.views.replace("{n}", String(l.views))} · ♥ {l._count.favorites}
                             </div>
-                            <OwnerControls
-                              locale={lang}
-                              dict={dict}
-                              listingId={l.id}
-                              slug={l.slug}
-                              status={l.status}
-                              renewable={canRenew(l.bumpedAt)}
-                              expired={g.key === "expired"}
-                              compact
-                            />
+                            {l.status === "REMOVED" ? (
+                              <span className="mk-removed-note">🚫 {t.removedBanner}</span>
+                            ) : (
+                              <OwnerControls
+                                locale={lang}
+                                dict={dict}
+                                listingId={l.id}
+                                slug={l.slug}
+                                status={l.status}
+                                renewable={canRenew(l.bumpedAt)}
+                                expired={g.key === "expired"}
+                                compact
+                              />
+                            )}
                           </>
                         }
                       />

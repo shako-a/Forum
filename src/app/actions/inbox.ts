@@ -222,10 +222,25 @@ export async function reportContent(_state: FormState, formData: FormData): Prom
   return { ok: true };
 }
 
-// Admin: mark a report resolved.
-export async function resolveReport(reportId: string): Promise<void> {
+// Admin: close a report as resolved (acted on) or dismissed (no action
+// needed), with an optional note for the record.
+export async function resolveReport(reportId: string, note?: string): Promise<void> {
+  await closeReport(reportId, "RESOLVED", note);
+}
+export async function dismissReport(reportId: string, note?: string): Promise<void> {
+  await closeReport(reportId, "DISMISSED", note);
+}
+async function closeReport(reportId: string, status: "RESOLVED" | "DISMISSED", note?: string) {
   const actor = await authorize("ADMIN");
   if (!actor) return;
-  await db.report.update({ where: { id: reportId }, data: { status: "RESOLVED" } });
+  await db.report.update({
+    where: { id: reportId },
+    data: {
+      status,
+      note: (note ?? "").trim().slice(0, 500) || null,
+      resolvedById: actor.id,
+      resolvedAt: new Date(),
+    },
+  });
   revalidatePath("/[lang]/admin/reports", "page");
 }

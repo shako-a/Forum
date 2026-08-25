@@ -48,6 +48,7 @@ export function MarketCard({
         />
         {l.status === "SOLD" && <span className="mk-badge mk-badge-sold">{t.sold}</span>}
         {l.status === "PAUSED" && <span className="mk-badge mk-badge-paused">{t.paused}</span>}
+        {l.status === "REMOVED" && <span className="mk-badge mk-badge-sold">{t.removed}</span>}
         {l.canShip && l.status === "ACTIVE" && <span className="mk-badge mk-badge-ship">📦 {t.ships}</span>}
       </div>
       <Link href={href} className="mk-card-body">

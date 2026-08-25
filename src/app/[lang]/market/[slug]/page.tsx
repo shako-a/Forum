@@ -5,7 +5,16 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { getCurrentUser } from "@/lib/dal";
 import { toHeaderUser } from "@/lib/header-user";
 import { db } from "@/lib/db";
-import { getMarketListing, getSimilarListings, attachSaved, countView } from "@/lib/market-data";
+import {
+  getMarketListing,
+  getSimilarListings,
+  attachSaved,
+  countView,
+  getSellerRating,
+  getSellerReviews,
+  getViewerSellerReview,
+  hasConversationBetween,
+} from "@/lib/market-data";
 import {
   MARKET_CATEGORIES,
   MARKET_CONDITIONS,
@@ -24,6 +33,9 @@ import { Gallery } from "@/components/estate/Gallery";
 import { MarketCard, marketPriceLabel } from "@/components/market/MarketCard";
 import { FavoriteButton } from "@/components/market/FavoriteButton";
 import { OwnerControls } from "@/components/market/OwnerControls";
+import { ReportListingButton } from "@/components/market/ReportListingButton";
+import { SellerReviewForm } from "@/components/market/SellerReviewForm";
+import { Stars } from "@/components/business/Stars";
 
 export const dynamic = "force-dynamic";
 
@@ -45,13 +57,18 @@ export default async function MarketListingPage({ params }: PageProps<"/[lang]/m
   const canManage = isOwner || user?.role === "ADMIN";
   // Paused = the seller hid it. Sold stays visible (people who saved it should
   // learn it's gone); expired stays reachable by link, just out of search.
-  if (l.status === "PAUSED" && !canManage) notFound();
+  if ((l.status === "PAUSED" || l.status === "REMOVED") && !canManage) notFound();
   if (!isOwner) countView(l.id);
 
-  const [similarRaw, [me]] = await Promise.all([
+  const [similarRaw, [me], rating, reviews, myReview, inTouch] = await Promise.all([
     getSimilarListings(l),
     attachSaved([{ id: l.id }], user?.id),
+    getSellerRating(l.sellerId),
+    getSellerReviews(l.sellerId),
+    getViewerSellerReview(l.sellerId, user?.id),
+    user && !isOwner ? hasConversationBetween(user.id, l.sellerId) : Promise.resolve(false),
   ]);
+  const canReview = !!user && !isOwner && inTouch;
   const similar = await attachSaved(similarRaw, user?.id);
   const expired = isMarketExpired(l.bumpedAt);
   const location = [l.city, stateLabel(l.state, lang)].filter(Boolean).join(", ");
@@ -73,6 +90,11 @@ export default async function MarketListingPage({ params }: PageProps<"/[lang]/m
 
           {l.status === "SOLD" && <div className="mk-status-banner mk-status-sold">✓ {t.soldBanner}</div>}
           {l.status === "PAUSED" && <div className="mk-status-banner">⏸ {t.pausedBanner}</div>}
+          {l.status === "REMOVED" && (
+            <div className="mk-status-banner mk-status-sold">
+              🚫 {t.removedBanner}{l.removedReason ? ` — ${l.removedReason}` : ""}
+            </div>
+          )}
           {l.status === "ACTIVE" && expired && canManage && (
             <div className="mk-status-banner">⌛ {t.expiredBanner}</div>
           )}
@@ -120,7 +142,7 @@ export default async function MarketListingPage({ params }: PageProps<"/[lang]/m
             </div>
           </div>
 
-          {canManage && (
+          {canManage && l.status !== "REMOVED" && (
             <div className="card card-pad mk-owner-card">
               <OwnerControls
                 locale={lang}
@@ -182,6 +204,10 @@ export default async function MarketListingPage({ params }: PageProps<"/[lang]/m
                   {l.sellerBusiness && <>{t.listedBy} {l.seller.forumName} · </>}
                   {t.memberSince} {new Date(l.seller.createdAt).getFullYear()} · {t.activeListings.replace("{n}", String(l.seller._count.marketListings))}
                 </div>
+                <div className="mk-seller-rating">
+                  <Stars value={rating.avg} count={rating.count} />
+                  {rating.count === 0 && <span className="muted-sm"> {t.noRatings}</span>}
+                </div>
               </div>
               {!isOwner && (
                 <div className="mk-seller-actions">
@@ -200,6 +226,53 @@ export default async function MarketListingPage({ params }: PageProps<"/[lang]/m
                 </div>
               )}
             </div>
+            {!isOwner && (
+              <div className="mk-report-row">
+                <ReportListingButton
+                  locale={lang}
+                  dict={dict}
+                  listingId={l.id}
+                  loggedIn={!!user}
+                  loginHref={`/${lang}/login?next=${encodeURIComponent(href)}`}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Seller reviews */}
+          <div className="card card-pad biz-section">
+            <h2 className="biz-section-title">⭐ {t.reviews}</h2>
+            {reviews.length === 0 ? (
+              <p className="biz-empty">{t.noRatings}</p>
+            ) : (
+              <ul className="mk-reviews">
+                {reviews.map((rv) => (
+                  <li key={rv.id} className="mk-review">
+                    <div className="mk-review-head">
+                      <Stars value={rv.rating} />
+                      <Link href={`/${lang}/u/${encodeURIComponent(rv.reviewer.forumName)}`} className="mk-review-author">
+                        {rv.reviewer.forumName}
+                      </Link>
+                      <span className="muted-sm">· {timeAgo(rv.createdAt, lang)}</span>
+                      {rv.listing && (
+                        <span className="muted-sm">
+                          · {t.aboutItem} <Link href={`/${lang}/market/${rv.listing.slug}`}>{rv.listing.title}</Link>
+                        </span>
+                      )}
+                    </div>
+                    {rv.body && <p className="mk-review-body">{rv.body}</p>}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {canReview ? (
+              <div className="mk-review-you">
+                <h3 className="mk-review-you-title">{myReview ? t.reviewUpdate : t.rateSeller}</h3>
+                <SellerReviewForm locale={lang} dict={dict} sellerId={l.sellerId} listingId={l.id} existing={myReview} />
+              </div>
+            ) : (
+              !isOwner && <p className="muted-sm mk-review-hint">💬 {t.reviewHint}</p>
+            )}
           </div>
 
           {/* Similar */}

@@ -5692,3 +5692,162 @@ a.mk-tag:hover {
   gap: 16px;
   flex-wrap: wrap;
 }
+
+/* Marketplace reports + seller reviews */
+.mk-report-row {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+}
+.mk-report-link {
+  color: var(--muted);
+}
+.mk-report-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+}
+.mk-report-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  align-items: center;
+}
+.mk-seller-rating {
+  margin-top: 4px;
+}
+.mk-reviews {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.mk-review-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+.mk-review-author {
+  font-weight: 700;
+  color: var(--blue);
+}
+.mk-review-body {
+  margin-top: 4px;
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+.mk-review-you {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.mk-review-you-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.mk-review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mk-rating-input {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.mk-star {
+  border: none;
+  background: none;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--line);
+  cursor: pointer;
+  padding: 0 1px;
+}
+.mk-star.on {
+  color: var(--amber);
+}
+.mk-rating-input .muted-sm {
+  margin-left: 8px;
+}
+.mk-removed-note {
+  color: var(--red-deep);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Admin reports */
+.admin-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.admin-tab {
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.admin-tab.on {
+  background: var(--ink);
+  color: var(--on-ink);
+  border-color: var(--ink);
+}
+.admin-tabs-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--line);
+  margin: 0 4px;
+}
+.report-listing {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  min-width: 180px;
+}
+.report-listing-thumb {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.report-listing-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.report-listing-info {
+  min-width: 0;
+}
+.report-removed {
+  color: var(--red-deep);
+}
+.report-note {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.report-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}

@@ -171,3 +171,45 @@ export async function attachSaved<T extends { id: string }>(
 export function countView(id: string): void {
   db.marketListing.update({ where: { id }, data: { views: { increment: 1 } } }).catch(() => {});
 }
+
+// --- Seller reputation ----------------------------------------------------
+export async function getSellerRating(sellerId: string) {
+  const a = await db.marketSellerReview.aggregate({
+    where: { sellerId },
+    _avg: { rating: true },
+    _count: { _all: true },
+  });
+  return { avg: a._avg.rating ?? 0, count: a._count._all };
+}
+
+export async function getSellerReviews(sellerId: string, take = 6) {
+  return db.marketSellerReview.findMany({
+    where: { sellerId },
+    orderBy: { createdAt: "desc" },
+    take,
+    include: {
+      reviewer: { select: { id: true, forumName: true } },
+      listing: { select: { title: true, slug: true } },
+    },
+  });
+}
+
+export async function getViewerSellerReview(sellerId: string, viewerId: string | null | undefined) {
+  if (!viewerId) return null;
+  return db.marketSellerReview.findUnique({
+    where: { sellerId_reviewerId: { sellerId, reviewerId: viewerId } },
+    select: { id: true, rating: true, body: true },
+  });
+}
+
+// True when the two members share a DM thread — the bar for leaving a rating.
+export async function hasConversationBetween(a: string, b: string): Promise<boolean> {
+  if (!a || !b || a === b) return false;
+  const convo = await db.conversation.findFirst({
+    where: {
+      AND: [{ participants: { some: { userId: a } } }, { participants: { some: { userId: b } } }],
+    },
+    select: { id: true },
+  });
+  return !!convo;
+}

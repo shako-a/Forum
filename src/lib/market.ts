@@ -38,8 +38,21 @@ export const MARKET_PRICE_TYPES: LabelDef[] = [
   { key: "FREE", icon: "🎁", en: "Free", ka: "უფასოდ" },
 ];
 
+// Statuses a seller can set. REMOVED is staff-only (set from a report).
 export const MARKET_STATUSES = ["ACTIVE", "SOLD", "PAUSED"] as const;
 export type MarketStatus = (typeof MARKET_STATUSES)[number];
+
+// Why a listing gets reported — marketplace-specific, unlike post reports.
+export const MARKET_REPORT_REASONS: LabelDef[] = [
+  { key: "scam", icon: "🚫", en: "Scam or fraud", ka: "თაღლითობა" },
+  { key: "prohibited", icon: "⛔", en: "Prohibited or illegal item", ka: "აკრძალული ან უკანონო ნივთი" },
+  { key: "misleading", icon: "❗", en: "Misleading description or photos", ka: "შეცდომაში შემყვანი აღწერა ან ფოტოები" },
+  { key: "spam", icon: "📢", en: "Spam, duplicate or wrong category", ka: "სპამი, დუბლიკატი ან არასწორი კატეგორია" },
+  { key: "offensive", icon: "💢", en: "Offensive content", ka: "შეურაცხმყოფელი კონტენტი" },
+  { key: "other", icon: "💬", en: "Something else", ka: "სხვა" },
+];
+export const isMarketReportReason = (v: unknown): v is string =>
+  typeof v === "string" && !!byKey(MARKET_REPORT_REASONS, v);
 
 // Listings drop out of search this many days after their last renew.
 export const MARKET_EXPIRY_DAYS = 60;
