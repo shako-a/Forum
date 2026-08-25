@@ -4,7 +4,8 @@ import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { getCurrentUser, getSiteSettings } from "@/lib/dal";
 import { db } from "@/lib/db";
-import { countVisitors, countVisitorsToday, VISITOR_WINDOW_DAYS } from "@/lib/visitors";
+import { countVisitors, countVisitorsToday, countVisitsAllTime, getVisitorBaseline, VISITOR_WINDOW_DAYS } from "@/lib/visitors";
+import { VisitorBaselineForm } from "@/components/admin/VisitorBaselineForm";
 
 async function safeCount(fn: () => Promise<number>) {
   try {
@@ -27,7 +28,7 @@ export default async function AdminDashboard({ params }: PageProps<"/[lang]/admi
   const t = dict.admin;
   const settings = await getSiteSettings();
 
-  const [users, categories, posts, hidden, ads, pinned, online, visitors30, visitorsToday] = await Promise.all([
+  const [users, categories, posts, hidden, ads, pinned, online, visitors30, visitorsToday, visitsAllTime, baseline] = await Promise.all([
     safeCount(() => db.user.count()),
     safeCount(() => db.category.count()),
     safeCount(() => db.post.count()),
@@ -37,6 +38,8 @@ export default async function AdminDashboard({ params }: PageProps<"/[lang]/admi
     safeCount(() => db.user.count({ where: { lastSeenAt: { gte: new Date(Date.now() - 5 * 60 * 1000) } } })),
     safeCount(() => countVisitors(VISITOR_WINDOW_DAYS, true)),
     safeCount(() => countVisitorsToday()),
+    safeCount(() => countVisitsAllTime()),
+    safeCount(() => getVisitorBaseline()),
   ]);
 
   // Posts currently shown in the Popular bar: pinned selection if curated,
@@ -51,6 +54,7 @@ export default async function AdminDashboard({ params }: PageProps<"/[lang]/admi
     { label: t.onlineNow, value: online, icon: "🟢", href: `${base}/users` },
     { label: t.visitorsToday, value: visitorsToday, icon: "👣", href: `${base}` },
     { label: t.visitorsWindow.replace("{n}", String(VISITOR_WINDOW_DAYS)), value: visitors30, icon: "📈", href: `${base}` },
+    { label: t.visitsAllTime, value: visitsAllTime, icon: "🌍", href: `${base}` },
     { label: t.users, value: users, icon: "👥", href: `${base}/users` },
     { label: t.categories, value: categories, icon: "🗂", href: `${base}/categories` },
     { label: t.posts, value: posts, icon: "📝", href: `/${lang}` },
@@ -73,6 +77,11 @@ export default async function AdminDashboard({ params }: PageProps<"/[lang]/admi
           </Link>
         ))}
       </div>
+      <VisitorBaselineForm
+        dict={dict}
+        baseline={baseline ?? 0}
+        recorded={(visitsAllTime ?? 0) - (baseline ?? 0)}
+      />
     </div>
   );
 }

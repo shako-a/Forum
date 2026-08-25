@@ -88,7 +88,7 @@
     "comments": "comments",
     "sponsored": "Sponsored",
     "appComingSoon": "Coming soon",
-    "visitors": "Visitors"
+    "visitors": "Visits"
   },
   "categories": {
     "title": "Categories",
@@ -1041,7 +1041,12 @@
     "postingAll": "Every registered member",
     "postingPerkHolders": "Perk holders only (Pro / packages with the perk)",
     "postingIncludedIn": "Included in: {list}",
-    "postingNotInPackages": "Not attached to any package yet — attach it below before switching."
+    "postingNotInPackages": "Not attached to any package yet — attach it below before switching.",
+    "visitsAllTime": "Visits (all time)",
+    "visitsBaseline": "Visit counter baseline",
+    "visitsBaselineSub": "The public figure is this baseline plus everything the built-in counter has recorded. The baseline carries over the visits Google Analytics measured before the counter existed — edit it if you reconcile against GA again.",
+    "visitsBaselineLabel": "Carried over from Google Analytics",
+    "visitsRecorded": "{n} recorded here"
   },
   "mod": {
     "tools": "Moderator tools",

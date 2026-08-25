@@ -1011,6 +1011,11 @@ model SiteSetting {
   // Total items shown in the Popular Topics bar (posts + ad cards combined).
   popularBarSize Int @default(6)
 
+  // Visits recorded before the built-in counter existed (taken from Google
+  // Analytics). Added to the public figure so it reflects the whole history
+  // rather than restarting from the day the counter shipped.
+  visitorBaseline Int @default(0)
+
   // Who may post in each listing area: "all" = any registered member,
   // "perk" = only holders of the matching perk (Pro, or a package carrying
   // the feature key — realEstate / market / auto / jobPosting). Managed from

@@ -6472,3 +6472,17 @@ a.mk-tag:hover {
 .biz-job-manage .mk-owner form {
   display: inline;
 }
+.admin-baseline-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.admin-baseline-field {
+  max-width: 220px;
+}
+.admin-baseline-sum {
+  padding-bottom: 8px;
+  color: var(--muted);
+  font-size: 13.5px;
+}

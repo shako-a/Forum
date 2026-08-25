@@ -71,6 +71,35 @@ export async function recordVisit(): Promise<void> {
   }
 }
 
+/**
+ * Visits recorded before this counter existed, taken from Google Analytics.
+ * Stored in SiteSetting so an admin can correct it without a deploy.
+ */
+export async function getVisitorBaseline(): Promise<number> {
+  try {
+    const row = await db.siteSetting.findUnique({ where: { id: "singleton" }, select: { visitorBaseline: true } });
+    return row?.visitorBaseline ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * The public figure: every visit this counter has recorded, plus the
+ * pre-launch baseline. A row is one visitor on one day, so a person who
+ * comes back on three days counts three times — this is a visit count, not
+ * a headcount of distinct people (the daily hash rotation is what makes the
+ * counter cookieless, and it deliberately can't link a person across days).
+ */
+export async function countVisitsAllTime(): Promise<number> {
+  try {
+    const [rows, baseline] = await Promise.all([db.visitorDay.count(), getVisitorBaseline()]);
+    return rows + baseline;
+  } catch {
+    return 0;
+  }
+}
+
 // Distinct-visitor counts are cached briefly — they feed a sidebar stat, not
 // a dashboard that needs to be exact to the second.
 let cache: { at: number; days: number; value: number } | null = null;

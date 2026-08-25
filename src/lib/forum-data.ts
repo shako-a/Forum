@@ -1,6 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
-import { countVisitors } from "@/lib/visitors";
+import { countVisitsAllTime } from "@/lib/visitors";
 import { pmToHtml, pmPlainText, pmFirstImage } from "@/lib/prosemirror";
 import { canModerateCategory, canRevealAnonymous, getSiteSettings } from "@/lib/dal";
 import { resolveAuthor, type DisplayAuthor } from "@/lib/anon";
@@ -164,7 +164,7 @@ export async function getForumStats() {
       db.user.count(),
       db.post.count(),
       db.user.count({ where: { lastSeenAt: { gte: onlineSince } } }),
-      countVisitors(),
+      countVisitsAllTime(),
     ]);
     return { members, online, topics, visitors };
   } catch (error) {

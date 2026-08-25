@@ -31,3 +31,16 @@ export async function setPostingAccess(area: PostingArea, mode: PostingMode): Pr
   revalidatePath("/[lang]/admin/more", "page");
   revalidatePath("/[lang]", "layout");
 }
+
+// Admin: correct the pre-launch visit baseline (the Google Analytics figure).
+export async function setVisitorBaseline(value: number): Promise<void> {
+  if (!(await authorize("ADMIN"))) return;
+  const n = Math.max(0, Math.min(100_000_000, Math.floor(Number(value) || 0)));
+  await db.siteSetting.upsert({
+    where: { id: "singleton" },
+    update: { visitorBaseline: n },
+    create: { id: "singleton", visitorBaseline: n },
+  });
+  revalidatePath("/[lang]/admin", "page");
+  revalidatePath("/[lang]", "layout");
+}
