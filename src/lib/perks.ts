@@ -58,3 +58,13 @@ export function canCustomize(u: Viewer): boolean {
       hasFeature(u, "feedCustom"))
   );
 }
+
+// Auto-market posting: free for everyone for now, same switch pattern as the
+// marketplace. Flip to false to make it a Pro perk / "auto" feature key.
+export const AUTO_FREE_FOR_ALL = true;
+
+export function canPostAuto(u: Viewer): boolean {
+  if (!u) return false;
+  if (AUTO_FREE_FOR_ALL) return true;
+  return u.isPro || hasFeature(u, "auto");
+}

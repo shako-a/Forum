@@ -73,6 +73,15 @@ export async function LeftSidebar({
         </svg>
         {nav.market}
       </NavLink>
+      <NavLink href={`/${locale}/auto`}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M5 13l2-5h10l2 5" />
+          <path d="M3 13h18v5H3z" />
+          <circle cx="7.5" cy="18" r="1.5" />
+          <circle cx="16.5" cy="18" r="1.5" />
+        </svg>
+        {nav.auto}
+      </NavLink>
 
       <NavLink href={`/${locale}/more`}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

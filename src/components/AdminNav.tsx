@@ -105,6 +105,7 @@ export function AdminNav({
           ],
         },
         { href: `${base}/estate`, label: t.estateAdmin, icon: "🏠" },
+        { href: `${base}/auto`, label: t.autoAdmin, icon: "🚗" },
         { href: `${base}/more`, label: t.morePackages, icon: "💎" },
         { href: `${base}/ai-usage`, label: t.aiUsage, icon: "✦" },
         { href: `${base}/reports`, label: t.reports, icon: "⚑" },

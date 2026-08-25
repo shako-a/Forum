@@ -5,6 +5,8 @@ import { useTransition } from "react";
 import { resolveReport, dismissReport } from "@/app/actions/inbox";
 import { adminRemoveMarketListing, adminRestoreMarketListing } from "@/app/actions/admin-market";
 import { setEstateActive } from "@/app/actions/admin-estate";
+import { adminRemoveAutoListing, adminRestoreAutoListing } from "@/app/actions/admin-auto";
+import { AUTO_REPORT_REASONS } from "@/lib/auto";
 import { MARKET_REPORT_REASONS } from "@/lib/market";
 import { ESTATE_REPORT_REASONS } from "@/lib/estate";
 import type { Dictionary } from "@/i18n/dictionaries";
@@ -32,9 +34,18 @@ export type AdminReportEstate = {
   thumb: string | null;
 };
 
+export type AdminReportAuto = {
+  id: string;
+  slug: string;
+  title: string;
+  priceLabel: string;
+  status: string;
+  thumb: string | null;
+};
+
 export type AdminReport = {
   id: string;
-  type: "post" | "reply" | "dm" | "market" | "estate" | "other";
+  type: "post" | "reply" | "dm" | "market" | "estate" | "auto" | "other";
   reporter: string;
   reported: string | null;
   reportedId: string | null;
@@ -43,6 +54,7 @@ export type AdminReport = {
   target: { href: string; label: string } | null;
   listing: AdminReportListing | null;
   estate: AdminReportEstate | null;
+  auto: AdminReportAuto | null;
   status: string;
   note: string | null;
   resolvedBy: string | null;
@@ -56,7 +68,10 @@ export type ReportFilters = { status: string; type: string };
 function reasonText(reason: string | null, locale: Locale): string {
   if (!reason) return "—";
   const [key, ...rest] = reason.split(" — ");
-  const def = MARKET_REPORT_REASONS.find((r) => r.key === key) ?? ESTATE_REPORT_REASONS.find((r) => r.key === key);
+  const def =
+    MARKET_REPORT_REASONS.find((r) => r.key === key) ??
+    ESTATE_REPORT_REASONS.find((r) => r.key === key) ??
+    AUTO_REPORT_REASONS.find((r) => r.key === key);
   if (!def) return reason;
   const label = `${def.icon} ${locale === "ka" ? def.ka : def.en}`;
   return rest.length ? `${label} — ${rest.join(" — ")}` : label;
@@ -68,6 +83,7 @@ function Row({ r, dict, locale }: { r: AdminReport; dict: Dictionary; locale: Lo
   const open = r.status === "OPEN";
   const l = r.listing;
   const e = r.estate;
+  const a = r.auto;
 
   const act = (fn: () => Promise<void>) => startTransition(() => void fn());
   const closeWithNote = (fn: (id: string, note?: string) => Promise<void>) => {
@@ -130,6 +146,21 @@ function Row({ r, dict, locale }: { r: AdminReport; dict: Dictionary; locale: Lo
             <div className="report-listing-info">
               <a href={`/${locale}/realestate/${e.slug}`} target="_blank" rel="noreferrer" className="admin-link">{e.title}</a>
               <div className="muted-sm">{e.priceLabel} · {e.active ? "ACTIVE" : <strong className="report-removed">{t.unlisted}</strong>}</div>
+            </div>
+          </div>
+        ) : a ? (
+          <div className="report-listing">
+            <a href={`/${locale}/auto/${a.slug}`} target="_blank" rel="noreferrer" className="report-listing-thumb">
+              {a.thumb ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={a.thumb} alt="" />
+              ) : (
+                <span>🚗</span>
+              )}
+            </a>
+            <div className="report-listing-info">
+              <a href={`/${locale}/auto/${a.slug}`} target="_blank" rel="noreferrer" className="admin-link">{a.title}</a>
+              <div className="muted-sm">{a.priceLabel} · {a.status === "REMOVED" ? <strong className="report-removed">{t.listingRemoved}</strong> : a.status}</div>
             </div>
           </div>
         ) : r.target ? (
@@ -198,6 +229,25 @@ function Row({ r, dict, locale }: { r: AdminReport; dict: Dictionary; locale: Lo
               ↻ {t.relist}
             </button>
           )}
+          {a && a.status !== "REMOVED" && (
+            <button
+              type="button"
+              className="action mod-action"
+              disabled={pending}
+              onClick={() => {
+                const reason = window.prompt(t.removeReasonPrompt, "");
+                if (reason === null) return;
+                act(() => adminRemoveAutoListing(a.id, reason));
+              }}
+            >
+              🚫 {t.removeListing}
+            </button>
+          )}
+          {a && a.status === "REMOVED" && (
+            <button type="button" className="action" disabled={pending} onClick={() => act(() => adminRestoreAutoListing(a.id))}>
+              ↻ {t.restoreListing}
+            </button>
+          )}
           {open && (
             <>
               <button type="button" className="action" disabled={pending} onClick={() => closeWithNote(resolveReport)}>
@@ -246,6 +296,7 @@ export function ReportsAdmin({
     ["all", t.typeAll],
     ["market", t.typeMarket],
     ["estate", t.typeEstate],
+    ["auto", t.typeAuto],
     ["post", t.typePost],
     ["reply", t.typeReply],
     ["dm", t.typeDm],

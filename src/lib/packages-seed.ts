@@ -20,6 +20,7 @@ const FEATURES = [
   { key: "jobPosting", nameEn: "Post job openings", nameKa: "ვაკანსიების განთავსება" },
   { key: "realEstate", nameEn: "Post real-estate listings", nameKa: "უძრავი ქონების განცხადებების განთავსება" },
   { key: "market", nameEn: "Sell on the marketplace", nameKa: "მარკეტზე გაყიდვა" },
+  { key: "auto", nameEn: "Post auto-market listings", nameKa: "ავტო-მარკეტზე განცხადების განთავსება" },
   { key: "support", nameEn: "Help keep the community running", nameKa: "დაეხმარე საზოგადოების ფუნქციონირებას" },
 ];
 
@@ -154,6 +155,10 @@ const FEATURE_ADDITIONS: Array<{
   // until MARKET_FREE_FOR_ALL (lib/perks.ts) is switched off.
   {
     feature: { key: "market", nameEn: "Sell on the marketplace", nameKa: "მარკეტზე გაყიდვა" },
+    addTo: [],
+  },
+  {
+    feature: { key: "auto", nameEn: "Post auto-market listings", nameKa: "ავტო-მარკეტზე განცხადების განთავსება" },
     addTo: [],
   },
 ];

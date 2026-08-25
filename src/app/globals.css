@@ -6438,3 +6438,31 @@ a.mk-tag:hover {
   color: var(--blue);
   font-weight: 600;
 }
+
+/* Auto market */
+.auto-kind-badge {
+  left: 8px;
+  top: 8px;
+  bottom: auto;
+}
+.auto-status-badge {
+  left: 8px;
+  bottom: 8px;
+}
+.auto-insured {
+  color: var(--green-ink);
+  font-weight: 700;
+}
+.auto-check-inline {
+  align-self: flex-end;
+  padding-bottom: 12px;
+}
+.auto-rental-box {
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg);
+}

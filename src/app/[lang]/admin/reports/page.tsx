@@ -9,7 +9,7 @@ import { ReportsAdmin, type AdminReport, type ReportFilters } from "@/components
 export const dynamic = "force-dynamic";
 
 const STATUS_FILTERS = new Set(["open", "resolved", "dismissed", "all"]);
-const TYPE_FILTERS = new Set(["all", "market", "estate", "post", "reply", "dm"]);
+const TYPE_FILTERS = new Set(["all", "market", "estate", "auto", "post", "reply", "dm"]);
 
 export default async function AdminReportsPage({ params, searchParams }: PageProps<"/[lang]/admin/reports">) {
   const { lang } = await params;
@@ -28,6 +28,8 @@ export default async function AdminReportsPage({ params, searchParams }: PagePro
       ? { marketListingId: { not: null } }
       : filters.type === "estate"
         ? { propertyListingId: { not: null } }
+      : filters.type === "auto"
+        ? { autoListingId: { not: null } }
       : filters.type === "post"
         ? { postId: { not: null } }
         : filters.type === "reply"
@@ -52,6 +54,7 @@ export default async function AdminReportsPage({ params, searchParams }: PagePro
           select: { id: true, slug: true, title: true, price: true, priceType: true, status: true, photos: true },
         },
         propertyListing: { select: { id: true, slug: true, title: true, price: true, kind: true, active: true, photos: true } },
+        autoListing: { select: { id: true, slug: true, title: true, price: true, kind: true, status: true, photos: true } },
       },
     }),
     db.report.count({ where: { status: "OPEN" } }),
@@ -78,6 +81,8 @@ export default async function AdminReportsPage({ params, searchParams }: PagePro
     let type: AdminReport["type"] = "other";
     if (r.marketListing) {
       type = "market";
+    } else if (r.autoListing) {
+      type = "auto";
     } else if (r.propertyListing) {
       type = "estate";
       target = { href: `/${lang}/realestate/${r.propertyListing.slug}`, label: td.reportEstate };
@@ -123,6 +128,16 @@ export default async function AdminReportsPage({ params, searchParams }: PagePro
             priceLabel: `$${r.propertyListing.price.toLocaleString("en-US")}${r.propertyListing.kind === "RENT" ? "/mo" : ""}`,
             active: r.propertyListing.active,
             thumb: r.propertyListing.photos[0] ?? null,
+          }
+        : null,
+      auto: r.autoListing
+        ? {
+            id: r.autoListing.id,
+            slug: r.autoListing.slug,
+            title: r.autoListing.title,
+            priceLabel: `$${r.autoListing.price.toLocaleString("en-US")}${r.autoListing.kind === "RENT" ? "/day" : ""}`,
+            status: r.autoListing.status,
+            thumb: r.autoListing.photos[0] ?? null,
           }
         : null,
       status: r.status,

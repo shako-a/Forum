@@ -123,6 +123,7 @@ model User {
   sellerReviewsWritten MarketSellerReview[] @relation("SellerReviewsWritten")
   reportsResolved      Report[]             @relation("ReportResolver")
   merchOrders          MerchOrder[]
+  autoListings         AutoListing[]        @relation("AutoOwner")
   notifications       Notification[]            @relation("UserNotifications")
   notificationsActed  Notification[]            @relation("NotificationActor")
   conversations       ConversationParticipant[]
@@ -766,6 +767,83 @@ model MerchOrderItem {
 }
 
 // ---------------------------------------------------------------------------
+// Auto market — cars for sale and for rent. Built on the real-estate and
+// marketplace patterns: ZIP-resolved coordinates for radius search, a curated
+// feature checklist, an admin-curated featured banner, and a staff REMOVED
+// state driven from reports. Rentals price per day and carry insurance /
+// deposit / minimum-days facts that sales don't need.
+// ---------------------------------------------------------------------------
+
+model AutoListing {
+  id      String @id @default(cuid())
+  slug    String @unique
+  owner   User   @relation("AutoOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String
+
+  kind String // "SALE" | "RENT"
+
+  // Identity — title is derived ("2019 Toyota Camry") and stored for search.
+  year  Int
+  make  String // key from lib/auto.ts (or "other" + makeOther)
+  makeOther String?
+  model String
+  title String
+
+  bodyType     String? // key from lib/auto.ts
+  mileage      Int?
+  transmission String? // AUTOMATIC | MANUAL
+  fuel         String? // GAS | DIESEL | HYBRID | ELECTRIC
+  drivetrain   String? // FWD | RWD | AWD | FOURWD
+  color        String?
+  condition    String  @default("USED") // NEW | USED (sales)
+  vin          String?
+
+  // Whole dollars. For RENT this is the daily rate.
+  price      Int
+  negotiable Boolean @default(false)
+
+  // Rental-only facts
+  insured        Boolean @default(false)
+  minRentalDays  Int?
+  depositAmount  Int?
+
+  description String?
+  features    String[] // keys from lib/auto.ts
+  photos      String[] // ordered; [0] is the cover
+
+  // Location — ZIP is optional but powers the radius search.
+  city  String?
+  zip   String?
+  state String
+  lat   Float?
+  lng   Float?
+
+  contactName String?
+  phone       String?
+  email       String?
+
+  // ACTIVE | SOLD (or rented out) | PAUSED | REMOVED (staff)
+  status        String  @default("ACTIVE")
+  removedReason String?
+
+  featured      Boolean @default(false)
+  featuredOrder Int     @default(0)
+  views         Int     @default(0)
+
+  reports Report[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([kind])
+  @@index([make])
+  @@index([status, createdAt])
+  @@index([state])
+  @@index([lat, lng])
+  @@index([ownerId])
+}
+
+// ---------------------------------------------------------------------------
 // Visitor counter. Cookieless and non-identifying: `hash` is a salted digest
 // of IP + user-agent that rotates every day, so it cannot be used to follow
 // anyone across days and needs no consent banner. One row per visitor per day
@@ -893,6 +971,8 @@ model Report {
   marketListingId String? // set when a marketplace listing is reported
   propertyListing   PropertyListing? @relation(fields: [propertyListingId], references: [id], onDelete: SetNull)
   propertyListingId String? // set when a real-estate listing is reported
+  autoListing   AutoListing? @relation(fields: [autoListingId], references: [id], onDelete: SetNull)
+  autoListingId String? // set when an auto listing is reported
   reason         String?
   context        String? // snapshot, e.g. the last message
   status         String  @default("OPEN") // OPEN | RESOLVED | DISMISSED

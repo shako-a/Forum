@@ -2,6 +2,7 @@ import * as z from "zod";
 import { isBusinessCategory } from "@/lib/business-categories";
 import { isPropertyType } from "@/lib/estate";
 import { isMarketCategory, isMarketCondition, isMarketPriceType } from "@/lib/market";
+import { isAutoMake, AUTO_MIN_YEAR, AUTO_MAX_YEAR } from "@/lib/auto";
 
 // Sign-up: mirrors the required profile fields from the spec.
 // First/last name + forum name + phone + email + state are mandatory; city optional.
@@ -228,6 +229,61 @@ export const MarketListingSchema = z
     error: "Enter a price (or mark the item as free).",
     path: ["price"],
   });
+
+// --- Auto market ----------------------------------------------------------
+const optionalInt = (max: number) =>
+  z
+    .union([z.literal(""), z.coerce.number().int().min(0).max(max)])
+    .optional()
+    .transform((v) => (v === "" || v === undefined ? undefined : v));
+const optionalEnum = (keys: readonly string[]) =>
+  z
+    .union([z.literal(""), z.string().refine((v) => keys.includes(v), { error: "Pick an option." })])
+    .optional()
+    .transform((v) => (v ? v : undefined));
+
+export const AutoListingSchema = z
+  .object({
+    kind: z.enum(["SALE", "RENT"], { error: "Choose sale or rental." }),
+    year: z.coerce
+      .number({ error: "Year is required." })
+      .int()
+      .min(AUTO_MIN_YEAR, { error: `Year must be ${AUTO_MIN_YEAR} or later.` })
+      .max(AUTO_MAX_YEAR, { error: `Year can't be after ${AUTO_MAX_YEAR}.` }),
+    make: z.string().refine(isAutoMake, { error: "Pick a make." }),
+    makeOther: z.string().trim().max(40).optional(),
+    model: z.string().min(1, { error: "Model is required." }).trim().max(60),
+    bodyType: optionalEnum(["sedan", "suv", "truck", "van", "hatchback", "wagon", "coupe", "convertible", "motorcycle", "other"]),
+    mileage: optionalInt(2_000_000),
+    transmission: optionalEnum(["AUTOMATIC", "MANUAL"]),
+    fuel: optionalEnum(["GAS", "DIESEL", "HYBRID", "ELECTRIC"]),
+    drivetrain: optionalEnum(["FWD", "RWD", "AWD", "FOURWD"]),
+    color: z.string().trim().max(30).optional(),
+    condition: z.enum(["NEW", "USED"]).optional().default("USED"),
+    vin: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .regex(/^([A-HJ-NPR-Z0-9]{17})?$/, { error: "A VIN is 17 characters (no I, O or Q)." })
+      .optional(),
+    price: z.coerce.number({ error: "Price is required." }).int().min(1, { error: "Price is required." }).max(10_000_000),
+    negotiable: z.boolean(),
+    insured: z.boolean(),
+    minRentalDays: optionalInt(365),
+    depositAmount: optionalInt(100_000),
+    description: z.string().trim().max(6000).optional(),
+    city: z.string().trim().max(80).optional(),
+    zip: zipCode,
+    state: z.string().min(1, { error: "State / Country is required." }).trim(),
+    contactName: z.string().trim().max(100).optional(),
+    phone: z.string().trim().max(40).optional(),
+    email: z.email({ error: "Enter a valid email." }).or(z.literal("")).optional(),
+  })
+  .refine((v) => v.make !== "other" || (v.makeOther ?? "").length >= 2, {
+    error: "Enter the make.",
+    path: ["makeOther"],
+  });
+export type AutoListingInput = z.infer<typeof AutoListingSchema>;
 
 // --- Real estate ----------------------------------------------------------
 // Optional numeric facts: number inputs submit "" when left blank.
