@@ -132,8 +132,10 @@ export default async function Image({ params }: { params: Promise<{ lang: string
               marginTop: 36,
               fontFamily: "Noto Sans Georgian",
               fontWeight: 700,
-              fontSize: locale === "ka" ? 58 : 72,
+              fontSize: 72,
               lineHeight: 1.18,
+              // Only the Latin setting wants negative tracking; Georgian
+              // letterforms need their default spacing to stay legible.
               letterSpacing: locale === "ka" ? 0 : -2,
               color: WHITE,
             }}

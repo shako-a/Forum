@@ -6,7 +6,7 @@
   },
   "common": {
     "appName": "GeoGlobally",
-    "tagline": "Georgians, worldwide",
+    "tagline": "Georgians in the US",
     "socialSubline": "Jobs, housing, businesses, marketplace and cars — plus a forum where you can speak Georgian.",
     "socialDescription": "Jobs, housing, businesses, marketplace and cars — plus a forum where the Georgian diaspora speaks Georgian.",
     "cropTitle": "Crop image",
@@ -288,7 +288,7 @@
   },
   "business": {
     "directory": "Business directory",
-    "directorySub": "Discover Georgian-owned businesses and services around the world.",
+    "directorySub": "Discover Georgian-owned businesses and services across the US.",
     "directoryEmpty": "No businesses yet. Be the first to register one!",
     "register": "Register a business",
     "registerTitle": "Register your business",
@@ -345,7 +345,7 @@
     "jobDescription": "Job description",
     "addJob": "Add job",
     "jobsBoard": "Jobs board",
-    "jobsBoardSub": "Openings from Georgian businesses worldwide.",
+    "jobsBoardSub": "Openings from Georgian businesses across the US.",
     "noJobs": "No open positions right now.",
     "confirmDeleteJob": "Delete this job posting?",
     "myBusinesses": "My businesses",

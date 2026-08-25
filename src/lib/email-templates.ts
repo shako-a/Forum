@@ -23,7 +23,7 @@ const RESET: Record<Locale, Copy> = {
     body: "We received a request to reset your password. Click the button below to choose a new one. This link expires in 1 hour.",
     cta: "Reset password",
     ignore: "If you didn't request this, you can safely ignore this email — your password won't change.",
-    footer: `${BRAND} — a community forum for Georgians, worldwide.`,
+    footer: `${BRAND} — a community forum for Georgians in the US.`,
   },
   ka: {
     subject: `${BRAND} — პაროლის აღდგენა`,
@@ -31,7 +31,7 @@ const RESET: Record<Locale, Copy> = {
     body: "მივიღეთ პაროლის აღდგენის მოთხოვნა. ახალი პაროლის ასარჩევად დააჭირე ღილაკს. ბმული ვადა გაუვა 1 საათში.",
     cta: "პაროლის აღდგენა",
     ignore: "თუ ეს მოთხოვნა შენ არ გამოგიგზავნია, უბრალოდ დააიგნორე ეს წერილი — პაროლი არ შეიცვლება.",
-    footer: `${BRAND} — ქართველების საზოგადოება მთელ მსოფლიოში.`,
+    footer: `${BRAND} — ქართველების საზოგადოება ამერიკაში.`,
   },
 };
 
@@ -42,7 +42,7 @@ const VERIFY: Record<Locale, Copy> = {
     body: "Welcome to GeoGlobally! Confirm your email address to secure your account. This link expires in 24 hours.",
     cta: "Confirm email",
     ignore: "If you didn't create this account, you can ignore this email.",
-    footer: `${BRAND} — a community forum for Georgians, worldwide.`,
+    footer: `${BRAND} — a community forum for Georgians in the US.`,
   },
   ka: {
     subject: `${BRAND} — დაადასტურე ელ. ფოსტა`,
@@ -50,7 +50,7 @@ const VERIFY: Record<Locale, Copy> = {
     body: "კეთილი იყოს შენი მობრძანება GeoGlobally-ზე! დაადასტურე ელ. ფოსტა ანგარიშის დასაცავად. ბმული ვადა გაუვა 24 საათში.",
     cta: "დადასტურება",
     ignore: "თუ ეს ანგარიში შენ არ შეგიქმნია, დააიგნორე ეს წერილი.",
-    footer: `${BRAND} — ქართველების საზოგადოება მთელ მსოფლიოში.`,
+    footer: `${BRAND} — ქართველების საზოგადოება ამერიკაში.`,
   },
 };
 
