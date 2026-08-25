@@ -35,6 +35,17 @@ export function canPostListing(u: Viewer): boolean {
   return canRegisterBusiness(u) || hasFeature(u, "realEstate");
 }
 
+// Marketplace selling is free for every member for now. Flip this to false to
+// make it a paid perk: Pro keeps it, and any package carrying the "market"
+// feature key (already in the catalogue) grants it.
+export const MARKET_FREE_FOR_ALL = true;
+
+export function canSellOnMarket(u: Viewer): boolean {
+  if (!u) return false;
+  if (MARKET_FREE_FOR_ALL) return true;
+  return u.isPro || hasFeature(u, "market");
+}
+
 // Profile and feed customization: the Supporter bracket's headline perk, and
 // included in both higher tiers (paying more never gives you less).
 export function canCustomize(u: Viewer): boolean {

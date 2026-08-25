@@ -117,6 +117,8 @@ model User {
   businessReviews     BusinessReview[]
   propertyListings    PropertyListing[] @relation("ListingOwner")
   uploads             MediaUpload[]
+  marketListings      MarketListing[]   @relation("MarketSeller")
+  marketFavorites     MarketFavorite[]
   notifications       Notification[]            @relation("UserNotifications")
   notificationsActed  Notification[]            @relation("NotificationActor")
   conversations       ConversationParticipant[]
@@ -434,6 +436,7 @@ model Business {
   // Content this business has authored while someone acted as it.
   authoredPosts   Post[]  @relation("PostBusinessAuthor")
   authoredReplies Reply[] @relation("ReplyBusinessAuthor")
+  marketListings  MarketListing[] @relation("MarketSellerBusiness")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -547,6 +550,69 @@ model PropertyListing {
   @@index([propertyType])
   @@index([state])
   @@index([active, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Marketplace — member-to-member classifieds (goods for sale, free items).
+// Free for everyone today; canSellOnMarket() in lib/perks.ts is the switch
+// that makes selling a paid perk later. A listing can be attributed to a
+// business when the seller was acting as one.
+// ---------------------------------------------------------------------------
+
+model MarketListing {
+  id       String @id @default(cuid())
+  slug     String @unique
+  seller   User   @relation("MarketSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  sellerId String
+
+  sellerBusiness   Business? @relation("MarketSellerBusiness", fields: [sellerBusinessId], references: [id], onDelete: SetNull)
+  sellerBusinessId String?
+
+  title       String
+  description String
+  category    String // key from lib/market.ts
+  condition   String // NEW | LIKE_NEW | GOOD | FAIR | PARTS
+
+  // Whole dollars. 0 when priceType is FREE.
+  price     Int
+  priceType String @default("FIXED") // FIXED | NEGOTIABLE | FREE
+
+  photos String[] // ordered; [0] is the cover
+
+  // Where the item is; how the buyer can get it.
+  city        String?
+  state       String
+  localPickup Boolean @default(true)
+  canShip     Boolean @default(false)
+
+  phone String? // optional extra contact; DMs are always available
+
+  // ACTIVE | SOLD | PAUSED. Search shows ACTIVE only, and only listings
+  // renewed within the last 60 days (see MARKET_EXPIRY_DAYS).
+  status   String   @default("ACTIVE")
+  bumpedAt DateTime @default(now()) // "renew" moves this forward
+  views    Int      @default(0)
+
+  favorites MarketFavorite[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, bumpedAt])
+  @@index([category])
+  @@index([state])
+  @@index([sellerId])
+}
+
+model MarketFavorite {
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  listing   MarketListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  listingId String
+  createdAt DateTime      @default(now())
+
+  @@id([userId, listingId])
+  @@index([listingId])
 }
 
 // ---------------------------------------------------------------------------

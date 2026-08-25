@@ -19,6 +19,7 @@ const FEATURES = [
   { key: "business", nameEn: "Register a business in the directory", nameKa: "ბიზნესის რეგისტრაცია კატალოგში" },
   { key: "jobPosting", nameEn: "Post job openings", nameKa: "ვაკანსიების განთავსება" },
   { key: "realEstate", nameEn: "Post real-estate listings", nameKa: "უძრავი ქონების განცხადებების განთავსება" },
+  { key: "market", nameEn: "Sell on the marketplace", nameKa: "მარკეტზე გაყიდვა" },
   { key: "support", nameEn: "Help keep the community running", nameKa: "დაეხმარე საზოგადოების ფუნქციონირებას" },
 ];
 
@@ -148,6 +149,12 @@ const FEATURE_ADDITIONS: Array<{
       nameKa: "უძრავი ქონების განცხადებების განთავსება",
     },
     addTo: ["PRO"],
+  },
+  // In the catalogue but attached to nothing: selling is free for everyone
+  // until MARKET_FREE_FOR_ALL (lib/perks.ts) is switched off.
+  {
+    feature: { key: "market", nameEn: "Sell on the marketplace", nameKa: "მარკეტზე გაყიდვა" },
+    addTo: [],
   },
 ];
 

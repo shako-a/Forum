@@ -1,6 +1,7 @@
 import * as z from "zod";
 import { isBusinessCategory } from "@/lib/business-categories";
 import { isPropertyType } from "@/lib/estate";
+import { isMarketCategory, isMarketCondition, isMarketPriceType } from "@/lib/market";
 
 // Sign-up: mirrors the required profile fields from the spec.
 // First/last name + forum name + phone + email + state are mandatory; city optional.
@@ -195,6 +196,29 @@ export const ReviewSchema = z.object({
   rating: z.coerce.number().int().min(1, { error: "Pick a rating." }).max(5),
   body: z.string().trim().max(2000).optional(),
 });
+
+// --- Marketplace ----------------------------------------------------------
+export const MarketListingSchema = z
+  .object({
+    title: z.string().min(3, { error: "Title must be at least 3 characters." }).trim().max(120),
+    description: z.string().min(10, { error: "Describe the item in at least 10 characters." }).trim().max(6000),
+    category: z.string().refine(isMarketCategory, { error: "Pick a category." }),
+    condition: z.string().refine(isMarketCondition, { error: "Pick the item's condition." }),
+    priceType: z.string().refine(isMarketPriceType, { error: "Pick a price type." }),
+    price: z
+      .union([z.literal(""), z.coerce.number().int().min(0).max(10_000_000)])
+      .optional()
+      .transform((v) => (v === "" || v === undefined ? 0 : v)),
+    city: z.string().trim().max(80).optional(),
+    state: z.string().min(1, { error: "State / Country is required." }).trim(),
+    localPickup: z.boolean(),
+    canShip: z.boolean(),
+    phone: z.string().trim().max(40).optional(),
+  })
+  .refine((v) => v.priceType === "FREE" || v.price > 0, {
+    error: "Enter a price (or mark the item as free).",
+    path: ["price"],
+  });
 
 // --- Real estate ----------------------------------------------------------
 // Optional numeric facts: number inputs submit "" when left blank.

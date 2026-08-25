@@ -25,9 +25,14 @@ function requiresLogin(segments: string[]): boolean {
   // Edit screens live under otherwise-public sections (p/<slug>/edit,
   // business/<slug>/edit) — gate them by their trailing segment.
   if (segments[segments.length - 1] === "edit") return true;
-  // The business and real-estate sections are public to read, but creating and
-  // managing entries is not.
-  if ((sub === "business" || sub === "realestate") && (segments[3] === "new" || segments[3] === "mine")) return true;
+  // The business, real-estate and marketplace sections are public to read, but
+  // creating and managing entries (and the saved-items list) is not.
+  if (
+    (sub === "business" || sub === "realestate" || sub === "market") &&
+    (segments[3] === "new" || segments[3] === "mine" || segments[3] === "saved")
+  ) {
+    return true;
+  }
   return false;
 }
 
