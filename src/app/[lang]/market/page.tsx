@@ -28,6 +28,8 @@ import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { MarketCard } from "@/components/market/MarketCard";
 import { PerPageSelect } from "@/components/market/PerPageSelect";
+import { MerchStrip } from "@/components/market/MerchStrip";
+import { getMerchStrip } from "@/lib/merch-data";
 
 export const dynamic = "force-dynamic";
 
@@ -61,12 +63,13 @@ export default async function MarketPage({ params, searchParams }: PageProps<"/[
   const perRaw = num(sp.per);
   const per = (MARKET_PAGE_SIZES as readonly number[]).includes(perRaw ?? 0) ? (perRaw as number) : MARKET_PAGE_SIZE;
 
-  const [dict, user, allCategories, dir, counts] = await Promise.all([
+  const [dict, user, allCategories, dir, counts, merch] = await Promise.all([
     getDictionary(lang),
     getCurrentUser(),
     db.category.findMany({ orderBy: { sortOrder: "asc" } }),
     getMarketDirectory(filters, page, per),
     getMarketCategoryCounts(filters),
+    getMerchStrip(),
   ]);
   const items = await attachSaved(dir.items, user?.id);
   const t = dict.market;
@@ -127,6 +130,9 @@ export default async function MarketPage({ params, searchParams }: PageProps<"/[
               </Link>
             </div>
           </div>
+
+          {/* Forum merch (admin-managed top bar) */}
+          <MerchStrip locale={lang} dict={dict} products={merch} />
 
           {/* Search */}
           <form className="mk-search-row" action={`/${lang}/market`} method="get">

@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal";
 import { canPostListing } from "@/lib/perks";
 import { slugify } from "@/lib/slug";
-import { isEstateFeature } from "@/lib/estate";
+import { isEstateFeature, isEstateReportReason } from "@/lib/estate";
 import { ListingSchema, zodErrors, type FormState } from "@/lib/definitions";
 import { flagGaEvent } from "@/lib/ga-server";
 import { deleteUploadsByUrl } from "@/lib/media";
@@ -147,4 +147,38 @@ export async function deleteListing(listingId: string, locale: string): Promise<
   await deleteUploadsByUrl(listing.photos);
   revalidatePath(`/${locale}/realestate`, "page");
   redirect(`/${locale}/realestate/mine`);
+}
+
+// Report a listing to staff (scam, wrong info, discrimination, spam…).
+export async function reportPropertyListing(_state: FormState, formData: FormData): Promise<FormState> {
+  const user = await getCurrentUser();
+  if (!user) return { message: "You must be logged in." };
+  const listingId = String(formData.get("listingId") ?? "");
+  const reasonKey = String(formData.get("reason") ?? "");
+  const details = String(formData.get("details") ?? "").trim().slice(0, 500);
+  if (!isEstateReportReason(reasonKey)) return { errors: { reason: ["Pick a reason."] } };
+
+  const listing = await db.propertyListing.findUnique({
+    where: { id: listingId },
+    select: { id: true, ownerId: true, title: true, price: true, kind: true, address: true },
+  });
+  if (!listing) return { message: "Not found." };
+  if (listing.ownerId === user.id) return { message: "You can't report your own listing." };
+
+  const dupe = await db.report.findFirst({
+    where: { reporterId: user.id, propertyListingId: listingId, status: "OPEN" },
+    select: { id: true },
+  });
+  if (dupe) return { ok: true };
+
+  await db.report.create({
+    data: {
+      reporterId: user.id,
+      reportedUserId: listing.ownerId,
+      propertyListingId: listingId,
+      reason: details ? `${reasonKey} — ${details}` : reasonKey,
+      context: `${listing.title} ($${listing.price}${listing.kind === "RENT" ? "/mo" : ""}) — ${listing.address}`.slice(0, 280),
+    },
+  });
+  return { ok: true };
 }

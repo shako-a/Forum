@@ -9,7 +9,7 @@ import { ReportsAdmin, type AdminReport, type ReportFilters } from "@/components
 export const dynamic = "force-dynamic";
 
 const STATUS_FILTERS = new Set(["open", "resolved", "dismissed", "all"]);
-const TYPE_FILTERS = new Set(["all", "market", "post", "reply", "dm"]);
+const TYPE_FILTERS = new Set(["all", "market", "estate", "post", "reply", "dm"]);
 
 export default async function AdminReportsPage({ params, searchParams }: PageProps<"/[lang]/admin/reports">) {
   const { lang } = await params;
@@ -26,6 +26,8 @@ export default async function AdminReportsPage({ params, searchParams }: PagePro
     ...(filters.status === "all" ? {} : { status: filters.status.toUpperCase() }),
     ...(filters.type === "market"
       ? { marketListingId: { not: null } }
+      : filters.type === "estate"
+        ? { propertyListingId: { not: null } }
       : filters.type === "post"
         ? { postId: { not: null } }
         : filters.type === "reply"
@@ -49,6 +51,7 @@ export default async function AdminReportsPage({ params, searchParams }: PagePro
         marketListing: {
           select: { id: true, slug: true, title: true, price: true, priceType: true, status: true, photos: true },
         },
+        propertyListing: { select: { id: true, slug: true, title: true, price: true, kind: true, active: true, photos: true } },
       },
     }),
     db.report.count({ where: { status: "OPEN" } }),
@@ -75,6 +78,9 @@ export default async function AdminReportsPage({ params, searchParams }: PagePro
     let type: AdminReport["type"] = "other";
     if (r.marketListing) {
       type = "market";
+    } else if (r.propertyListing) {
+      type = "estate";
+      target = { href: `/${lang}/realestate/${r.propertyListing.slug}`, label: td.reportEstate };
     } else if (r.reply?.post) {
       type = "reply";
       target = { href: `/${lang}/p/${r.reply.post.slug}#r-${r.reply.id}`, label: td.reportReply };
@@ -107,6 +113,16 @@ export default async function AdminReportsPage({ params, searchParams }: PagePro
             sellerName: r.reportedUser?.forumName ?? null,
             openReportsOnListing: listingOpen.get(l.id) ?? 0,
             reportsAboutSeller: r.reportedUserId ? (sellerTotal.get(r.reportedUserId) ?? 0) : 0,
+          }
+        : null,
+      estate: r.propertyListing
+        ? {
+            id: r.propertyListing.id,
+            slug: r.propertyListing.slug,
+            title: r.propertyListing.title,
+            priceLabel: `$${r.propertyListing.price.toLocaleString("en-US")}${r.propertyListing.kind === "RENT" ? "/mo" : ""}`,
+            active: r.propertyListing.active,
+            thumb: r.propertyListing.photos[0] ?? null,
           }
         : null,
       status: r.status,

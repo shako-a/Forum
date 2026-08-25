@@ -215,3 +215,67 @@ export async function hasConversationBetween(a: string, b: string): Promise<bool
   });
   return !!convo;
 }
+
+// --- Admin ----------------------------------------------------------------
+export async function getMarketAdminStats() {
+  const week = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const month = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const [active, soldMonth, newWeek, removed, paused, openReports, sellers, byCategory, views, favorites] = await Promise.all([
+    db.marketListing.count({ where: liveWhere() }),
+    db.marketListing.count({ where: { status: "SOLD", updatedAt: { gte: month } } }),
+    db.marketListing.count({ where: { createdAt: { gte: week } } }),
+    db.marketListing.count({ where: { status: "REMOVED" } }),
+    db.marketListing.count({ where: { status: "PAUSED" } }),
+    db.report.count({ where: { marketListingId: { not: null }, status: "OPEN" } }),
+    db.marketListing.groupBy({ by: ["sellerId"], _count: { _all: true } }).then((r) => r.length),
+    db.marketListing.groupBy({ by: ["category"], where: liveWhere(), _count: { _all: true }, orderBy: { _count: { category: "desc" } }, take: 8 }),
+    db.marketListing.aggregate({ _sum: { views: true } }),
+    db.marketFavorite.count(),
+  ]);
+  return {
+    active,
+    soldMonth,
+    newWeek,
+    removed,
+    paused,
+    openReports,
+    sellers,
+    byCategory: byCategory.map((c) => ({ category: c.category, count: c._count._all })),
+    views: views._sum.views ?? 0,
+    favorites,
+  };
+}
+
+export async function getMarketAdminListings(opts: { q?: string; status?: string } = {}) {
+  const { q, status } = opts;
+  return db.marketListing.findMany({
+    where: {
+      ...(status ? { status } : {}),
+      ...(q
+        ? {
+            OR: [
+              { title: { contains: q, mode: "insensitive" as const } },
+              { seller: { forumName: { contains: q, mode: "insensitive" as const } } },
+            ],
+          }
+        : {}),
+    },
+    orderBy: { createdAt: "desc" },
+    take: 300,
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      category: true,
+      price: true,
+      priceType: true,
+      status: true,
+      photos: true,
+      views: true,
+      createdAt: true,
+      bumpedAt: true,
+      seller: { select: { id: true, forumName: true } },
+      _count: { select: { reports: { where: { status: "OPEN" } }, favorites: true } },
+    },
+  });
+}

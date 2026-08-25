@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { authorize } from "@/lib/dal";
 import { createNotification } from "@/lib/notify";
+import { deleteUploadsByUrl } from "@/lib/media";
 
 // Staff reaction to a marketplace report: take the listing down (the seller
 // can't relist it), close every open report on it, and tell the seller why.
@@ -54,5 +55,16 @@ export async function adminRestoreMarketListing(listingId: string): Promise<void
     })
     .catch(() => {});
   revalidatePath("/[lang]/admin/reports", "page");
+  revalidatePath("/[lang]/market", "layout");
+}
+
+// Hard delete (photos released). For spam that shouldn't stay in the record.
+export async function adminDeleteMarketListing(listingId: string): Promise<void> {
+  if (!(await authorize("ADMIN"))) return;
+  const listing = await db.marketListing.findUnique({ where: { id: listingId }, select: { photos: true } });
+  if (!listing) return;
+  await db.marketListing.delete({ where: { id: listingId } });
+  await deleteUploadsByUrl(listing.photos);
+  revalidatePath("/[lang]/admin/market", "page");
   revalidatePath("/[lang]/market", "layout");
 }

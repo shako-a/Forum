@@ -29,7 +29,7 @@ function requiresLogin(segments: string[]): boolean {
   // creating and managing entries (and the saved-items list) is not.
   if (
     (sub === "business" || sub === "realestate" || sub === "market") &&
-    (segments[3] === "new" || segments[3] === "mine" || segments[3] === "saved")
+    (segments[3] === "new" || segments[3] === "mine" || segments[3] === "saved" || segments[3] === "orders")
   ) {
     return true;
   }

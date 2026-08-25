@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useTransition } from "react";
 import { resolveReport, dismissReport } from "@/app/actions/inbox";
 import { adminRemoveMarketListing, adminRestoreMarketListing } from "@/app/actions/admin-market";
+import { setEstateActive } from "@/app/actions/admin-estate";
 import { MARKET_REPORT_REASONS } from "@/lib/market";
+import { ESTATE_REPORT_REASONS } from "@/lib/estate";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 
@@ -21,9 +23,18 @@ export type AdminReportListing = {
   reportsAboutSeller: number;
 };
 
+export type AdminReportEstate = {
+  id: string;
+  slug: string;
+  title: string;
+  priceLabel: string;
+  active: boolean;
+  thumb: string | null;
+};
+
 export type AdminReport = {
   id: string;
-  type: "post" | "reply" | "dm" | "market" | "other";
+  type: "post" | "reply" | "dm" | "market" | "estate" | "other";
   reporter: string;
   reported: string | null;
   reportedId: string | null;
@@ -31,6 +42,7 @@ export type AdminReport = {
   context: string | null;
   target: { href: string; label: string } | null;
   listing: AdminReportListing | null;
+  estate: AdminReportEstate | null;
   status: string;
   note: string | null;
   resolvedBy: string | null;
@@ -44,7 +56,7 @@ export type ReportFilters = { status: string; type: string };
 function reasonText(reason: string | null, locale: Locale): string {
   if (!reason) return "—";
   const [key, ...rest] = reason.split(" — ");
-  const def = MARKET_REPORT_REASONS.find((r) => r.key === key);
+  const def = MARKET_REPORT_REASONS.find((r) => r.key === key) ?? ESTATE_REPORT_REASONS.find((r) => r.key === key);
   if (!def) return reason;
   const label = `${def.icon} ${locale === "ka" ? def.ka : def.en}`;
   return rest.length ? `${label} — ${rest.join(" — ")}` : label;
@@ -55,6 +67,7 @@ function Row({ r, dict, locale }: { r: AdminReport; dict: Dictionary; locale: Lo
   const [pending, startTransition] = useTransition();
   const open = r.status === "OPEN";
   const l = r.listing;
+  const e = r.estate;
 
   const act = (fn: () => Promise<void>) => startTransition(() => void fn());
   const closeWithNote = (fn: (id: string, note?: string) => Promise<void>) => {
@@ -104,6 +117,21 @@ function Row({ r, dict, locale }: { r: AdminReport; dict: Dictionary; locale: Lo
               </div>
             </div>
           </div>
+        ) : e ? (
+          <div className="report-listing">
+            <a href={`/${locale}/realestate/${e.slug}`} target="_blank" rel="noreferrer" className="report-listing-thumb">
+              {e.thumb ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={e.thumb} alt="" />
+              ) : (
+                <span>🏠</span>
+              )}
+            </a>
+            <div className="report-listing-info">
+              <a href={`/${locale}/realestate/${e.slug}`} target="_blank" rel="noreferrer" className="admin-link">{e.title}</a>
+              <div className="muted-sm">{e.priceLabel} · {e.active ? "ACTIVE" : <strong className="report-removed">{t.unlisted}</strong>}</div>
+            </div>
+          </div>
         ) : r.target ? (
           <a className="admin-link" href={r.target.href} target="_blank" rel="noreferrer">
             {r.target.label}
@@ -149,6 +177,25 @@ function Row({ r, dict, locale }: { r: AdminReport; dict: Dictionary; locale: Lo
           {l && l.status === "REMOVED" && (
             <button type="button" className="action" disabled={pending} onClick={() => act(() => adminRestoreMarketListing(l.id))}>
               ↻ {t.restoreListing}
+            </button>
+          )}
+          {e && e.active && (
+            <button
+              type="button"
+              className="action mod-action"
+              disabled={pending}
+              onClick={() => {
+                const reason = window.prompt(t.unlistReasonPrompt, "");
+                if (reason === null) return;
+                act(() => setEstateActive(e.id, false, reason));
+              }}
+            >
+              🚫 {t.unlist}
+            </button>
+          )}
+          {e && !e.active && (
+            <button type="button" className="action" disabled={pending} onClick={() => act(() => setEstateActive(e.id, true))}>
+              ↻ {t.relist}
             </button>
           )}
           {open && (
@@ -198,6 +245,7 @@ export function ReportsAdmin({
   const typeTabs: Array<[string, string]> = [
     ["all", t.typeAll],
     ["market", t.typeMarket],
+    ["estate", t.typeEstate],
     ["post", t.typePost],
     ["reply", t.typeReply],
     ["dm", t.typeDm],

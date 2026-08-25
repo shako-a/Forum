@@ -5,7 +5,8 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { getCurrentUser } from "@/lib/dal";
 import { toHeaderUser } from "@/lib/header-user";
 import { db } from "@/lib/db";
-import { getListing } from "@/lib/estate-data";
+import { getListing, countEstateView } from "@/lib/estate-data";
+import { ReportEstateButton } from "@/components/estate/ReportEstateButton";
 import {
   propertyTypeIcon,
   propertyTypeLabel,
@@ -39,6 +40,7 @@ export default async function ListingPage({ params }: PageProps<"/[lang]/realest
   const canManage = isOwner || user?.role === "ADMIN";
   // Unlisted listings stay reachable for their owner (and admins) only.
   if (!l.active && !canManage) notFound();
+  if (!isOwner) countEstateView(l.id);
 
   const location = [l.city, stateLabel(l.state, lang)].filter(Boolean).join(", ");
   const fullAddress = [l.address, l.city, stateLabel(l.state, lang)].filter(Boolean).join(", ");
@@ -88,6 +90,18 @@ export default async function ListingPage({ params }: PageProps<"/[lang]/realest
                 <span>{propertyTypeIcon(l.propertyType)} {propertyTypeLabel(l.propertyType, lang)}</span>
                 <span className="sep">·</span>
                 <span>{t.posted} {timeAgo(l.createdAt, lang)}</span>
+                {isOwner && (
+                  <>
+                    <span className="sep">·</span>
+                    <span>👁 {dict.market.views.replace("{n}", String(l.views))}</span>
+                  </>
+                )}
+                {l.featured && (
+                  <>
+                    <span className="sep">·</span>
+                    <span className="biz-featured">★ {t.featured}</span>
+                  </>
+                )}
               </div>
               {facts.length > 0 && (
                 <div className="re-detail-facts">
@@ -159,6 +173,17 @@ export default async function ListingPage({ params }: PageProps<"/[lang]/realest
               {l.email && <a href={`mailto:${l.email}`} className="biz-contact-item">✉ {l.email}</a>}
               {location && <span className="biz-contact-item">📍 {location}</span>}
             </div>
+            {!isOwner && (
+              <div className="mk-report-row">
+                <ReportEstateButton
+                  locale={lang}
+                  dict={dict}
+                  listingId={l.id}
+                  loggedIn={!!user}
+                  loginHref={`/${lang}/login?next=${encodeURIComponent(`/${lang}/realestate/${l.slug}`)}`}
+                />
+              </div>
+            )}
           </div>
         </main>
       </div>

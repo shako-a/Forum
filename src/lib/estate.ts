@@ -80,3 +80,15 @@ export function featureIcon(key: string): string {
 export function formatPrice(price: number): string {
   return "$" + price.toLocaleString("en-US");
 }
+
+// Why a real-estate listing gets reported.
+export const ESTATE_REPORT_REASONS: FeatureDef[] = [
+  { key: "scam", icon: "🚫", en: "Scam or fake listing", ka: "თაღლითობა ან ყალბი განცხადება" },
+  { key: "wrongInfo", icon: "❗", en: "Wrong price, address or details", ka: "არასწორი ფასი, მისამართი ან დეტალები" },
+  { key: "unavailable", icon: "🏚️", en: "Already sold / rented", ka: "უკვე გაყიდულია / გაქირავებულია" },
+  { key: "discrimination", icon: "⚖️", en: "Discriminatory terms", ka: "დისკრიმინაციული პირობები" },
+  { key: "spam", icon: "📢", en: "Spam or duplicate", ka: "სპამი ან დუბლიკატი" },
+  { key: "other", icon: "💬", en: "Something else", ka: "სხვა" },
+];
+export const isEstateReportReason = (v: unknown): v is string =>
+  typeof v === "string" && ESTATE_REPORT_REASONS.some((r) => r.key === v);

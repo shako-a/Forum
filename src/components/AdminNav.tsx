@@ -95,6 +95,16 @@ export function AdminNav({
             { href: `${base}/jobs`, label: dict.business.jobs, icon: "📋" },
           ],
         },
+        {
+          group: t.marketGroup,
+          icon: "🛍️",
+          children: [
+            { href: `${base}/market`, label: t.marketOverview, icon: "📈" },
+            { href: `${base}/merch`, label: t.merchProducts, icon: "🧢" },
+            { href: `${base}/merch/orders`, label: t.merchOrders, icon: "📦" },
+          ],
+        },
+        { href: `${base}/estate`, label: t.estateAdmin, icon: "🏠" },
         { href: `${base}/more`, label: t.morePackages, icon: "💎" },
         { href: `${base}/ai-usage`, label: t.aiUsage, icon: "✦" },
         { href: `${base}/reports`, label: t.reports, icon: "⚑" },
