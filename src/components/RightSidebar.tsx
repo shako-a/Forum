@@ -72,8 +72,8 @@ export async function RightSidebar({
             </Link>
           )}
           <div className="stat-row" style={{ marginTop: user ? 0 : 16 }}>
+            <div className="stat"><b>{fmtCount(stats.visitors)}</b><span>{dict.home.visitors}</span></div>
             <div className="stat"><b>{fmtCount(stats.members)}</b><span>{dict.home.members}</span></div>
-            <div className="stat"><b>{fmtCount(stats.online)}</b><span>{dict.home.online}</span></div>
             <div className="stat"><b>{fmtCount(stats.topics)}</b><span>{dict.home.topics}</span></div>
           </div>
         </div>
@@ -105,13 +105,17 @@ export async function RightSidebar({
         </div>
       )}
 
-      {/* App promo */}
+      {/* App promo — the apps aren't published yet, so the badges are inert
+          and the card says so rather than offering dead store links. */}
       <div className="card card-pad app-card">
-        <h3>{dict.home.appCardTitle}</h3>
+        <h3>
+          {dict.home.appCardTitle}
+          <span className="app-soon">{dict.home.appComingSoon}</span>
+        </h3>
         <p>{dict.home.appCardBody}</p>
-        <div className="store-badges">
-          <a className="store-badge" href="#"> {dict.home.appStore}</a>
-          <a className="store-badge" href="#">▶ {dict.home.googlePlay}</a>
+        <div className="store-badges" aria-disabled="true">
+          <span className="store-badge is-soon"> {dict.home.appStore}</span>
+          <span className="store-badge is-soon">▶ {dict.home.googlePlay}</span>
         </div>
       </div>
 

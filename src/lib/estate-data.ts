@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { lookupZip, boundingBox, distanceMiles, type LatLng } from "@/lib/geo";
 import type { Prisma } from "@/generated/prisma/client";
 
 export type ListingFilters = {
@@ -11,7 +12,9 @@ export type ListingFilters = {
   minBedrooms?: number;
   minBathrooms?: number;
   minRooms?: number;
-  sort?: "newest" | "priceAsc" | "priceDesc";
+  sort?: "newest" | "nearest" | "priceAsc" | "priceDesc";
+  zip?: string; // ZIP + radius: only listings that saved a ZIP can match
+  radius?: number; // miles
 };
 
 // Fields the directory cards need (keeps photo arrays but skips description).
@@ -28,17 +31,40 @@ const CARD_SELECT = {
   areaSqFt: true,
   city: true,
   state: true,
+  lat: true,
+  lng: true,
   photos: true,
   createdAt: true,
 } satisfies Prisma.PropertyListingSelect;
 
+export type ListingCardRow = Prisma.PropertyListingGetPayload<{ select: typeof CARD_SELECT }> & {
+  distance?: number; // miles from the searched ZIP, when a radius search is on
+};
+
+// Cap on rows pulled for in-memory distance filtering.
+const RADIUS_SCAN_LIMIT = 1000;
+
+function radiusOf(f: ListingFilters): { center: LatLng; miles: number } | null {
+  if (!f.zip || !f.radius) return null;
+  const center = lookupZip(f.zip);
+  return center ? { center, miles: f.radius } : null;
+}
+
 // Public directory: active listings, newest first, with all the search filters.
-export async function getListingDirectory(filters: ListingFilters = {}) {
+export async function getListingDirectory(filters: ListingFilters = {}): Promise<ListingCardRow[]> {
   const { q, kind, propertyType, state, minPrice, maxPrice, minBedrooms, minBathrooms, minRooms, sort } =
     filters;
-  return db.propertyListing.findMany({
+  const radius = radiusOf(filters);
+  const box = radius ? boundingBox(radius.center, radius.miles) : null;
+  const rows = await db.propertyListing.findMany({
     where: {
       active: true,
+      ...(box
+        ? {
+            lat: { gte: box.minLat, lte: box.maxLat },
+            lng: { gte: box.minLng, lte: box.maxLng },
+          }
+        : {}),
       ...(kind ? { kind } : {}),
       ...(propertyType ? { propertyType } : {}),
       ...(state ? { state } : {}),
@@ -65,9 +91,21 @@ export async function getListingDirectory(filters: ListingFilters = {}) {
         : sort === "priceDesc"
           ? [{ price: "desc" }, { createdAt: "desc" }]
           : { createdAt: "desc" },
-    take: 100,
+    take: radius ? RADIUS_SCAN_LIMIT : 100,
     select: CARD_SELECT,
   });
+
+  if (!radius) return rows;
+  // The SQL box is a square around the circle — apply the exact distance here.
+  const within = rows
+    .flatMap((r) =>
+      r.lat == null || r.lng == null
+        ? []
+        : [{ ...r, distance: distanceMiles(radius.center, { lat: r.lat, lng: r.lng }) }],
+    )
+    .filter((r) => r.distance <= radius.miles);
+  if (sort === "nearest" || !sort) within.sort((a, b) => a.distance - b.distance);
+  return within.slice(0, 100);
 }
 
 // A single public listing with its owner (for the contact card).

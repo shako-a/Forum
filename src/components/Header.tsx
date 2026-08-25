@@ -10,6 +10,7 @@ import type { HeaderUser } from "@/lib/header-user";
 import { hasAiAccess } from "@/lib/perks";
 import { getInboxUnread } from "@/lib/inbox-data";
 import { getManageableBusinesses } from "@/lib/business-manage";
+import { recordVisit } from "@/lib/visitors";
 import { getActingBusiness } from "@/lib/acting-as";
 
 export async function Header({
@@ -21,6 +22,9 @@ export async function Header({
   dict: Dictionary;
   user: HeaderUser;
 }) {
+  // Every user-facing page renders the header, so this is where the
+  // cookieless visitor counter ticks (deduplicated per visitor per day).
+  await recordVisit();
   const t = dict.common;
   const unread = user ? (await getInboxUnread()).total : 0;
   // Businesses this user can act as, and which one is active (if any).

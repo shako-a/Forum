@@ -57,6 +57,7 @@ export default async function EditListingPage({ params }: PageProps<"/[lang]/rea
               yearBuilt: listing.yearBuilt ?? "",
               address: listing.address,
               city: listing.city ?? "",
+              zip: listing.zip ?? "",
               state: listing.state,
               contactName: listing.contactName ?? "",
               phone: listing.phone ?? "",

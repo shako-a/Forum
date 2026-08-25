@@ -59,7 +59,7 @@ export const MARKET_EXPIRY_DAYS = 60;
 // A listing can be renewed (bumped to the top) once this many hours have passed.
 export const MARKET_RENEW_COOLDOWN_HOURS = 24;
 
-export const MARKET_SORTS = ["newest", "priceAsc", "priceDesc"] as const;
+export const MARKET_SORTS = ["newest", "nearest", "priceAsc", "priceDesc"] as const;
 export type MarketSort = (typeof MARKET_SORTS)[number];
 
 function byKey(list: LabelDef[], key: string) {

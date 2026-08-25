@@ -29,11 +29,13 @@ export function ListingCard({
   dict,
   listing,
   footer,
+  distance,
 }: {
   locale: Locale;
   dict: Dictionary;
   listing: ListingCardData;
   footer?: React.ReactNode; // extra actions (e.g. Edit on the "mine" page)
+  distance?: number; // miles from the searched ZIP, on radius searches
 }) {
   const t = dict.estate;
   const l = listing;
@@ -73,6 +75,12 @@ export function ListingCard({
             <>
               <span className="sep">·</span>
               <span>📍 {location}</span>
+            </>
+          )}
+          {distance !== undefined && (
+            <>
+              <span className="sep">·</span>
+              <span className="mk-distance">{dict.market.away.replace("{n}", distance.toFixed(distance < 10 ? 1 : 0))}</span>
             </>
           )}
         </div>

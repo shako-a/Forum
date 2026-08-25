@@ -12,6 +12,7 @@ import { MarketListingSchema, zodErrors, type FormState } from "@/lib/definition
 import { canRenew, MARKET_STATUSES, isMarketReportReason, type MarketStatus } from "@/lib/market";
 import { hasConversationBetween } from "@/lib/market-data";
 import { deleteUploadsByUrl } from "@/lib/media";
+import { lookupZip } from "@/lib/geo";
 import { flagGaEvent } from "@/lib/ga-server";
 
 const MAX_PHOTOS = 10;
@@ -43,8 +44,10 @@ function parseListing(formData: FormData) {
     priceType: formData.get("priceType"),
     price: formData.get("price") ?? undefined,
     city: formData.get("city") || undefined,
+    zip: formData.get("zip") || undefined,
     state: formData.get("state"),
     localPickup: formData.get("localPickup") === "on",
+    localDelivery: formData.get("localDelivery") === "on",
     canShip: formData.get("canShip") === "on",
     phone: formData.get("phone") || undefined,
   });
@@ -77,7 +80,8 @@ export async function createMarketListing(_state: FormState, formData: FormData)
   const parsed = parseListing(formData);
   if (!parsed.success) return { errors: zodErrors(parsed.error) };
 
-  const { title, city, phone, priceType, price, ...rest } = parsed.data;
+  const { title, city, phone, priceType, price, zip, ...rest } = parsed.data;
+  const point = lookupZip(zip);
   const slug = await uniqueSlug(title);
   // Listing while acting as a business attributes the item to the business.
   const acting = await getActingBusiness();
@@ -89,6 +93,9 @@ export async function createMarketListing(_state: FormState, formData: FormData)
       priceType,
       price: priceType === "FREE" ? 0 : price,
       city: city ?? null,
+      zip: zip ?? null,
+      lat: point?.lat ?? null,
+      lng: point?.lng ?? null,
       phone: phone ?? null,
       photos: parsePhotos(formData),
       sellerId: user.id,
@@ -111,7 +118,8 @@ export async function updateMarketListing(_state: FormState, formData: FormData)
   const parsed = parseListing(formData);
   if (!parsed.success) return { errors: zodErrors(parsed.error) };
 
-  const { title, city, phone, priceType, price, ...rest } = parsed.data;
+  const { title, city, phone, priceType, price, zip, ...rest } = parsed.data;
+  const point = lookupZip(zip);
   const photos = parsePhotos(formData);
   await db.marketListing.update({
     where: { id: listing.id },
@@ -121,6 +129,9 @@ export async function updateMarketListing(_state: FormState, formData: FormData)
       priceType,
       price: priceType === "FREE" ? 0 : price,
       city: city ?? null,
+      zip: zip ?? null,
+      lat: point?.lat ?? null,
+      lng: point?.lng ?? null,
       phone: phone ?? null,
       photos,
     },

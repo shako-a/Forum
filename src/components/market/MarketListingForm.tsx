@@ -17,8 +17,10 @@ export type MarketListingValues = {
   priceType: string;
   price: number;
   city: string;
+  zip: string;
   state: string;
   localPickup: boolean;
+  localDelivery: boolean;
   canShip: boolean;
   phone: string;
   photos: string[];
@@ -200,6 +202,23 @@ export function MarketListingForm({
           <label htmlFor="city">{dict.auth.city}</label>
           <input id="city" name="city" className="input" defaultValue={values?.city} maxLength={80} />
         </div>
+        <div className="field">
+          <label htmlFor="zip">
+            {t.zip} <span className="muted-sm">· {t.zipHint}</span>
+          </label>
+          <input
+            id="zip"
+            name="zip"
+            className="input"
+            inputMode="numeric"
+            autoComplete="postal-code"
+            placeholder="10001"
+            maxLength={10}
+            defaultValue={values?.zip}
+            aria-invalid={err?.zip ? true : undefined}
+          />
+          {err?.zip && <span className="field-error">{err.zip.join(" ")}</span>}
+        </div>
         <StateSelect
           name="state"
           label={dict.auth.state}
@@ -216,6 +235,10 @@ export function MarketListingForm({
           <label className="re-feature-check">
             <input type="checkbox" name="localPickup" defaultChecked={values?.localPickup ?? true} />
             <span>🤝 {t.localPickup}</span>
+          </label>
+          <label className="re-feature-check">
+            <input type="checkbox" name="localDelivery" defaultChecked={values?.localDelivery ?? false} />
+            <span>🚗 {t.localDelivery}</span>
           </label>
           <label className="re-feature-check">
             <input type="checkbox" name="canShip" defaultChecked={values?.canShip ?? false} />

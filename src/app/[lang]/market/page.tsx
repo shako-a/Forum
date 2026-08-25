@@ -15,6 +15,7 @@ import {
   type MarketFilters,
 } from "@/lib/market-data";
 import { MARKET_CATEGORIES, MARKET_CONDITIONS, isMarketSort } from "@/lib/market";
+import { RADIUS_OPTIONS, DEFAULT_RADIUS, normalizeZip, lookupZip } from "@/lib/geo";
 import {
   US_STATES,
   GEORGIA_VALUE,
@@ -56,8 +57,17 @@ export default async function MarketPage({ params, searchParams }: PageProps<"/[
     maxPrice: num(sp.maxPrice),
     shipping: sp.ships === "1",
     freeOnly: sp.free === "1",
-    sort: isMarketSort(sp.sort) ? sp.sort : "newest",
+    sort: isMarketSort(sp.sort) ? sp.sort : undefined,
+    zip: normalizeZip(sp.zip) ?? undefined,
+    radius: (RADIUS_OPTIONS as readonly number[]).includes(num(sp.radius) ?? 0)
+      ? (num(sp.radius) as number)
+      : undefined,
   };
+  // A ZIP with no explicit radius still searches — default to the usual 25 mi.
+  if (filters.zip && !filters.radius) filters.radius = DEFAULT_RADIUS;
+  const zipKnown = filters.zip ? !!lookupZip(filters.zip) : true;
+  const radiusOn = !!(filters.zip && zipKnown);
+  const effectiveSort = filters.sort ?? (radiusOn ? "nearest" : "newest");
   const page = Math.max(1, num(sp.page) ?? 1);
   const view: "grid" | "list" = sp.view === "list" ? "list" : "grid";
   const perRaw = num(sp.per);
@@ -67,8 +77,8 @@ export default async function MarketPage({ params, searchParams }: PageProps<"/[
     getDictionary(lang),
     getCurrentUser(),
     db.category.findMany({ orderBy: { sortOrder: "asc" } }),
-    getMarketDirectory(filters, page, per),
-    getMarketCategoryCounts(filters),
+    getMarketDirectory({ ...filters, sort: effectiveSort }, page, per),
+    getMarketCategoryCounts({ ...filters, sort: effectiveSort }),
     getMerchStrip(),
   ]);
   const items = await attachSaved(dir.items, user?.id);
@@ -88,6 +98,8 @@ export default async function MarketPage({ params, searchParams }: PageProps<"/[
   if (filters.shipping) base.ships = "1";
   if (filters.freeOnly) base.free = "1";
   if (filters.sort && filters.sort !== "newest") base.sort = filters.sort;
+  if (filters.zip) base.zip = filters.zip;
+  if (filters.radius && filters.radius !== DEFAULT_RADIUS) base.radius = String(filters.radius);
   if (view === "list") base.view = "list";
   if (per !== MARKET_PAGE_SIZE) base.per = String(per);
   const link = (extra: Record<string, string | undefined>) => {
@@ -99,7 +111,7 @@ export default async function MarketPage({ params, searchParams }: PageProps<"/[
     const s = q.toString();
     return `/${lang}/market${s ? `?${s}` : ""}`;
   };
-  const activeFilterCount = [filters.category, filters.condition, filters.state, filters.minPrice, filters.maxPrice, filters.shipping || undefined, filters.freeOnly || undefined].filter(Boolean).length;
+  const activeFilterCount = [filters.category, filters.condition, filters.state, filters.zip, filters.minPrice, filters.maxPrice, filters.shipping || undefined, filters.freeOnly || undefined].filter(Boolean).length;
 
   const from = (page - 1) * per + 1;
   const to = Math.min(dir.total, page * per);
@@ -246,8 +258,8 @@ export default async function MarketPage({ params, searchParams }: PageProps<"/[
                 </select>
               </div>
 
+              {/* Location — bracketed by a rule above and below */}
               <hr className="mk-panel-sep" />
-
               <div className="mk-panel-group">
                 <label className="mk-panel-label" htmlFor="f-state">{t.location}</label>
                 <select id="f-state" className="input" name="state" defaultValue={filters.state ?? ""}>
@@ -258,7 +270,31 @@ export default async function MarketPage({ params, searchParams }: PageProps<"/[
                     <option key={s.abbr} value={s.abbr}>{s.name}</option>
                   ))}
                 </select>
+                <div className="mk-zip-row">
+                  <input
+                    className="input"
+                    name="zip"
+                    inputMode="numeric"
+                    autoComplete="postal-code"
+                    maxLength={10}
+                    placeholder={t.zip}
+                    defaultValue={filters.zip ?? ""}
+                    aria-label={t.zip}
+                  />
+                  <select className="input" name="radius" defaultValue={String(filters.radius ?? DEFAULT_RADIUS)} aria-label={t.radius}>
+                    {RADIUS_OPTIONS.map((r) => (
+                      <option key={r} value={r}>{t.radiusMiles.replace("{n}", String(r))}</option>
+                    ))}
+                  </select>
+                </div>
+                {filters.zip && !zipKnown ? (
+                  <span className="field-error">{t.unknownZip}</span>
+                ) : (
+                  <span className="muted-sm mk-zip-hint">{t.zipFilterHint}</span>
+                )}
               </div>
+              <hr className="mk-panel-sep" />
+
               <div className="mk-panel-group">
                 <span className="mk-panel-label">{t.price}</span>
                 <div className="mk-price-range">
@@ -280,8 +316,9 @@ export default async function MarketPage({ params, searchParams }: PageProps<"/[
 
               <div className="mk-panel-group">
                 <label className="mk-panel-label" htmlFor="f-sort">{t.sortBy}</label>
-                <select id="f-sort" className="input" name="sort" defaultValue={filters.sort}>
+                <select id="f-sort" className="input" name="sort" defaultValue={effectiveSort}>
                   <option value="newest">{t.sortNewest}</option>
+                  {radiusOn && <option value="nearest">{t.sortNearest}</option>}
                   <option value="priceAsc">{t.sortPriceAsc}</option>
                   <option value="priceDesc">{t.sortPriceDesc}</option>
                 </select>

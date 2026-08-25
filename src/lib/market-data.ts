@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import type { Prisma } from "@/generated/prisma/client";
 import { marketExpiryCutoff, type MarketSort } from "@/lib/market";
+import { lookupZip, boundingBox, distanceMiles, type LatLng } from "@/lib/geo";
 
 export const MARKET_PAGE_SIZE = 24;
 export const MARKET_PAGE_SIZES = [24, 48, 96] as const;
@@ -15,6 +16,8 @@ export type MarketFilters = {
   freeOnly?: boolean;
   shipping?: boolean;
   sort?: MarketSort;
+  zip?: string; // ZIP + radius: only listings that saved a ZIP can match
+  radius?: number; // miles
 };
 
 // Fields the directory cards need.
@@ -31,6 +34,8 @@ const CARD_SELECT = {
   city: true,
   state: true,
   canShip: true,
+  lat: true,
+  lng: true,
   status: true,
   bumpedAt: true,
   createdAt: true,
@@ -39,7 +44,22 @@ const CARD_SELECT = {
 
 export type MarketCardRow = Prisma.MarketListingGetPayload<{ select: typeof CARD_SELECT }> & {
   saved?: boolean;
+  distance?: number; // miles from the searched ZIP, when a radius search is on
 };
+
+/**
+ * Resolve a ZIP + radius filter into a centre point and the bounding box the
+ * SQL query can use. Returns null when there is no usable radius search.
+ */
+function radiusOf(f: MarketFilters): { center: LatLng; miles: number } | null {
+  if (!f.zip || !f.radius) return null;
+  const center = lookupZip(f.zip);
+  return center ? { center, miles: f.radius } : null;
+}
+
+// Cap on rows pulled for in-memory distance filtering. Well above any
+// plausible result set for this forum; see the note in getMarketDirectory.
+const RADIUS_SCAN_LIMIT = 1000;
 
 // Everything the public search can see: active and renewed within the window.
 function liveWhere(): Prisma.MarketListingWhereInput {
@@ -48,12 +68,20 @@ function liveWhere(): Prisma.MarketListingWhereInput {
 
 function filtersWhere(f: MarketFilters, includeCategory = true): Prisma.MarketListingWhereInput {
   const { q, category, condition, state, minPrice, maxPrice, freeOnly, shipping } = f;
+  const r = radiusOf(f);
+  const radius = r ? { box: boundingBox(r.center, r.miles) } : null;
   return {
     ...liveWhere(),
     ...(includeCategory && category ? { category } : {}),
     ...(condition ? { condition } : {}),
     ...(state ? { state } : {}),
     ...(shipping ? { canShip: true } : {}),
+    ...(radius
+      ? {
+          lat: { gte: radius.box.minLat, lte: radius.box.maxLat },
+          lng: { gte: radius.box.minLng, lte: radius.box.maxLng },
+        }
+      : {}),
     ...(freeOnly ? { priceType: "FREE" } : {}),
     ...(minPrice || maxPrice
       ? { price: { ...(minPrice ? { gte: minPrice } : {}), ...(maxPrice ? { lte: maxPrice } : {}) } }
@@ -82,6 +110,34 @@ function orderFor(sort: MarketSort | undefined): Prisma.MarketListingOrderByWith
 
 export async function getMarketDirectory(filters: MarketFilters, page = 1, pageSize = MARKET_PAGE_SIZE) {
   const where = filtersWhere(filters);
+  const radius = radiusOf(filters);
+
+  // Radius search: the SQL box is a square around the circle, so the exact
+  // distance test has to happen here. Paginating in memory keeps the count
+  // honest — at this scale the box never returns more than a few hundred rows.
+  if (radius) {
+    const rows = await db.marketListing.findMany({
+      where,
+      orderBy: orderFor(filters.sort),
+      take: RADIUS_SCAN_LIMIT,
+      select: CARD_SELECT,
+    });
+    const within = rows
+      .flatMap((r) =>
+        r.lat == null || r.lng == null
+          ? []
+          : [{ ...r, distance: distanceMiles(radius.center, { lat: r.lat, lng: r.lng }) }],
+      )
+      .filter((r) => r.distance <= radius.miles);
+    if (filters.sort === "nearest" || !filters.sort) within.sort((a, b) => a.distance - b.distance);
+    const total = within.length;
+    return {
+      items: within.slice((page - 1) * pageSize, page * pageSize),
+      total,
+      pages: Math.max(1, Math.ceil(total / pageSize)),
+    };
+  }
+
   const [total, items] = await Promise.all([
     db.marketListing.count({ where }),
     db.marketListing.findMany({
@@ -98,9 +154,27 @@ export async function getMarketDirectory(filters: MarketFilters, page = 1, pageS
 // Live-listing counts per category, honoring every filter except the category
 // itself (so the chip strip shows what's behind each choice).
 export async function getMarketCategoryCounts(filters: MarketFilters): Promise<Record<string, number>> {
+  const where = filtersWhere(filters, false);
+  const radius = radiusOf(filters);
+  if (radius) {
+    // Same exact-distance pass as the directory, so the chip counts match
+    // what clicking the chip actually returns.
+    const rows = await db.marketListing.findMany({
+      where,
+      take: RADIUS_SCAN_LIMIT,
+      select: { category: true, lat: true, lng: true },
+    });
+    const out: Record<string, number> = {};
+    for (const r of rows) {
+      if (r.lat == null || r.lng == null) continue;
+      if (distanceMiles(radius.center, { lat: r.lat, lng: r.lng }) > radius.miles) continue;
+      out[r.category] = (out[r.category] ?? 0) + 1;
+    }
+    return out;
+  }
   const rows = await db.marketListing.groupBy({
     by: ["category"],
-    where: filtersWhere(filters, false),
+    where,
     _count: { _all: true },
   });
   return Object.fromEntries(rows.map((r) => [r.category, r._count._all]));

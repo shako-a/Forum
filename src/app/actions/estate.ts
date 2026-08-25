@@ -10,6 +10,7 @@ import { isEstateFeature, isEstateReportReason } from "@/lib/estate";
 import { ListingSchema, zodErrors, type FormState } from "@/lib/definitions";
 import { flagGaEvent } from "@/lib/ga-server";
 import { deleteUploadsByUrl } from "@/lib/media";
+import { lookupZip } from "@/lib/geo";
 
 const MAX_PHOTOS = 12;
 
@@ -37,6 +38,7 @@ function parseListing(formData: FormData) {
     yearBuilt: formData.get("yearBuilt") ?? undefined,
     address: formData.get("address"),
     city: formData.get("city") || undefined,
+    zip: formData.get("zip") || undefined,
     state: formData.get("state"),
     contactName: formData.get("contactName") || undefined,
     phone: formData.get("phone") || undefined,
@@ -67,7 +69,8 @@ export async function createListing(_state: FormState, formData: FormData): Prom
   const parsed = parseListing(formData);
   if (!parsed.success) return { errors: zodErrors(parsed.error) };
 
-  const { title, city, email, ...rest } = parsed.data;
+  const { title, city, email, zip, ...rest } = parsed.data;
+  const point = lookupZip(zip);
   const slug = await uniqueListingSlug(title);
   await db.propertyListing.create({
     data: {
@@ -76,6 +79,9 @@ export async function createListing(_state: FormState, formData: FormData): Prom
       slug,
       ownerId: user.id,
       city: city ?? null,
+      zip: zip ?? null,
+      lat: point?.lat ?? null,
+      lng: point?.lng ?? null,
       email: email || null,
       features: parseFeatures(formData),
       photos: parsePhotos(formData),
@@ -103,7 +109,8 @@ export async function updateListing(_state: FormState, formData: FormData): Prom
   const parsed = parseListing(formData);
   if (!parsed.success) return { errors: zodErrors(parsed.error) };
 
-  const { title, city, email, bedrooms, bathrooms, rooms, areaSqFt, yearBuilt, description, contactName, phone, ...rest } = parsed.data;
+  const { title, city, email, zip, bedrooms, bathrooms, rooms, areaSqFt, yearBuilt, description, contactName, phone, ...rest } = parsed.data;
+  const point = lookupZip(zip);
   const photos = parsePhotos(formData);
   await db.propertyListing.update({
     where: { id },
@@ -111,6 +118,9 @@ export async function updateListing(_state: FormState, formData: FormData): Prom
       ...rest,
       title,
       city: city ?? null,
+      zip: zip ?? null,
+      lat: point?.lat ?? null,
+      lng: point?.lng ?? null,
       email: email || null,
       description: description ?? null,
       contactName: contactName ?? null,

@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
+import { countVisitors } from "@/lib/visitors";
 import { pmToHtml, pmPlainText, pmFirstImage } from "@/lib/prosemirror";
 import { canModerateCategory, canRevealAnonymous, getSiteSettings } from "@/lib/dal";
 import { resolveAuthor, type DisplayAuthor } from "@/lib/anon";
@@ -151,23 +152,24 @@ export async function getFeedPage(viewer: { id: string } | null, sort: "popular"
   }
 }
 
-// Forum-wide counters for the sidebar welcome card. "online" has no real-time
-// presence system, so it's approximated as members active (posted or replied)
-// in the last 24h — a real, honest figure. Degrades to zeros if the DB is down.
+// Forum-wide counters. `visitors` and `members`/`topics` feed the public
+// welcome card; `online` is staff-only and shown on the admin dashboard.
+// Degrades to zeros if the DB is down.
 export async function getForumStats() {
   try {
     // "Online" = users who loaded a page in the last 5 minutes (see lastSeenAt
     // in getCurrentUser). Reflects actual presence, not just recent posters.
     const onlineSince = new Date(Date.now() - 5 * 60 * 1000);
-    const [members, topics, online] = await Promise.all([
+    const [members, topics, online, visitors] = await Promise.all([
       db.user.count(),
       db.post.count(),
       db.user.count({ where: { lastSeenAt: { gte: onlineSince } } }),
+      countVisitors(),
     ]);
-    return { members, online, topics };
+    return { members, online, topics, visitors };
   } catch (error) {
     console.error("getForumStats failed:", error);
-    return { members: 0, online: 0, topics: 0 };
+    return { members: 0, online: 0, topics: 0, visitors: 0 };
   }
 }
 

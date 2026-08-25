@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { getListingDirectory, getFeaturedListings } from "@/lib/estate-data";
 import { canPostListing } from "@/lib/perks";
 import { PROPERTY_TYPES, formatPrice, propertyTypeIcon } from "@/lib/estate";
+import { RADIUS_OPTIONS, DEFAULT_RADIUS, normalizeZip, lookupZip } from "@/lib/geo";
 import {
   US_STATES,
   GEORGIA_VALUE,
@@ -47,18 +48,32 @@ export default async function RealEstatePage({ params, searchParams }: PageProps
     maxPrice: num(sp.maxPrice),
     minBedrooms: num(sp.beds),
     minBathrooms: num(sp.baths),
-    sort: (sortRaw === "priceAsc" || sortRaw === "priceDesc" ? sortRaw : "newest") as "newest" | "priceAsc" | "priceDesc",
+    sort: (sortRaw === "priceAsc" || sortRaw === "priceDesc" || sortRaw === "nearest" ? sortRaw : undefined) as
+      | "newest"
+      | "nearest"
+      | "priceAsc"
+      | "priceDesc"
+      | undefined,
+    zip: normalizeZip(sp.zip) ?? undefined,
+    radius: (RADIUS_OPTIONS as readonly number[]).includes(num(sp.radius) ?? 0)
+      ? (num(sp.radius) as number)
+      : undefined,
   };
+  // A ZIP with no explicit radius still searches — default to the usual 25 mi.
+  if (filters.zip && !filters.radius) filters.radius = DEFAULT_RADIUS;
+  const zipKnown = filters.zip ? !!lookupZip(filters.zip) : true;
+  const radiusOn = !!(filters.zip && zipKnown);
+  const effectiveSort = filters.sort ?? (radiusOn ? "nearest" : "newest");
 
   const [dict, user, allCategories, listings, featured] = await Promise.all([
     getDictionary(lang),
     getCurrentUser(),
     db.category.findMany({ orderBy: { sortOrder: "asc" } }),
-    getListingDirectory(filters),
+    getListingDirectory({ ...filters, sort: effectiveSort }),
     getFeaturedListings(),
   ]);
   const t = dict.estate;
-  const hasFilters = !!(filters.q || filters.kind || filters.propertyType || filters.state || filters.minPrice || filters.maxPrice || filters.minBedrooms || filters.minBathrooms);
+  const hasFilters = !!(filters.q || filters.kind || filters.propertyType || filters.state || filters.zip || filters.minPrice || filters.maxPrice || filters.minBedrooms || filters.minBathrooms);
 
   return (
     <>
@@ -119,7 +134,9 @@ export default async function RealEstatePage({ params, searchParams }: PageProps
             {filters.maxPrice && <input type="hidden" name="maxPrice" value={filters.maxPrice} />}
             {filters.minBedrooms && <input type="hidden" name="beds" value={filters.minBedrooms} />}
             {filters.minBathrooms && <input type="hidden" name="baths" value={filters.minBathrooms} />}
-            {filters.sort !== "newest" && <input type="hidden" name="sort" value={filters.sort} />}
+            {filters.sort && filters.sort !== "newest" && <input type="hidden" name="sort" value={filters.sort} />}
+            {filters.zip && <input type="hidden" name="zip" value={filters.zip} />}
+            {filters.radius && filters.radius !== DEFAULT_RADIUS && <input type="hidden" name="radius" value={filters.radius} />}
             <input className="input" name="q" placeholder={t.searchPlaceholder} defaultValue={filters.q ?? ""} />
             <button type="submit" className="btn btn-primary">{dict.business.search}</button>
           </form>
@@ -142,7 +159,7 @@ export default async function RealEstatePage({ params, searchParams }: PageProps
           ) : (
             <div className="re-grid">
               {listings.map((l) => (
-                <ListingCard key={l.id} locale={lang} dict={dict} listing={l} />
+                <ListingCard key={l.id} locale={lang} dict={dict} listing={l} distance={l.distance} />
               ))}
             </div>
           )}
@@ -191,8 +208,8 @@ export default async function RealEstatePage({ params, searchParams }: PageProps
               </div>
             </div>
 
+            {/* Location — bracketed by a rule above and below */}
             <hr className="mk-panel-sep" />
-
             <div className="mk-panel-group">
               <label className="mk-panel-label" htmlFor="f-state">{dict.market.location}</label>
               <select id="f-state" className="input" name="state" defaultValue={filters.state ?? ""}>
@@ -201,7 +218,31 @@ export default async function RealEstatePage({ params, searchParams }: PageProps
                 <option value={USA_VALUE}>{USA_FLAG} {usaName(lang)}</option>
                 {US_STATES.map((s) => <option key={s.abbr} value={s.abbr}>{s.name}</option>)}
               </select>
+              <div className="mk-zip-row">
+                <input
+                  className="input"
+                  name="zip"
+                  inputMode="numeric"
+                  autoComplete="postal-code"
+                  maxLength={10}
+                  placeholder={dict.market.zip}
+                  defaultValue={filters.zip ?? ""}
+                  aria-label={dict.market.zip}
+                />
+                <select className="input" name="radius" defaultValue={String(filters.radius ?? DEFAULT_RADIUS)} aria-label={dict.market.radius}>
+                  {RADIUS_OPTIONS.map((r) => (
+                    <option key={r} value={r}>{dict.market.radiusMiles.replace("{n}", String(r))}</option>
+                  ))}
+                </select>
+              </div>
+              {filters.zip && !zipKnown ? (
+                <span className="field-error">{dict.market.unknownZip}</span>
+              ) : (
+                <span className="muted-sm mk-zip-hint">{dict.market.zipFilterHint}</span>
+              )}
             </div>
+            <hr className="mk-panel-sep" />
+
             <div className="mk-panel-group">
               <span className="mk-panel-label">{t.price}</span>
               <div className="mk-price-range">
@@ -215,8 +256,9 @@ export default async function RealEstatePage({ params, searchParams }: PageProps
 
             <div className="mk-panel-group">
               <label className="mk-panel-label" htmlFor="f-sort">{dict.market.sortBy}</label>
-              <select id="f-sort" className="input" name="sort" defaultValue={filters.sort}>
+              <select id="f-sort" className="input" name="sort" defaultValue={effectiveSort}>
                 <option value="newest">{dict.market.sortNewest}</option>
+                {radiusOn && <option value="nearest">{dict.market.sortNearest}</option>}
                 <option value="priceAsc">{dict.market.sortPriceAsc}</option>
                 <option value="priceDesc">{dict.market.sortPriceDesc}</option>
               </select>

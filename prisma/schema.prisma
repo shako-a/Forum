@@ -535,7 +535,13 @@ model PropertyListing {
   // the profile State/Country picker values.
   address String
   city    String?
+  zip     String? // optional; powers the ZIP + radius search
   state   String
+
+  // Centroid of `zip`, filled server-side on save. Null when no ZIP is given,
+  // which means the listing can't match a radius search.
+  lat Float?
+  lng Float?
 
   features String[] // keys from the curated features list (lib/estate.ts)
   photos   String[] // ordered image URLs; photos[0] is the hero shot
@@ -562,6 +568,7 @@ model PropertyListing {
   @@index([propertyType])
   @@index([state])
   @@index([active, createdAt])
+  @@index([lat, lng])
 }
 
 // ---------------------------------------------------------------------------
@@ -593,9 +600,15 @@ model MarketListing {
 
   // Where the item is; how the buyer can get it.
   city        String?
+  zip         String? // optional; powers the ZIP + radius search
   state       String
   localPickup Boolean @default(true)
+  localDelivery Boolean @default(false) // seller drops it off nearby
   canShip     Boolean @default(false)
+
+  // Centroid of `zip`, filled server-side on save (null = no radius match).
+  lat Float?
+  lng Float?
 
   phone String? // optional extra contact; DMs are always available
 
@@ -618,6 +631,7 @@ model MarketListing {
   @@index([category])
   @@index([state])
   @@index([sellerId])
+  @@index([lat, lng])
 }
 
 model MarketFavorite {
@@ -749,6 +763,21 @@ model MerchOrderItem {
 
   @@index([orderId])
   @@index([productId])
+}
+
+// ---------------------------------------------------------------------------
+// Visitor counter. Cookieless and non-identifying: `hash` is a salted digest
+// of IP + user-agent that rotates every day, so it cannot be used to follow
+// anyone across days and needs no consent banner. One row per visitor per day
+// gives "unique visitors in the last N days" by counting distinct hashes.
+// ---------------------------------------------------------------------------
+
+model VisitorDay {
+  hash String
+  day  String // YYYY-MM-DD (UTC)
+
+  @@id([hash, day])
+  @@index([day])
 }
 
 // ---------------------------------------------------------------------------

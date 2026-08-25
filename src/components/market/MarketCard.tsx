@@ -72,6 +72,12 @@ export function MarketCard({
         </div>
         <div className="mk-card-meta">
           <span>{timeAgo(l.bumpedAt, locale)}</span>
+          {l.distance !== undefined && (
+            <>
+              <span className="sep">·</span>
+              <span className="mk-distance">{t.away.replace("{n}", l.distance.toFixed(l.distance < 10 ? 1 : 0))}</span>
+            </>
+          )}
           {l.sellerBusiness && (
             <>
               <span className="sep">·</span>

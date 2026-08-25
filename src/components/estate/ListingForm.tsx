@@ -22,6 +22,7 @@ export type ListingValues = {
   yearBuilt: number | "";
   address: string;
   city: string;
+  zip: string;
   state: string;
   contactName: string;
   phone: string;
@@ -167,6 +168,12 @@ export function ListingForm({
       <Field name="address" label={t.address} required defaultValue={values?.address} placeholder={t.addressPlaceholder} />
       <div className="field-row">
         <Field name="city" label={dict.auth.city} defaultValue={values?.city} />
+        <Field
+          name="zip"
+          label={`${dict.market.zip} · ${dict.market.zipHint}`}
+          defaultValue={values?.zip}
+          placeholder="10001"
+        />
         <StateSelect
           name="state"
           label={dict.auth.state}

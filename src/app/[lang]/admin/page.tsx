@@ -4,6 +4,7 @@ import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { getCurrentUser, getSiteSettings } from "@/lib/dal";
 import { db } from "@/lib/db";
+import { countVisitors, countVisitorsToday, VISITOR_WINDOW_DAYS } from "@/lib/visitors";
 
 async function safeCount(fn: () => Promise<number>) {
   try {
@@ -26,13 +27,16 @@ export default async function AdminDashboard({ params }: PageProps<"/[lang]/admi
   const t = dict.admin;
   const settings = await getSiteSettings();
 
-  const [users, categories, posts, hidden, ads, pinned] = await Promise.all([
+  const [users, categories, posts, hidden, ads, pinned, online, visitors30, visitorsToday] = await Promise.all([
     safeCount(() => db.user.count()),
     safeCount(() => db.category.count()),
     safeCount(() => db.post.count()),
     safeCount(() => db.post.count({ where: { hidden: true } })),
     safeCount(() => db.adCard.count()),
     safeCount(() => db.post.count({ where: { featuredInBar: true, hidden: false } })),
+    safeCount(() => db.user.count({ where: { lastSeenAt: { gte: new Date(Date.now() - 5 * 60 * 1000) } } })),
+    safeCount(() => countVisitors(VISITOR_WINDOW_DAYS, true)),
+    safeCount(() => countVisitorsToday()),
   ]);
 
   // Posts currently shown in the Popular bar: pinned selection if curated,
@@ -44,6 +48,9 @@ export default async function AdminDashboard({ params }: PageProps<"/[lang]/admi
 
   const base = `/${lang}/admin`;
   const stats = [
+    { label: t.onlineNow, value: online, icon: "🟢", href: `${base}/users` },
+    { label: t.visitorsToday, value: visitorsToday, icon: "👣", href: `${base}` },
+    { label: t.visitorsWindow.replace("{n}", String(VISITOR_WINDOW_DAYS)), value: visitors30, icon: "📈", href: `${base}` },
     { label: t.users, value: users, icon: "👥", href: `${base}/users` },
     { label: t.categories, value: categories, icon: "🗂", href: `${base}/categories` },
     { label: t.posts, value: posts, icon: "📝", href: `/${lang}` },

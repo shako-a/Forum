@@ -85,7 +85,9 @@
     "translateToEnglish": "Translate to English",
     "pinned": "Pinned",
     "comments": "comments",
-    "sponsored": "Sponsored"
+    "sponsored": "Sponsored",
+    "appComingSoon": "Coming soon",
+    "visitors": "Visitors"
   },
   "categories": {
     "title": "Categories",
@@ -234,7 +236,7 @@
     "perkSupport": "Help keep the community running",
     "perkBadge": "A Donor badge on your profile",
     "alreadyDonor": "You're a Donor — thank you! 💛",
-    "ctaComingSoon": "Donations coming soon",
+    "ctaComingSoon": "Coming soon",
     "loginPrompt": "Log in to become a Donor.",
     "contactPrompt": "Online checkout is coming soon. In the meantime, contact an admin to become a Donor."
   },
@@ -529,7 +531,16 @@
     "shipping": "Shipping",
     "tracking": "Tracking",
     "cancelOrder": "Cancel order",
-    "cancelOrderConfirm": "Cancel this order?"
+    "cancelOrderConfirm": "Cancel this order?",
+    "zip": "ZIP code",
+    "zipHint": "optional",
+    "localDelivery": "I can deliver locally",
+    "sortNearest": "Nearest first",
+    "radius": "Within",
+    "radiusMiles": "{n} miles",
+    "zipFilterHint": "Radius search only matches listings that included a ZIP code.",
+    "away": "{n} mi away",
+    "unknownZip": "Unknown ZIP code"
   },
   "inbox": {
     "title": "Inbox",
@@ -925,7 +936,10 @@
     "reportEstate": "Real-estate listing",
     "typeEstate": "Real estate",
     "unlisted": "UNLISTED",
-    "note": "Note"
+    "note": "Note",
+    "onlineNow": "Online now",
+    "visitorsToday": "Visitors today",
+    "visitorsWindow": "Visitors ({n} days)"
   },
   "mod": {
     "tools": "Moderator tools",
@@ -965,7 +979,7 @@
     "youHaveThis": "You have this tier",
     "thanksHolding": "You have this tier — thank you!",
     "backToAll": "All tiers",
-    "ctaComingSoon": "Payments coming soon",
+    "ctaComingSoon": "Coming soon",
     "loginPrompt": "Sign in to subscribe.",
     "contactPrompt": "Online payment is coming soon. In the meantime, contact an administrator to get this tier.",
     "allPaymentsNote": "Payments are not live yet — tiers are granted by an administrator for now.",

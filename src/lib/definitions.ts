@@ -198,6 +198,13 @@ export const ReviewSchema = z.object({
 });
 
 // --- Marketplace ----------------------------------------------------------
+// Optional US ZIP. Blank stays blank; anything present must be 5 digits (or
+// ZIP+4, which is trimmed to the 5-digit prefix the centroid table uses).
+const zipCode = z
+  .union([z.literal(""), z.string().trim().regex(/^\d{5}(-\d{4})?$/, { error: "Enter a 5-digit ZIP code." })])
+  .optional()
+  .transform((v) => (v ? v.slice(0, 5) : undefined));
+
 export const MarketListingSchema = z
   .object({
     title: z.string().min(3, { error: "Title must be at least 3 characters." }).trim().max(120),
@@ -210,8 +217,10 @@ export const MarketListingSchema = z
       .optional()
       .transform((v) => (v === "" || v === undefined ? 0 : v)),
     city: z.string().trim().max(80).optional(),
+    zip: zipCode,
     state: z.string().min(1, { error: "State / Country is required." }).trim(),
     localPickup: z.boolean(),
+    localDelivery: z.boolean(),
     canShip: z.boolean(),
     phone: z.string().trim().max(40).optional(),
   })
@@ -240,6 +249,7 @@ export const ListingSchema = z.object({
   yearBuilt: optionalCount,
   address: z.string().min(1, { error: "Address is required." }).trim().max(200),
   city: z.string().trim().optional(),
+  zip: zipCode,
   state: z.string().min(1, { error: "State / Country is required." }).trim(),
   contactName: z.string().trim().max(100).optional(),
   phone: z.string().trim().optional(),
