@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUser, canModerateCategory } from "@/lib/dal";
 import { defaultLocale, isLocale } from "@/i18n/config";
-import { pmHasContent, textToPmDoc, safeImageUrl, appendImage } from "@/lib/prosemirror";
+import { pmHasContent, pmValidate, textToPmDoc, safeImageUrl, appendImage } from "@/lib/prosemirror";
 import { slugify } from "@/lib/slug";
 import type { FormState } from "@/lib/definitions";
 import { flagGaEvent } from "@/lib/ga-server";
@@ -47,13 +47,17 @@ export async function createPost(_state: FormState, formData: FormData): Promise
   } catch {
     body = null;
   }
+  // Size/depth limits run before anything recursive touches the document.
+  const bodyCheck = body === null ? { ok: true } : pmValidate(body, bodyRaw.length);
+  if (!bodyCheck.ok) body = null;
   const imageUrl = safeImageUrl(formData.get("image"));
 
   const errors: Record<string, string[]> = {};
   if (!categoryId) errors.categoryId = ["Please choose a category."];
   if (title.length < 3) errors.title = ["Title must be at least 3 characters."];
   // A post needs body text or an attached image.
-  if (!pmHasContent(body) && !imageUrl) errors.body = ["Please write something or add an image."];
+  if (!bodyCheck.ok) errors.body = ["The post body is too large or too deeply nested."];
+  else if (!pmHasContent(body) && !imageUrl) errors.body = ["Please write something or add an image."];
   if (Object.keys(errors).length) return { errors };
 
   const category = await db.category.findUnique({ where: { id: categoryId }, select: { id: true } });
@@ -107,12 +111,16 @@ export async function editPost(_state: FormState, formData: FormData): Promise<F
   } catch {
     body = null;
   }
+  // Size/depth limits run before anything recursive touches the document.
+  const bodyCheck = body === null ? { ok: true } : pmValidate(body, bodyRaw.length);
+  if (!bodyCheck.ok) body = null;
   const imageUrl = safeImageUrl(formData.get("image"));
 
   const errors: Record<string, string[]> = {};
   if (!categoryId) errors.categoryId = ["Please choose a category."];
   if (title.length < 3) errors.title = ["Title must be at least 3 characters."];
-  if (!pmHasContent(body) && !imageUrl) errors.body = ["Please write something or add an image."];
+  if (!bodyCheck.ok) errors.body = ["The post body is too large or too deeply nested."];
+  else if (!pmHasContent(body) && !imageUrl) errors.body = ["Please write something or add an image."];
   if (Object.keys(errors).length) return { errors };
 
   const category = await db.category.findUnique({ where: { id: categoryId }, select: { id: true } });

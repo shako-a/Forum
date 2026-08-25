@@ -93,6 +93,11 @@ export type FormState =
       errors?: Record<string, string[] | undefined>;
       message?: string;
       ok?: boolean;
+      // Machine-readable outcome so the form can show a localized message
+      // (`message` stays as the English fallback). Used by the login lockout.
+      code?: "attemptsLeft" | "lockedOut";
+      attemptsLeft?: number;
+      lockMinutes?: number;
     }
   | undefined;
 

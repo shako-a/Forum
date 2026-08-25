@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { getCurrentUser, canModerateCategory } from "@/lib/dal";
 import { defaultLocale, isLocale } from "@/i18n/config";
+import { pmImageUrls } from "@/lib/prosemirror";
+import { deleteUploadsByUrl } from "@/lib/media";
 
 // Moderation actions. Each is reachable via direct POST, so authorization is
 // re-checked here (category-scoped: a moderator may only act in categories
@@ -19,7 +21,15 @@ function safeLocale(locale: string): string {
 export async function deletePost(postId: string, locale: string): Promise<void> {
   const user = await getCurrentUser();
   if (user?.role !== "ADMIN") return;
+  // Collect the media the thread referenced before the cascade wipes it.
+  const post = await db.post.findUnique({
+    where: { id: postId },
+    select: { body: true, replies: { select: { body: true } } },
+  });
   await db.post.delete({ where: { id: postId } }).catch(() => {});
+  if (post) {
+    await deleteUploadsByUrl([...pmImageUrls(post.body), ...post.replies.flatMap((r) => pmImageUrls(r.body))]);
+  }
   const lang = safeLocale(locale);
   revalidatePath(`/${lang}`);
   revalidatePath(`/${lang}/popular`);

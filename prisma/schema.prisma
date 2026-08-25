@@ -46,6 +46,11 @@ model User {
   role         Role       @default(USER)
   status       UserStatus @default(ACTIVE)
 
+  // Brute-force lockout: consecutive failed logins, and until when the account
+  // refuses password checks once the threshold is hit. Reset on success.
+  failedLogins Int       @default(0)
+  lockedUntil  DateTime?
+
   // The "main admin" / owner — always sees real authors behind anonymous
   // content and controls whether other staff can. Typically just one user.
   isOwner      Boolean    @default(false)
@@ -111,6 +116,7 @@ model User {
   managedBusinesses   BusinessManager[] @relation("BusinessManagerUser")
   businessReviews     BusinessReview[]
   propertyListings    PropertyListing[] @relation("ListingOwner")
+  uploads             MediaUpload[]
   notifications       Notification[]            @relation("UserNotifications")
   notificationsActed  Notification[]            @relation("NotificationActor")
   conversations       ConversationParticipant[]
@@ -541,6 +547,26 @@ model PropertyListing {
   @@index([propertyType])
   @@index([state])
   @@index([active, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Uploaded media ledger. Every object written to Spaces through /api/upload
+// gets a row here, so uploads are attributable (who, when, how big), quota-
+// limitable (rolling 24h per user), and erasable: when the post/listing/ad
+// that referenced a URL is deleted, the object is removed from the bucket.
+// ---------------------------------------------------------------------------
+
+model MediaUpload {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  key         String   @unique // object key inside the bucket
+  url         String   @unique // public URL as handed to the client
+  contentType String
+  size        Int // bytes
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
 
 // ---------------------------------------------------------------------------

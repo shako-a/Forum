@@ -196,7 +196,10 @@
     "goHome": "Go to the forum",
     "bannerText": "Confirm your email to secure your account.",
     "bannerCta": "Resend link",
-    "bannerDismiss": "Dismiss"
+    "bannerDismiss": "Dismiss",
+    "attemptsLeft": "Incorrect password. {n} attempt(s) left before the account is locked for {m} minutes.",
+    "lockedOut": "Too many incorrect attempts — this account is locked for {m} minutes.",
+    "lockedOutReset": "Forgot your password? Reset it now instead of waiting."
   },
   "roles": {
     "user": "User",
@@ -678,7 +681,13 @@
       "rolloverHint": "Share of the leftover amount carried into next month. 0 = use it or lose it.",
       "derivedMaxCarry": "max carried over",
       "derivedPeak": "peak in one month"
-    }
+    },
+    "uploads": "Uploads",
+    "uploadsSub": "Files this member uploaded through the site (last 24h counts toward their daily quota). Deleting removes the file from storage; content that referenced it will show a broken image.",
+    "noUploads": "No uploads.",
+    "uploadsTotal": "{n} files · {size}",
+    "deleteUpload": "Delete file",
+    "confirmDeleteUpload": "Delete this file from storage permanently?"
   },
   "mod": {
     "tools": "Moderator tools",

@@ -9,6 +9,7 @@ import { slugify } from "@/lib/slug";
 import { isEstateFeature } from "@/lib/estate";
 import { ListingSchema, zodErrors, type FormState } from "@/lib/definitions";
 import { flagGaEvent } from "@/lib/ga-server";
+import { deleteUploadsByUrl } from "@/lib/media";
 
 const MAX_PHOTOS = 12;
 
@@ -94,7 +95,7 @@ export async function updateListing(_state: FormState, formData: FormData): Prom
   const id = String(formData.get("listingId") ?? "");
   const listing = await db.propertyListing.findUnique({
     where: { id },
-    select: { ownerId: true, slug: true },
+    select: { ownerId: true, slug: true, photos: true },
   });
   if (!listing) return { message: "Listing not found." };
   if (listing.ownerId !== user.id && user.role !== "ADMIN") return { message: "Not allowed." };
@@ -103,6 +104,7 @@ export async function updateListing(_state: FormState, formData: FormData): Prom
   if (!parsed.success) return { errors: zodErrors(parsed.error) };
 
   const { title, city, email, bedrooms, bathrooms, rooms, areaSqFt, yearBuilt, description, contactName, phone, ...rest } = parsed.data;
+  const photos = parsePhotos(formData);
   await db.propertyListing.update({
     where: { id },
     data: {
@@ -120,9 +122,11 @@ export async function updateListing(_state: FormState, formData: FormData): Prom
       yearBuilt: yearBuilt ?? null,
       active: formData.get("active") === "on",
       features: parseFeatures(formData),
-      photos: parsePhotos(formData),
+      photos,
     },
   });
+  // Photos the owner removed from the gallery are released from storage.
+  await deleteUploadsByUrl(listing.photos.filter((p) => !photos.includes(p)));
 
   const locale = String(formData.get("locale") ?? "en");
   revalidatePath(`/${locale}/realestate/${listing.slug}`, "page");
@@ -136,10 +140,11 @@ export async function deleteListing(listingId: string, locale: string): Promise<
   if (!user) return;
   const listing = await db.propertyListing.findUnique({
     where: { id: listingId },
-    select: { ownerId: true },
+    select: { ownerId: true, photos: true },
   });
   if (!listing || (listing.ownerId !== user.id && user.role !== "ADMIN")) return;
   await db.propertyListing.delete({ where: { id: listingId } });
+  await deleteUploadsByUrl(listing.photos);
   revalidatePath(`/${locale}/realestate`, "page");
   redirect(`/${locale}/realestate/mine`);
 }

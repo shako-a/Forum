@@ -10,6 +10,7 @@ import { slugify } from "@/lib/slug";
 import { createNotification } from "@/lib/notify";
 import { BusinessSchema, JobSchema, ReviewSchema, zodErrors, type FormState } from "@/lib/definitions";
 import { flagGaEvent } from "@/lib/ga-server";
+import { deleteUploadsByUrl } from "@/lib/media";
 
 async function uniqueBusinessSlug(name: string): Promise<string> {
   const base = slugify(name) || "business";
@@ -62,7 +63,10 @@ export async function updateBusiness(_state: FormState, formData: FormData): Pro
   const user = await getCurrentUser();
   if (!user) return { message: "You must be logged in." };
   const id = String(formData.get("businessId") ?? "");
-  const biz = await db.business.findUnique({ where: { id }, select: { ownerId: true, slug: true } });
+  const biz = await db.business.findUnique({
+    where: { id },
+    select: { ownerId: true, slug: true, logoUrl: true },
+  });
   if (!biz) return { message: "Business not found." };
   if (!(await canManageBusiness(user.id, id, user.role === "ADMIN"))) return { message: "Not allowed." };
 
@@ -71,6 +75,7 @@ export async function updateBusiness(_state: FormState, formData: FormData): Pro
 
   const { name, city, ...rest } = parsed.data;
   await db.business.update({ where: { id }, data: { ...rest, name, city: city ?? null } });
+  if (biz.logoUrl && biz.logoUrl !== (rest.logoUrl ?? null)) await deleteUploadsByUrl([biz.logoUrl]);
 
   const locale = String(formData.get("locale") ?? "en");
   revalidatePath(`/${locale}/business/${biz.slug}`, "page");
@@ -81,9 +86,13 @@ export async function updateBusiness(_state: FormState, formData: FormData): Pro
 export async function deleteBusiness(businessId: string, locale: string): Promise<void> {
   const user = await getCurrentUser();
   if (!user) return;
-  const biz = await db.business.findUnique({ where: { id: businessId }, select: { ownerId: true } });
+  const biz = await db.business.findUnique({
+    where: { id: businessId },
+    select: { ownerId: true, logoUrl: true },
+  });
   if (!biz || (biz.ownerId !== user.id && user.role !== "ADMIN")) return;
   await db.business.delete({ where: { id: businessId } });
+  await deleteUploadsByUrl([biz.logoUrl]);
   revalidatePath(`/${locale}/business`, "page");
 }
 

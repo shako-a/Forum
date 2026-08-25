@@ -5,8 +5,9 @@ import { db } from "@/lib/db";
 import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUser, canModerateCategory } from "@/lib/dal";
 import { defaultLocale, isLocale } from "@/i18n/config";
-import { buildReplyDoc, safeUrl } from "@/lib/prosemirror";
+import { buildReplyDoc, safeUrl, pmImageUrls } from "@/lib/prosemirror";
 import { createNotification, notifyMentions } from "@/lib/notify";
+import { deleteUploadsByUrl } from "@/lib/media";
 import { getActingBusiness } from "@/lib/acting-as";
 import type { FormState } from "@/lib/definitions";
 
@@ -100,8 +101,8 @@ export async function createReply(_state: FormState, formData: FormData): Promis
   if (text) {
     await notifyMentions({
       text,
-      actorId: user.id,
-      excludeUserIds: [...notified],
+      actorId,
+      excludeUserIds: [user.id, ...notified],
       title: post.title,
       url: replyUrl,
     });
@@ -154,6 +155,7 @@ export async function deleteReply(replyId: string, locale: string, slug: string)
     select: {
       authorId: true,
       deletedAt: true,
+      body: true,
       post: { select: { categoryId: true } },
       _count: { select: { children: true } },
     },
@@ -172,6 +174,8 @@ export async function deleteReply(replyId: string, locale: string, slug: string)
   } else {
     await db.reply.delete({ where: { id: replyId } });
   }
+  // Either way the reply's own media is gone from the page — release it.
+  await deleteUploadsByUrl(pmImageUrls(reply.body));
 
   const lang = isLocale(locale) ? locale : defaultLocale;
   revalidatePath(`/${lang}/p/${slug}`);

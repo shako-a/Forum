@@ -77,17 +77,76 @@ export async function login(_state: FormState, formData: FormData): Promise<Form
 
   const user = await db.user.findUnique({
     where: { email: parsed.data.email },
-    select: { id: true, role: true, passwordHash: true, status: true },
+    select: {
+      id: true,
+      role: true,
+      passwordHash: true,
+      status: true,
+      failedLogins: true,
+      lockedUntil: true,
+    },
   });
 
-  const ok = user && (await bcrypt.compare(parsed.data.password, user.passwordHash));
-  if (!user || !ok || user.status !== "ACTIVE") {
+  if (!user) {
+    // Burn the same bcrypt time as a real check so response timing doesn't
+    // reveal whether the email is registered.
+    await bcrypt.compare(parsed.data.password, DUMMY_HASH);
     return { message: "Invalid email or password." };
   }
 
+  const now = Date.now();
+  if (user.lockedUntil && user.lockedUntil.getTime() > now) {
+    const lockMinutes = Math.max(1, Math.ceil((user.lockedUntil.getTime() - now) / 60_000));
+    return {
+      code: "lockedOut",
+      lockMinutes,
+      message: `Too many incorrect attempts. Try again in ${lockMinutes} min, or reset your password.`,
+    };
+  }
+
+  const ok = await bcrypt.compare(parsed.data.password, user.passwordHash);
+  if (!ok) {
+    const failed = user.failedLogins + 1;
+    if (failed >= LOCK_AFTER_ATTEMPTS) {
+      await db.user.update({
+        where: { id: user.id },
+        data: { failedLogins: 0, lockedUntil: new Date(now + LOCK_MINUTES * 60_000) },
+      });
+      return {
+        code: "lockedOut",
+        lockMinutes: LOCK_MINUTES,
+        message: `Too many incorrect attempts. Try again in ${LOCK_MINUTES} min, or reset your password.`,
+      };
+    }
+    await db.user.update({ where: { id: user.id }, data: { failedLogins: failed } });
+    if (failed >= WARN_AFTER_ATTEMPTS) {
+      const attemptsLeft = LOCK_AFTER_ATTEMPTS - failed;
+      return {
+        code: "attemptsLeft",
+        attemptsLeft,
+        lockMinutes: LOCK_MINUTES,
+        message: `Invalid email or password. ${attemptsLeft} attempt${attemptsLeft === 1 ? "" : "s"} left before a ${LOCK_MINUTES}-minute lock.`,
+      };
+    }
+    return { message: "Invalid email or password." };
+  }
+
+  if (user.status !== "ACTIVE") return { message: "Invalid email or password." };
+
+  if (user.failedLogins > 0 || user.lockedUntil) {
+    await db.user.update({ where: { id: user.id }, data: { failedLogins: 0, lockedUntil: null } });
+  }
   await createSession(user.id, user.role);
   redirect(postAuthDestination(nextFrom(formData), locale));
 }
+
+// Lockout policy: warn from the 3rd wrong password, lock the account for 15
+// minutes on the 5th. Counters live on the User row (see schema).
+const WARN_AFTER_ATTEMPTS = 3;
+const LOCK_AFTER_ATTEMPTS = 5;
+const LOCK_MINUTES = 15;
+// A valid bcrypt hash of a random string; only used to equalize timing.
+const DUMMY_HASH = "$2b$10$4C1mFEej4Akm8XCXsEz2qOIQ4k/fEgywIkRCgxTbEFzuMw7j.3V/m";
 
 export async function logout(formData: FormData): Promise<void> {
   const locale = localeFrom(formData);

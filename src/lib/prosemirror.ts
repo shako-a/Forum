@@ -136,7 +136,60 @@ function renderNode(node: PMNode): string {
 
 export function pmToHtml(doc: unknown): string {
   if (!doc || typeof doc !== "object") return "";
-  return renderNode(doc as PMNode);
+  // A malformed or absurdly deep row must never take a whole page down with
+  // it (pmValidate guards writes; this guards anything that slipped in).
+  try {
+    return renderNode(doc as PMNode);
+  } catch {
+    return "";
+  }
+}
+
+// --- Write-side limits -------------------------------------------------
+// The renderer above is recursive, so a hostile client could store a document
+// nested thousands of levels deep (well under the request size limit) that
+// blows the call stack on every render. Every user-supplied document is run
+// through this iterative validator before it's stored.
+export const PM_MAX_BYTES = 200_000;
+export const PM_MAX_NODES = 5_000;
+export const PM_MAX_DEPTH = 64;
+
+export type PmValidation = { ok: true } | { ok: false; reason: "bytes" | "nodes" | "depth" | "shape" };
+
+export function pmValidate(doc: unknown, rawBytes?: number): PmValidation {
+  if (!doc || typeof doc !== "object" || Array.isArray(doc)) return { ok: false, reason: "shape" };
+  if ((doc as PMNode).type !== "doc") return { ok: false, reason: "shape" };
+  if ((rawBytes ?? JSON.stringify(doc).length) > PM_MAX_BYTES) return { ok: false, reason: "bytes" };
+
+  let nodes = 0;
+  const stack: Array<{ node: PMNode; depth: number }> = [{ node: doc as PMNode, depth: 1 }];
+  while (stack.length) {
+    const { node, depth } = stack.pop()!;
+    if (!node || typeof node !== "object") return { ok: false, reason: "shape" };
+    if (++nodes > PM_MAX_NODES) return { ok: false, reason: "nodes" };
+    if (depth > PM_MAX_DEPTH) return { ok: false, reason: "depth" };
+    if (node.content !== undefined) {
+      if (!Array.isArray(node.content)) return { ok: false, reason: "shape" };
+      for (const child of node.content) stack.push({ node: child, depth: depth + 1 });
+    }
+  }
+  return { ok: true };
+}
+
+// Every image src in a document (iterative). Used to release uploaded media
+// when the content that referenced it is deleted.
+export function pmImageUrls(doc: unknown): string[] {
+  const out: string[] = [];
+  if (!doc || typeof doc !== "object") return out;
+  const stack: PMNode[] = [doc as PMNode];
+  let guard = 0;
+  while (stack.length && guard++ < PM_MAX_NODES * 2) {
+    const n = stack.pop()!;
+    if (!n || typeof n !== "object") continue;
+    if (n.type === "image" && typeof n.attrs?.src === "string") out.push(n.attrs.src);
+    if (Array.isArray(n.content)) for (const c of n.content) stack.push(c);
+  }
+  return out;
 }
 
 const BLOCK_TYPES = new Set([

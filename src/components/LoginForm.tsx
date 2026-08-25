@@ -38,11 +38,24 @@ export function LoginForm({
         <input type="hidden" name="locale" value={locale} />
         {next && <input type="hidden" name="next" value={next} />}
 
-        {state?.message && (
+        {state?.code === "lockedOut" ? (
+          <div className="auth-alert" role="alert">
+            <p>{t.lockedOut.replace("{m}", String(state.lockMinutes ?? 15))}</p>
+            <p className="auth-alert-help">
+              <Link href={`/${locale}/forgot`}>{t.lockedOutReset}</Link>
+            </p>
+          </div>
+        ) : state?.code === "attemptsLeft" ? (
+          <p className="auth-alert" role="alert">
+            {t.attemptsLeft
+              .replace("{n}", String(state.attemptsLeft ?? 0))
+              .replace("{m}", String(state.lockMinutes ?? 15))}
+          </p>
+        ) : state?.message ? (
           <p className="auth-alert" role="alert">
             {state.message}
           </p>
-        )}
+        ) : null}
 
         <div className="field">
           <label htmlFor="email">

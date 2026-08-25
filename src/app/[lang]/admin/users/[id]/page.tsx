@@ -4,6 +4,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { requireRole } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { AdminUserEdit } from "@/components/admin/AdminUserEdit";
+import { UserUploads } from "@/components/admin/UserUploads";
 
 export const dynamic = "force-dynamic";
 
@@ -55,11 +56,20 @@ export default async function AdminUserDetailPage({ params }: PageProps<"/[lang]
     name: lang === "ka" ? p.nameKa : p.nameEn,
     icon: p.icon,
   }));
-  const heldPackageIds = (
-    await db.userPackage.findMany({ where: { userId: id }, select: { packageId: true } })
-  ).map((r) => r.packageId);
+  const [heldPackageIds, uploads] = await Promise.all([
+    db.userPackage
+      .findMany({ where: { userId: id }, select: { packageId: true } })
+      .then((rows) => rows.map((r) => r.packageId)),
+    db.mediaUpload.findMany({
+      where: { userId: id },
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      select: { id: true, url: true, contentType: true, size: true, createdAt: true },
+    }),
+  ]);
 
   return (
+    <>
     <AdminUserEdit
       locale={lang}
       dict={dict}
@@ -98,5 +108,10 @@ export default async function AdminUserDetailPage({ params }: PageProps<"/[lang]
       customPackages={customPackages}
       heldPackageIds={heldPackageIds}
     />
+    <UserUploads
+      dict={dict}
+      uploads={uploads.map((u) => ({ ...u, createdAt: u.createdAt.toISOString() }))}
+    />
+    </>
   );
 }

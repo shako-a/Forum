@@ -1,5 +1,6 @@
 import "server-only";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { randomUUID } from "node:crypto";
+import { S3Client, PutObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 
 // DigitalOcean Spaces (S3-compatible) object storage for uploaded media.
 // Configured via env: SPACES_KEY, SPACES_SECRET, SPACES_BUCKET, SPACES_REGION.
@@ -25,14 +26,17 @@ function getClient(): S3Client {
   return client;
 }
 
-// Upload bytes and return the public CDN-style URL.
+export function spacesPublicUrl(key: string): string {
+  return `https://${BUCKET}.${REGION}.digitaloceanspaces.com/${key}`;
+}
+
+// Upload bytes; returns the object key and its public CDN-style URL.
 export async function uploadToSpaces(
   body: Buffer,
   contentType: string,
   ext: string,
-): Promise<string> {
-  const rand = Math.random().toString(36).slice(2, 10);
-  const key = `uploads/${Date.now()}-${rand}.${ext}`;
+): Promise<{ key: string; url: string }> {
+  const key = `uploads/${Date.now()}-${randomUUID()}.${ext}`;
   await getClient().send(
     new PutObjectCommand({
       Bucket: BUCKET!,
@@ -43,5 +47,18 @@ export async function uploadToSpaces(
       CacheControl: "public, max-age=31536000, immutable",
     }),
   );
-  return `https://${BUCKET}.${REGION}.digitaloceanspaces.com/${key}`;
+  return { key, url: spacesPublicUrl(key) };
+}
+
+// Remove objects from the bucket (batched; S3 caps a single call at 1000).
+export async function deleteFromSpaces(keys: string[]): Promise<void> {
+  if (!isSpacesConfigured() || keys.length === 0) return;
+  for (let i = 0; i < keys.length; i += 1000) {
+    await getClient().send(
+      new DeleteObjectsCommand({
+        Bucket: BUCKET!,
+        Delete: { Objects: keys.slice(i, i + 1000).map((Key) => ({ Key })), Quiet: true },
+      }),
+    );
+  }
 }

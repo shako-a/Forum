@@ -31,9 +31,14 @@ export async function createNotification(args: {
 // Parse @handle mentions from plain text and notify those members. Latin
 // handles only (Georgian forum names won't match) — best-effort. Skips the
 // actor and anyone already notified (e.g. the post author).
+//
+// `actorId` is what the recipient SEES ("X mentioned you"); pass null for
+// anonymous/business authorship so the alias can't be tied to the human.
+// `excludeUserIds` must then still carry the real author's id so people don't
+// get notified about their own mentions.
 export async function notifyMentions(opts: {
   text: string;
-  actorId: string;
+  actorId: string | null;
   excludeUserIds?: string[];
   title: string;
   url: string;
