@@ -26,6 +26,7 @@ import {
   usaName,
 } from "@/lib/us-states";
 import { Header } from "@/components/Header";
+import { FilterDrawer } from "@/components/FilterDrawer";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { MarketCard } from "@/components/market/MarketCard";
 import { PerPageSelect } from "@/components/market/PerPageSelect";
@@ -215,7 +216,7 @@ export default async function MarketPage({ params, searchParams }: PageProps<"/[
         </main>
 
         {/* Filters (right column) */}
-        <aside className="mk-filter-col">
+        <FilterDrawer label={t.filters} closeLabel={dict.common.cancel}>
           <div className="card mk-panel">
             <h2 className="mk-panel-title">{t.filters}</h2>
 
@@ -328,7 +329,7 @@ export default async function MarketPage({ params, searchParams }: PageProps<"/[
               <button type="submit" className="btn btn-primary btn-full">{t.applyFilters}</button>
             </form>
           </div>
-        </aside>
+        </FilterDrawer>
       </div>
     </>
   );

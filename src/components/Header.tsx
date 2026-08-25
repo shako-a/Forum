@@ -4,6 +4,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { VerifyBanner } from "@/components/VerifyBanner";
 import { UserTheme } from "@/components/UserTheme";
 import { ProfileMenu } from "@/components/ProfileMenu";
+import { HeaderActions } from "@/components/HeaderActions";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import type { HeaderUser } from "@/lib/header-user";
@@ -98,7 +99,7 @@ export async function Header({
         <input type="text" placeholder={t.search} />
       </div>
 
-      <div className="header-actions">
+      <HeaderActions menuLabel={t.menu} closeLabel={t.cancel}>
         <Link
           href={askAiHref}
           className={`ask-ai${askAiLocked ? " ask-ai-locked" : ""}`}
@@ -156,7 +157,7 @@ export async function Header({
             </Link>
           </>
         )}
-      </div>
+      </HeaderActions>
       </header>
     </>
   );

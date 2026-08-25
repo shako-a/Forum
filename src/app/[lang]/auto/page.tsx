@@ -23,6 +23,7 @@ import { formatPrice } from "@/lib/estate";
 import { RADIUS_OPTIONS, DEFAULT_RADIUS, normalizeZip, lookupZip } from "@/lib/geo";
 import { US_STATES, GEORGIA_VALUE, GEORGIA_FLAG, USA_VALUE, USA_FLAG, georgiaName, usaName, stateLabel } from "@/lib/us-states";
 import { Header } from "@/components/Header";
+import { FilterDrawer } from "@/components/FilterDrawer";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { AutoCard } from "@/components/auto/AutoCard";
 import { PerPageSelect } from "@/components/market/PerPageSelect";
@@ -207,7 +208,7 @@ export default async function AutoMarketPage({ params, searchParams }: PageProps
         </main>
 
         {/* Filters (right column) */}
-        <aside className="mk-filter-col">
+        <FilterDrawer label={m.filters} closeLabel={dict.common.cancel}>
           <form action={`/${lang}/auto`} method="get" className="card mk-panel mk-panel-form">
             <h2 className="mk-panel-title">{m.filters}</h2>
             {filters.q && <input type="hidden" name="q" value={filters.q} />}
@@ -324,7 +325,7 @@ export default async function AutoMarketPage({ params, searchParams }: PageProps
             </div>
             <button type="submit" className="btn btn-primary btn-full">{m.applyFilters}</button>
           </form>
-        </aside>
+        </FilterDrawer>
       </div>
     </>
   );

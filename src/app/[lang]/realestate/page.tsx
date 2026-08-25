@@ -20,6 +20,7 @@ import {
   stateLabel,
 } from "@/lib/us-states";
 import { Header } from "@/components/Header";
+import { FilterDrawer } from "@/components/FilterDrawer";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { ListingCard } from "@/components/estate/ListingCard";
 
@@ -167,7 +168,7 @@ export default async function RealEstatePage({ params, searchParams }: PageProps
         </main>
 
         {/* Filters (right column) */}
-        <aside className="mk-filter-col">
+        <FilterDrawer label={dict.market.filters} closeLabel={dict.common.cancel}>
           <form action={`/${lang}/realestate`} method="get" className="card mk-panel mk-panel-form">
             <h2 className="mk-panel-title">{dict.market.filters}</h2>
             {filters.q && <input type="hidden" name="q" value={filters.q} />}
@@ -266,7 +267,7 @@ export default async function RealEstatePage({ params, searchParams }: PageProps
             </div>
             <button type="submit" className="btn btn-primary btn-full">{dict.market.applyFilters}</button>
           </form>
-        </aside>
+        </FilterDrawer>
       </div>
     </>
   );
