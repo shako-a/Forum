@@ -28,7 +28,7 @@ function requiresLogin(segments: string[]): boolean {
   // The business, real-estate and marketplace sections are public to read, but
   // creating and managing entries (and the saved-items list) is not.
   if (
-    (sub === "business" || sub === "realestate" || sub === "market" || sub === "auto") &&
+    (sub === "business" || sub === "realestate" || sub === "market" || sub === "auto" || sub === "jobs") &&
     (segments[3] === "new" || segments[3] === "mine" || segments[3] === "saved" || segments[3] === "orders")
   ) {
     return true;

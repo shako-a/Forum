@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal";
-import { canPostListing } from "@/lib/perks";
+import { canPostIn } from "@/lib/posting-access";
 import { slugify } from "@/lib/slug";
 import { isEstateFeature, isEstateReportReason } from "@/lib/estate";
 import { ListingSchema, zodErrors, type FormState } from "@/lib/definitions";
@@ -64,7 +64,7 @@ function parsePhotos(formData: FormData): string[] {
 export async function createListing(_state: FormState, formData: FormData): Promise<FormState> {
   const user = await getCurrentUser();
   if (!user) return { message: "You must be logged in." };
-  if (!canPostListing(user)) return { message: "Listings require the Professional tier." };
+  if (!(await canPostIn("estate", user))) return { message: "Posting real-estate listings isn't included in your plan." };
 
   const parsed = parseListing(formData);
   if (!parsed.success) return { errors: zodErrors(parsed.error) };

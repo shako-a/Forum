@@ -24,6 +24,8 @@ export default async function AdminJobsPage({ params }: PageProps<"/[lang]/admin
         state: true,
         active: true,
         business: { select: { slug: true, name: true } },
+        poster: { select: { id: true, forumName: true } },
+        companyName: true,
       },
     })
     .catch(() => []);
@@ -34,6 +36,8 @@ export default async function AdminJobsPage({ params }: PageProps<"/[lang]/admin
     location: [j.city, j.state].filter(Boolean).join(", "),
     active: j.active,
     business: j.business,
+    poster: j.poster,
+    companyName: j.companyName,
   }));
 
   return <JobsAdmin locale={lang} dict={dict} jobs={jobs} />;

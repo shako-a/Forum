@@ -92,6 +92,12 @@ export async function getJobsBoard() {
     take: 100,
     include: {
       business: { select: { slug: true, name: true, logoUrl: true, verified: true, category: true } },
+      poster: { select: { id: true, forumName: true } },
     },
   });
+}
+
+// A member's own job postings (not the business ones they manage).
+export async function getMyJobs(posterId: string) {
+  return db.jobPosting.findMany({ where: { posterId }, orderBy: { createdAt: "desc" } });
 }

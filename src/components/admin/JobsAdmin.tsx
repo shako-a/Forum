@@ -11,7 +11,9 @@ export type AdminJob = {
   title: string;
   location: string;
   active: boolean;
-  business: { slug: string; name: string };
+  business: { slug: string; name: string } | null;
+  poster: { id: string; forumName: string } | null;
+  companyName: string | null;
 };
 
 function Row({ j, locale, dict }: { j: AdminJob; locale: Locale; dict: Dictionary }) {
@@ -25,9 +27,20 @@ function Row({ j, locale, dict }: { j: AdminJob; locale: Locale; dict: Dictionar
         {j.location && <div className="muted-sm">📍 {j.location}</div>}
       </td>
       <td>
-        <Link href={`/${locale}/business/${j.business.slug}`} className="admin-user-link">
-          {j.business.name}
-        </Link>
+        {j.business ? (
+          <Link href={`/${locale}/business/${j.business.slug}`} className="admin-user-link">
+            {j.business.name}
+          </Link>
+        ) : (
+          <>
+            {j.companyName && <div>{j.companyName}</div>}
+            {j.poster && (
+              <Link href={`/${locale}/admin/users/${j.poster.id}`} className="admin-user-link">
+                👤 {j.poster.forumName}
+              </Link>
+            )}
+          </>
+        )}
       </td>
       <td>
         <button

@@ -5,7 +5,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { requireUser } from "@/lib/dal";
 import { toHeaderUser } from "@/lib/header-user";
 import { db } from "@/lib/db";
-import { canPostListing } from "@/lib/perks";
+import { canPostIn } from "@/lib/posting-access";
 import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { ListingForm } from "@/components/estate/ListingForm";
@@ -18,6 +18,7 @@ export default async function NewListingPage({ params }: PageProps<"/[lang]/real
   const user = await requireUser(lang);
   const dict = await getDictionary(lang);
   const allCategories = await db.category.findMany({ orderBy: { sortOrder: "asc" } });
+  const allowed = await canPostIn("estate", user);
   const t = dict.estate;
 
   return (
@@ -30,7 +31,7 @@ export default async function NewListingPage({ params }: PageProps<"/[lang]/real
             <h1 className="account-title">{t.newTitle}</h1>
             <p className="account-sub">{t.newSub}</p>
           </div>
-          {canPostListing(user) ? (
+          {allowed ? (
             <ListingForm locale={lang} dict={dict} mode="create" />
           ) : (
             <div className="card card-pad biz-gate">

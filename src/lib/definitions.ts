@@ -193,6 +193,27 @@ export const JobSchema = z.object({
   state: z.string().trim().optional(),
 });
 
+// Member-posted job (no business behind it) — needs the employer + a contact.
+export const UserJobSchema = z
+  .object({
+    title: z.string().min(3, { error: "Job title is required." }).trim().max(120),
+    description: z.string().min(20, { error: "Describe the job in at least 20 characters." }).trim().max(6000),
+    companyName: z.string().trim().max(120).optional(),
+    jobType: z
+      .union([z.literal(""), z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "TEMPORARY", "GIG"])])
+      .optional()
+      .transform((v) => (v ? v : undefined)),
+    pay: z.string().trim().max(60).optional(),
+    city: z.string().trim().max(80).optional(),
+    state: z.string().trim().max(40).optional(),
+    contactEmail: z.email({ error: "Enter a valid email." }).or(z.literal("")).optional(),
+    contactPhone: z.string().trim().max(40).optional(),
+  })
+  .refine((v) => !!v.contactEmail || !!v.contactPhone, {
+    error: "Add an email or a phone number so people can apply.",
+    path: ["contactEmail"],
+  });
+
 export const ReviewSchema = z.object({
   rating: z.coerce.number().int().min(1, { error: "Pick a rating." }).max(5),
   body: z.string().trim().max(2000).optional(),

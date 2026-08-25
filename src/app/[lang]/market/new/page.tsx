@@ -5,7 +5,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { requireUser } from "@/lib/dal";
 import { toHeaderUser } from "@/lib/header-user";
 import { db } from "@/lib/db";
-import { canSellOnMarket } from "@/lib/perks";
+import { canPostIn } from "@/lib/posting-access";
 import { getActingBusiness } from "@/lib/acting-as";
 import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
@@ -23,6 +23,7 @@ export default async function NewMarketListingPage({ params }: PageProps<"/[lang
     getActingBusiness(),
   ]);
   const t = dict.market;
+  const allowed = await canPostIn("market", user);
 
   return (
     <>
@@ -35,7 +36,7 @@ export default async function NewMarketListingPage({ params }: PageProps<"/[lang
             <h1 className="account-title">{t.newTitle}</h1>
             <p className="account-sub">{t.newSub}</p>
           </div>
-          {canSellOnMarket(user) ? (
+          {allowed ? (
             <MarketListingForm locale={lang} dict={dict} mode="create" actingAs={acting?.name ?? null} />
           ) : (
             <div className="card card-pad biz-gate">

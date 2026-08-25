@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/dal";
 import { toHeaderUser } from "@/lib/header-user";
 import { db } from "@/lib/db";
 import { getMyListings } from "@/lib/estate-data";
-import { canPostListing } from "@/lib/perks";
+import { canPostIn } from "@/lib/posting-access";
 import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { ListingCard } from "@/components/estate/ListingCard";
@@ -23,6 +23,7 @@ export default async function MyListingsPage({ params }: PageProps<"/[lang]/real
     getMyListings(user.id),
   ]);
   const t = dict.estate;
+  const canPost = await canPostIn("estate", user);
 
   return (
     <>
@@ -35,7 +36,7 @@ export default async function MyListingsPage({ params }: PageProps<"/[lang]/real
               <h1 className="account-title">{t.myListings}</h1>
               <p className="account-sub">{t.myListingsSub}</p>
             </div>
-            {canPostListing(user) && (
+            {canPost && (
               <Link href={`/${lang}/realestate/new`} className="btn btn-primary">＋ {t.post}</Link>
             )}
           </div>

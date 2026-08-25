@@ -6466,3 +6466,9 @@ a.mk-tag:hover {
   gap: 10px;
   background: var(--bg);
 }
+.biz-job-manage.is-off {
+  opacity: 0.6;
+}
+.biz-job-manage .mk-owner form {
+  display: inline;
+}

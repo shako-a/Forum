@@ -137,7 +137,9 @@ export async function deleteJob(jobId: string, locale: string): Promise<void> {
     where: { id: jobId },
     select: { businessId: true, business: { select: { slug: true } } },
   });
-  if (!job || !(await canManageBusiness(user.id, job.businessId, user.role === "ADMIN"))) return;
+  // Member-posted jobs (no business) are managed in actions/jobs.ts.
+  if (!job?.businessId || !job.business) return;
+  if (!(await canManageBusiness(user.id, job.businessId, user.role === "ADMIN"))) return;
   await db.jobPosting.delete({ where: { id: jobId } });
   revalidatePath(`/${locale}/business/${job.business.slug}`, "page");
   revalidatePath(`/${locale}/jobs`, "page");

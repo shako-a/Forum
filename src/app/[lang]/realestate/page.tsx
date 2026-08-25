@@ -6,7 +6,7 @@ import { getCurrentUser } from "@/lib/dal";
 import { toHeaderUser } from "@/lib/header-user";
 import { db } from "@/lib/db";
 import { getListingDirectory, getFeaturedListings } from "@/lib/estate-data";
-import { canPostListing } from "@/lib/perks";
+import { canPostIn } from "@/lib/posting-access";
 import { PROPERTY_TYPES, formatPrice, propertyTypeIcon } from "@/lib/estate";
 import { RADIUS_OPTIONS, DEFAULT_RADIUS, normalizeZip, lookupZip } from "@/lib/geo";
 import {
@@ -73,6 +73,7 @@ export default async function RealEstatePage({ params, searchParams }: PageProps
     getFeaturedListings(),
   ]);
   const t = dict.estate;
+  const canPost = await canPostIn("estate", user);
   const hasFilters = !!(filters.q || filters.kind || filters.propertyType || filters.state || filters.zip || filters.minPrice || filters.maxPrice || filters.minBedrooms || filters.minBathrooms);
 
   return (
@@ -88,7 +89,7 @@ export default async function RealEstatePage({ params, searchParams }: PageProps
             </div>
             <div className="mk-head-actions">
               {user && <Link href={`/${lang}/realestate/mine`} className="btn btn-ghost btn-sm">{t.myListings}</Link>}
-              {canPostListing(user) && (
+              {canPost && (
                 <Link href={`/${lang}/realestate/new`} className="btn btn-primary">＋ {t.post}</Link>
               )}
             </div>

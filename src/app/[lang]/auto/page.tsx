@@ -5,7 +5,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { getCurrentUser } from "@/lib/dal";
 import { toHeaderUser } from "@/lib/header-user";
 import { db } from "@/lib/db";
-import { canPostAuto } from "@/lib/perks";
+import { canPostIn } from "@/lib/posting-access";
 import { getAutoDirectory, getAutoMakeCounts, getFeaturedAuto, AUTO_PAGE_SIZE, AUTO_PAGE_SIZES, type AutoFilters } from "@/lib/auto-data";
 import {
   AUTO_MAKES,
@@ -82,6 +82,7 @@ export default async function AutoMarketPage({ params, searchParams }: PageProps
   ]);
   const t = dict.auto;
   const m = dict.market;
+  const canPost = await canPostIn("auto", user);
   const totalAll = Object.values(makeCounts).reduce((s, n) => s + n, 0);
 
   const base: Record<string, string> = {};
@@ -125,7 +126,7 @@ export default async function AutoMarketPage({ params, searchParams }: PageProps
             </div>
             <div className="mk-head-actions">
               {user && <Link href={`/${lang}/auto/mine`} className="btn btn-ghost btn-sm">{t.myListings}</Link>}
-              <Link href={canPostAuto(user) ? `/${lang}/auto/new` : `/${lang}/login?next=/${lang}/auto/new`} className="btn btn-primary">
+              <Link href={canPost ? `/${lang}/auto/new` : `/${lang}/login?next=/${lang}/auto/new`} className="btn btn-primary">
                 ＋ {t.post}
               </Link>
             </div>

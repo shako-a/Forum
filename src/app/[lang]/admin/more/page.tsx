@@ -6,6 +6,8 @@ import { db } from "@/lib/db";
 import { priceAt } from "@/lib/packages";
 import { seedPaidPackages, packagesNeedSeeding, ensureFeatureAdditions } from "@/lib/packages-seed";
 import { PackageAdmin, type AdminPackage, type AdminFeature } from "@/components/admin/PackageAdmin";
+import { PostingAccessAdmin, type PostingAreaRow } from "@/components/admin/PostingAccessAdmin";
+import { getPostingAccess, POSTING_AREAS, POSTING_PERK_KEY } from "@/lib/posting-access";
 
 export const dynamic = "force-dynamic";
 
@@ -72,5 +74,41 @@ export default async function AdminMorePage({ params }: PageProps<"/[lang]/admin
     usedBy: f._count.packages,
   }));
 
-  return <PackageAdmin locale={lang} dict={dict} packages={packages} features={features} />;
+  // Posting access: which packages carry each area's perk key, for context.
+  const [access, perkRows] = await Promise.all([
+    getPostingAccess(),
+    db.feature.findMany({
+      where: { key: { in: Object.values(POSTING_PERK_KEY) } },
+      select: {
+        key: true,
+        nameEn: true,
+        nameKa: true,
+        packages: { where: { included: true, package: { isActive: true } }, select: { package: { select: { nameEn: true, nameKa: true } } } },
+      },
+    }),
+  ]);
+  const areaLabel: Record<(typeof POSTING_AREAS)[number], string> = {
+    estate: dict.estate.directory,
+    market: dict.market.directory,
+    auto: dict.auto.directory,
+    jobs: dict.business.jobsBoard,
+  };
+  const postingRows: PostingAreaRow[] = POSTING_AREAS.map((area) => {
+    const key = POSTING_PERK_KEY[area];
+    const f = perkRows.find((r) => r.key === key);
+    return {
+      area,
+      label: areaLabel[area],
+      perkKey: key,
+      perkName: f ? (lang === "ka" ? f.nameKa : f.nameEn) : "—",
+      packages: f ? f.packages.map((p) => (lang === "ka" ? p.package.nameKa : p.package.nameEn)) : [],
+    };
+  });
+
+  return (
+    <>
+      <PostingAccessAdmin dict={dict} rows={postingRows} access={access} />
+      <PackageAdmin locale={lang} dict={dict} packages={packages} features={features} />
+    </>
+  );
 }

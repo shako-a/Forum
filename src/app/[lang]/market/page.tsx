@@ -5,7 +5,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { getCurrentUser } from "@/lib/dal";
 import { toHeaderUser } from "@/lib/header-user";
 import { db } from "@/lib/db";
-import { canSellOnMarket } from "@/lib/perks";
+import { canPostIn } from "@/lib/posting-access";
 import {
   getMarketDirectory,
   getMarketCategoryCounts,
@@ -83,6 +83,7 @@ export default async function MarketPage({ params, searchParams }: PageProps<"/[
   ]);
   const items = await attachSaved(dir.items, user?.id);
   const t = dict.market;
+  const canPost = await canPostIn("market", user);
   const totalAll = Object.values(counts).reduce((s, n) => s + n, 0);
 
   // Query string for links that keep the current filters (category list,
@@ -135,7 +136,7 @@ export default async function MarketPage({ params, searchParams }: PageProps<"/[
                 </>
               )}
               <Link
-                href={canSellOnMarket(user) ? `/${lang}/market/new` : `/${lang}/login?next=/${lang}/market/new`}
+                href={canPost ? `/${lang}/market/new` : `/${lang}/login?next=/${lang}/market/new`}
                 className="btn btn-primary"
               >
                 ＋ {t.sell}

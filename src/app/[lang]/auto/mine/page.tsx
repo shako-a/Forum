@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/dal";
 import { toHeaderUser } from "@/lib/header-user";
 import { db } from "@/lib/db";
 import { getMyAutoListings } from "@/lib/auto-data";
-import { canPostAuto } from "@/lib/perks";
+import { canPostIn } from "@/lib/posting-access";
 import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { AutoCard } from "@/components/auto/AutoCard";
@@ -25,6 +25,7 @@ export default async function MyAutoListingsPage({ params }: PageProps<"/[lang]/
   ]);
   const t = dict.auto;
   const m = dict.market;
+  const canPost = await canPostIn("auto", user);
   const groups = [
     { key: "active", label: m.statusActive, items: listings.filter((l) => l.status === "ACTIVE") },
     { key: "paused", label: m.statusPaused, items: listings.filter((l) => l.status === "PAUSED") },
@@ -43,7 +44,7 @@ export default async function MyAutoListingsPage({ params }: PageProps<"/[lang]/
               <h1 className="account-title">{t.myListings}</h1>
               <p className="account-sub">{t.mineSub}</p>
             </div>
-            {canPostAuto(user) && <Link href={`/${lang}/auto/new`} className="btn btn-primary">＋ {t.post}</Link>}
+            {canPost && <Link href={`/${lang}/auto/new`} className="btn btn-primary">＋ {t.post}</Link>}
           </div>
           {listings.length === 0 ? (
             <div className="card card-pad" style={{ textAlign: "center", color: "var(--muted)", padding: 40 }}>{t.noneYet}</div>

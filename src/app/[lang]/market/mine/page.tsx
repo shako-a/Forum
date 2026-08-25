@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/dal";
 import { toHeaderUser } from "@/lib/header-user";
 import { db } from "@/lib/db";
 import { getMyMarketListings } from "@/lib/market-data";
-import { canSellOnMarket } from "@/lib/perks";
+import { canPostIn } from "@/lib/posting-access";
 import { canRenew, isMarketExpired } from "@/lib/market";
 import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
@@ -25,6 +25,7 @@ export default async function MyMarketListingsPage({ params }: PageProps<"/[lang
     getMyMarketListings(user.id),
   ]);
   const t = dict.market;
+  const canPost = await canPostIn("market", user);
 
   const groups: Array<{ key: string; label: string; items: typeof listings }> = [
     { key: "active", label: t.statusActive, items: listings.filter((l) => l.status === "ACTIVE" && !isMarketExpired(l.bumpedAt)) },
@@ -47,7 +48,7 @@ export default async function MyMarketListingsPage({ params }: PageProps<"/[lang
             </div>
             <div className="mk-head-actions">
               <Link href={`/${lang}/market/saved`} className="btn btn-ghost btn-sm">♥ {t.savedItems}</Link>
-              {canSellOnMarket(user) && (
+              {canPost && (
                 <Link href={`/${lang}/market/new`} className="btn btn-primary">＋ {t.sell}</Link>
               )}
             </div>

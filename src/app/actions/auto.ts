@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal";
-import { canPostAuto } from "@/lib/perks";
+import { canPostIn } from "@/lib/posting-access";
 import { slugify } from "@/lib/slug";
 import { defaultLocale, isLocale } from "@/i18n/config";
 import { AutoListingSchema, zodErrors, type FormState, type AutoListingInput } from "@/lib/definitions";
@@ -127,7 +127,7 @@ async function owned(id: string, user: { id: string; role: string }) {
 export async function createAutoListing(_state: FormState, formData: FormData): Promise<FormState> {
   const user = await getCurrentUser();
   if (!user) return { message: "You must be logged in." };
-  if (!canPostAuto(user)) return { message: "Auto-market listings aren't included in your plan." };
+  if (!(await canPostIn("auto", user))) return { message: "Auto-market listings aren't included in your plan." };
   const parsed = parse(formData);
   if (!parsed.success) return { errors: zodErrors(parsed.error) };
 

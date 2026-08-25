@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal";
 import { getActingBusiness } from "@/lib/acting-as";
-import { canSellOnMarket } from "@/lib/perks";
+import { canPostIn } from "@/lib/posting-access";
 import { slugify } from "@/lib/slug";
 import { defaultLocale, isLocale } from "@/i18n/config";
 import { MarketListingSchema, zodErrors, type FormState } from "@/lib/definitions";
@@ -75,7 +75,7 @@ async function ownedListing(id: string, user: { id: string; role: string }) {
 export async function createMarketListing(_state: FormState, formData: FormData): Promise<FormState> {
   const user = await getCurrentUser();
   if (!user) return { message: "You must be logged in." };
-  if (!canSellOnMarket(user)) return { message: "Selling on the marketplace isn't included in your plan." };
+  if (!(await canPostIn("market", user))) return { message: "Selling on the marketplace isn't included in your plan." };
 
   const parsed = parseListing(formData);
   if (!parsed.success) return { errors: zodErrors(parsed.error) };

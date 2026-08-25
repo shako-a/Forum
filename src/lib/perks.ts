@@ -28,23 +28,9 @@ export function canRegisterBusiness(u: Viewer): boolean {
   return !!u && (u.isPro || hasFeature(u, "business"));
 }
 
-// Posting real-estate listings rides the same Professional bracket as business
-// profiles and job postings, and has its own feature key so an admin-created
-// package can grant it separately.
-export function canPostListing(u: Viewer): boolean {
-  return canRegisterBusiness(u) || hasFeature(u, "realEstate");
-}
-
-// Marketplace selling is free for every member for now. Flip this to false to
-// make it a paid perk: Pro keeps it, and any package carrying the "market"
-// feature key (already in the catalogue) grants it.
-export const MARKET_FREE_FOR_ALL = true;
-
-export function canSellOnMarket(u: Viewer): boolean {
-  if (!u) return false;
-  if (MARKET_FREE_FOR_ALL) return true;
-  return u.isPro || hasFeature(u, "market");
-}
+// Posting in the listing areas (real estate, marketplace, auto, jobs) is
+// governed by the admin-managed modes in lib/posting-access.ts (canPostIn),
+// not by fixed perk functions here.
 
 // Profile and feed customization: the Supporter bracket's headline perk, and
 // included in both higher tiers (paying more never gives you less).
@@ -57,14 +43,4 @@ export function canCustomize(u: Viewer): boolean {
       hasFeature(u, "profileCustom") ||
       hasFeature(u, "feedCustom"))
   );
-}
-
-// Auto-market posting: free for everyone for now, same switch pattern as the
-// marketplace. Flip to false to make it a Pro perk / "auto" feature key.
-export const AUTO_FREE_FOR_ALL = true;
-
-export function canPostAuto(u: Viewer): boolean {
-  if (!u) return false;
-  if (AUTO_FREE_FOR_ALL) return true;
-  return u.isPro || hasFeature(u, "auto");
 }

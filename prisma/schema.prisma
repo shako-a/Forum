@@ -124,6 +124,7 @@ model User {
   reportsResolved      Report[]             @relation("ReportResolver")
   merchOrders          MerchOrder[]
   autoListings         AutoListing[]        @relation("AutoOwner")
+  jobPostings          JobPosting[]         @relation("JobPoster")
   notifications       Notification[]            @relation("UserNotifications")
   notificationsActed  Notification[]            @relation("NotificationActor")
   conversations       ConversationParticipant[]
@@ -487,12 +488,22 @@ model BusinessReview {
 }
 
 model JobPosting {
-  id         String   @id @default(cuid())
-  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  businessId String
+  id         String    @id @default(cuid())
+  // Either a business posting (businessId) or a member posting (posterId).
+  business   Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId String?
+  poster     User?     @relation("JobPoster", fields: [posterId], references: [id], onDelete: Cascade)
+  posterId   String?
 
   title       String
   description String
+  // Member postings carry the employer + contact details a business
+  // profile would otherwise provide.
+  companyName  String?
+  jobType      String? // FULL_TIME | PART_TIME | CONTRACT | TEMPORARY | GIG
+  pay          String? // free text, e.g. "$18/hr" or "from $60k"
+  contactEmail String?
+  contactPhone String?
   city        String?
   state       String?
   active      Boolean @default(true)
@@ -502,6 +513,7 @@ model JobPosting {
 
   @@index([active, createdAt])
   @@index([businessId])
+  @@index([posterId])
 }
 
 // ---------------------------------------------------------------------------
@@ -998,6 +1010,15 @@ model SiteSetting {
 
   // Total items shown in the Popular Topics bar (posts + ad cards combined).
   popularBarSize Int @default(6)
+
+  // Who may post in each listing area: "all" = any registered member,
+  // "perk" = only holders of the matching perk (Pro, or a package carrying
+  // the feature key — realEstate / market / auto / jobPosting). Managed from
+  // Admin → pricing, so the areas can become paid without a deploy.
+  postingEstate String @default("all")
+  postingMarket String @default("all")
+  postingAuto   String @default("all")
+  postingJobs   String @default("all")
 
   updatedAt DateTime @updatedAt
 }
