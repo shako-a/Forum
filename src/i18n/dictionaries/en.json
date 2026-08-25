@@ -487,7 +487,16 @@
     "reviewUpdate": "Update your review",
     "reviewDelete": "Delete my review",
     "reviewHint": "Message the seller first — reviews are for members who've been in touch.",
-    "aboutItem": "about"
+    "aboutItem": "about",
+    "filters": "Filters",
+    "location": "Location",
+    "sortBy": "Sort by",
+    "applyFilters": "Apply filters",
+    "resetFilters": "Reset filters",
+    "view": "View",
+    "viewGrid": "Grid view",
+    "viewList": "List view",
+    "perPage": "Per page"
   },
   "inbox": {
     "title": "Inbox",

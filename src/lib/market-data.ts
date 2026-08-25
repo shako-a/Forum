@@ -2,7 +2,8 @@ import { db } from "@/lib/db";
 import type { Prisma } from "@/generated/prisma/client";
 import { marketExpiryCutoff, type MarketSort } from "@/lib/market";
 
-export const MARKET_PAGE_SIZE = 48;
+export const MARKET_PAGE_SIZE = 24;
+export const MARKET_PAGE_SIZES = [24, 48, 96] as const;
 
 export type MarketFilters = {
   q?: string;
@@ -21,6 +22,7 @@ const CARD_SELECT = {
   id: true,
   slug: true,
   title: true,
+  description: true,
   category: true,
   condition: true,
   price: true,
@@ -78,19 +80,19 @@ function orderFor(sort: MarketSort | undefined): Prisma.MarketListingOrderByWith
   }
 }
 
-export async function getMarketDirectory(filters: MarketFilters, page = 1) {
+export async function getMarketDirectory(filters: MarketFilters, page = 1, pageSize = MARKET_PAGE_SIZE) {
   const where = filtersWhere(filters);
   const [total, items] = await Promise.all([
     db.marketListing.count({ where }),
     db.marketListing.findMany({
       where,
       orderBy: orderFor(filters.sort),
-      skip: (page - 1) * MARKET_PAGE_SIZE,
-      take: MARKET_PAGE_SIZE,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
       select: CARD_SELECT,
     }),
   ]);
-  return { items, total, pages: Math.max(1, Math.ceil(total / MARKET_PAGE_SIZE)) };
+  return { items, total, pages: Math.max(1, Math.ceil(total / pageSize)) };
 }
 
 // Live-listing counts per category, honoring every filter except the category

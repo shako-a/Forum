@@ -22,21 +22,24 @@ export function MarketCard({
   listing,
   viewerId,
   footer,
+  variant = "grid",
 }: {
   locale: Locale;
   dict: Dictionary;
   listing: MarketCardRow;
   viewerId: string | null | undefined;
   footer?: React.ReactNode;
+  variant?: "grid" | "list"; // list = horizontal card with a description snippet
 }) {
   const t = dict.market;
   const l = listing;
   const href = `/${locale}/market/${l.slug}`;
   const location = [l.city, stateLabel(l.state, locale)].filter(Boolean).join(", ");
   const inactive = l.status !== "ACTIVE";
+  const snippet = variant === "list" ? l.description.replace(/\s+/g, " ").slice(0, 160) : null;
 
   return (
-    <div className={`mk-card${inactive ? " mk-card-inactive" : ""}`}>
+    <div className={`mk-card${variant === "list" ? " mk-card-list" : ""}${inactive ? " mk-card-inactive" : ""}`}>
       <div className="mk-card-media">
         <PhotoSlider photos={l.photos} href={href} alt={l.title} placeholder={iconOf(MARKET_CATEGORIES, l.category)} />
         <FavoriteButton
@@ -57,6 +60,7 @@ export function MarketCard({
           {l.priceType === "NEGOTIABLE" && <span className="mk-card-obo">{t.negotiableShort}</span>}
         </div>
         <h3 className="mk-card-title">{l.title}</h3>
+        {snippet && <p className="mk-card-snippet">{snippet}{l.description.length > 160 ? "…" : ""}</p>}
         <div className="mk-card-meta">
           <span className="mk-cond">{labelOf(MARKET_CONDITIONS, l.condition, locale)}</span>
           {location && (
