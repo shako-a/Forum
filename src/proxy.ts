@@ -36,6 +36,13 @@ function requiresLogin(segments: string[]): boolean {
   return false;
 }
 
+// Next's generated share-card routes, e.g. /ka/opengraph-image. Real routes
+// can carry a hashed suffix (`opengraph-image-<hash>`), so match by prefix.
+function isMetadataImage(segments: string[]): boolean {
+  const last = segments[segments.length - 1] ?? "";
+  return last.startsWith("opengraph-image") || last.startsWith("twitter-image");
+}
+
 // Honor the visitor's saved choice (NEXT_LOCALE cookie); otherwise default to
 // Georgian. We intentionally don't sniff Accept-Language — this is a Georgian
 // community, so new visitors start in ka and can switch (the choice sticks).
@@ -69,6 +76,12 @@ export async function proxy(request: NextRequest) {
   if (hasLocale) {
     const segments = pathname.split("/"); // ["", locale, sub, ...]
     const locale = segments[1];
+
+    // Share-card images are assets, not pages: they're fetched by Facebook,
+    // X, Slack and Telegram with no cookies, and several of those scrapers
+    // won't follow a redirect on an og:image URL — the preview just comes out
+    // blank. Serve the locale that was asked for and skip the negotiation.
+    if (isMetadataImage(segments)) return NextResponse.next();
 
     // Enforce the language preference: visitors who haven't explicitly chosen a
     // language (no NEXT_LOCALE cookie) always get the default (ka), even when

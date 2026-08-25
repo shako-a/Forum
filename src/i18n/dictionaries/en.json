@@ -7,6 +7,8 @@
   "common": {
     "appName": "GeoGlobally",
     "tagline": "Georgians, worldwide",
+    "socialSubline": "Jobs, housing, businesses, marketplace and cars — plus a forum where you can speak Georgian.",
+    "socialDescription": "Jobs, housing, businesses, marketplace and cars — plus a forum where the Georgian diaspora speaks Georgian.",
     "cropTitle": "Crop image",
     "cropApply": "Crop",
     "cropCancel": "Cancel",
