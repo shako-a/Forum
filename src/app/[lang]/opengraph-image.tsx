@@ -76,16 +76,21 @@ export default async function Image({ params }: { params: Promise<{ lang: string
           fontFamily: "Sora",
         }}
       >
-        {/* Warm glow behind the mark, so the top-left doesn't read as flat navy. */}
+        {/* Warm glow behind the mark, so the top-left doesn't read as flat navy.
+            The box has to fit inside the 630px canvas: satori clamps an
+            oversized absolutely-positioned child to the parent's height, which
+            chops the fade off mid-gradient and leaves a visible horizontal
+            edge. At 620px tall the gradient reaches full transparency well
+            before the box ends, so there's nothing to see. */}
         <div
           style={{
             position: "absolute",
-            top: -260,
-            left: -160,
-            width: 760,
-            height: 760,
-            borderRadius: 760,
-            backgroundImage: "radial-gradient(circle, rgba(215,38,61,0.34) 0%, rgba(215,38,61,0) 68%)",
+            top: -160,
+            left: -150,
+            width: 620,
+            height: 620,
+            borderRadius: 620,
+            backgroundImage: "radial-gradient(circle, rgba(215,38,61,0.40) 0%, rgba(215,38,61,0) 68%)",
           }}
         />
 
