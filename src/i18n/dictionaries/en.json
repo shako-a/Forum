@@ -35,7 +35,8 @@
     "seeAll": "… see all",
     "loading": "Loading…",
     "cancel": "Cancel",
-    "toggleTheme": "Toggle dark mode"
+    "toggleTheme": "Toggle dark mode",
+    "myListings": "My listings"
   },
   "nav": {
     "home": "Home",
@@ -229,6 +230,32 @@
     "donorBadge": "Donor",
     "proBadge": "Professional",
     "supporterBadge": "Supporter"
+  },
+  "account": {
+    "myListingsTitle": "My listings",
+    "myListingsSub": "Everything you've posted across housing, cars, the marketplace and jobs — with its current status.",
+    "allCategories": "All",
+    "postNew": "Post new",
+    "postIn": "Post in {area}",
+    "noListingsAtAll": "You haven't posted anything yet. Pick an area to start:",
+    "noneInFilter": "Nothing here with this filter.",
+    "tileLive": "Live",
+    "tileAttention": "Needs attention",
+    "tilePaused": "Paused",
+    "tileClosed": "Closed",
+    "tileViews": "Total views",
+    "statusLive": "Live",
+    "statusPaused": "Paused",
+    "statusExpired": "Expired",
+    "statusClosed": "Closed",
+    "statusRemoved": "Removed by staff",
+    "colListing": "Listing",
+    "colStatus": "Status",
+    "colPrice": "Price",
+    "colStats": "Stats",
+    "colUpdated": "Updated",
+    "viewListing": "View",
+    "filterAll": "All"
   },
   "donate": {
     "title": "Become a Donor",

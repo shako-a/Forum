@@ -21,6 +21,7 @@ export function ProfileMenu({
   actingName,
   actingAsLabel,
   selfLabel,
+  myListingsLabel,
 }: {
   locale: Locale;
   forumName: string;
@@ -31,6 +32,7 @@ export function ProfileMenu({
   actingName: string | null;
   actingAsLabel: string;
   selfLabel: string;
+  myListingsLabel: string;
 }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -119,6 +121,14 @@ export function ProfileMenu({
             onClick={() => setOpen(false)}
           >
             {profileLabel}
+          </Link>
+          <Link
+            href={`/${locale}/account/listings`}
+            role="menuitem"
+            className="profile-menu-item"
+            onClick={() => setOpen(false)}
+          >
+            📋 {myListingsLabel}
           </Link>
           <form action={logout}>
             <input type="hidden" name="locale" value={locale} />

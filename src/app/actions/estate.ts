@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal";
 import { canPostIn } from "@/lib/posting-access";
 import { slugify } from "@/lib/slug";
+import { isLocale } from "@/i18n/config";
 import { isEstateFeature, isEstateReportReason } from "@/lib/estate";
 import { ListingSchema, zodErrors, type FormState } from "@/lib/definitions";
 import { flagGaEvent } from "@/lib/ga-server";
@@ -191,4 +192,21 @@ export async function reportPropertyListing(_state: FormState, formData: FormDat
     },
   });
   return { ok: true };
+}
+
+// Owner-facing unlist / relist, so a listing can be paused from the account
+// dashboard without opening the edit form. (Staff use setEstateActive.)
+export async function setMyListingActive(id: string, active: boolean, locale: string): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) return;
+  const listing = await db.propertyListing.findUnique({
+    where: { id },
+    select: { ownerId: true, slug: true },
+  });
+  if (!listing || (listing.ownerId !== user.id && user.role !== "ADMIN")) return;
+  await db.propertyListing.update({ where: { id }, data: { active, ...(active ? {} : { featured: false }) } });
+  const lang = isLocale(locale) ? locale : "en";
+  revalidatePath(`/${lang}/realestate/${listing.slug}`, "page");
+  revalidatePath(`/${lang}/realestate`, "page");
+  revalidatePath(`/${lang}/account/listings`, "page");
 }

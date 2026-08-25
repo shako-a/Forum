@@ -35,7 +35,8 @@
     "seeAll": "… ნახე ყველა",
     "loading": "იტვირთება…",
     "cancel": "გაუქმება",
-    "toggleTheme": "ბნელი რეჟიმის გადართვა"
+    "toggleTheme": "ბნელი რეჟიმის გადართვა",
+    "myListings": "ჩემი განცხადებები"
   },
   "nav": {
     "home": "მთავარი",
@@ -229,6 +230,32 @@
     "donorBadge": "დონორი",
     "proBadge": "პრო",
     "supporterBadge": "მხარდამჭერი"
+  },
+  "account": {
+    "myListingsTitle": "ჩემი განცხადებები",
+    "myListingsSub": "ყველაფერი, რაც განათავსეთ — უძრავი ქონება, ავტო, მარკეტი და ვაკანსიები — მიმდინარე სტატუსით.",
+    "allCategories": "ყველა",
+    "postNew": "ახლის დამატება",
+    "postIn": "დამატება: {area}",
+    "noListingsAtAll": "ჯერ არაფერი განგითავსებიათ. აირჩიეთ სექცია:",
+    "noneInFilter": "ამ ფილტრით არაფერია.",
+    "tileLive": "აქტიური",
+    "tileAttention": "საჭიროებს ყურადღებას",
+    "tilePaused": "შეჩერებული",
+    "tileClosed": "დახურული",
+    "tileViews": "ნახვები სულ",
+    "statusLive": "აქტიური",
+    "statusPaused": "შეჩერებული",
+    "statusExpired": "ვადაგასული",
+    "statusClosed": "დახურული",
+    "statusRemoved": "წაშლილია მოდერატორების მიერ",
+    "colListing": "განცხადება",
+    "colStatus": "სტატუსი",
+    "colPrice": "ფასი",
+    "colStats": "სტატისტიკა",
+    "colUpdated": "განახლდა",
+    "viewListing": "ნახვა",
+    "filterAll": "ყველა"
   },
   "donate": {
     "title": "გახდი დონორი",

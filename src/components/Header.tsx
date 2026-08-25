@@ -143,6 +143,7 @@ export async function Header({
               actingName={acting?.name ?? null}
               actingAsLabel={t.actingAs}
               selfLabel={t.you}
+              myListingsLabel={t.myListings}
             />
           </>
         ) : (
