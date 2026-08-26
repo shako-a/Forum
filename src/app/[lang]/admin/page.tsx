@@ -7,6 +7,15 @@ import { db } from "@/lib/db";
 import { countVisitors, countVisitorsToday, countVisitsAllTime, getVisitorBaseline, VISITOR_WINDOW_DAYS } from "@/lib/visitors";
 import { VisitorBaselineForm } from "@/components/admin/VisitorBaselineForm";
 
+// Activity-tile windows, outside the component so the render body stays pure.
+function activityWindows() {
+  const now = new Date();
+  return {
+    dayAgo: new Date(now.getTime() - 24 * 60 * 60 * 1000),
+    weekAgo: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
+  };
+}
+
 async function safeCount(fn: () => Promise<number>) {
   try {
     return await fn();
@@ -28,7 +37,8 @@ export default async function AdminDashboard({ params }: PageProps<"/[lang]/admi
   const t = dict.admin;
   const settings = await getSiteSettings();
 
-  const [users, categories, posts, hidden, ads, pinned, online, visitors30, visitorsToday, visitsAllTime, baseline] = await Promise.all([
+  const { dayAgo, weekAgo } = activityWindows();
+  const [users, categories, posts, hidden, ads, pinned, online, visitors30, visitorsToday, visitsAllTime, baseline, events24h, warnings7d] = await Promise.all([
     safeCount(() => db.user.count()),
     safeCount(() => db.category.count()),
     safeCount(() => db.post.count()),
@@ -40,6 +50,8 @@ export default async function AdminDashboard({ params }: PageProps<"/[lang]/admi
     safeCount(() => countVisitorsToday()),
     safeCount(() => countVisitsAllTime()),
     safeCount(() => getVisitorBaseline()),
+    safeCount(() => db.auditLog.count({ where: { at: { gte: dayAgo } } })),
+    safeCount(() => db.auditLog.count({ where: { at: { gte: weekAgo }, OR: [{ severity: "warning" }, { outcome: "denied" }] } })),
   ]);
 
   // Posts currently shown in the Popular bar: pinned selection if curated,
@@ -61,6 +73,8 @@ export default async function AdminDashboard({ params }: PageProps<"/[lang]/admi
     { label: t.postManagement, value: barPosts, icon: "🔥", href: `${base}/popular` },
     { label: t.hiddenContent, value: hidden, icon: "🙈", href: `${base}/hidden` },
     { label: t.adCards, value: ads, icon: "📢", href: `${base}/ad-cards` },
+    { label: t.activity.dashTile24h, value: events24h, icon: "🧾", href: `${base}/activity` },
+    { label: t.activity.dashTileWarn, value: warnings7d, icon: "⚠️", href: `${base}/activity?quick=security` },
   ];
 
   return (

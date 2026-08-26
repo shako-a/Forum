@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { getUserFeatureKeys } from "@/lib/packages";
+import { auditEvent } from "@/lib/audit";
 import type { Role } from "@/generated/prisma/client";
 
 // Role hierarchy for "at least this role" checks.
@@ -100,11 +101,27 @@ export async function requireUser(locale: string) {
   return user;
 }
 
+// A signed-in member reaching for a page or action above their role is worth
+// a line in the activity log — it's the first thing an incident review looks
+// for. Guests bouncing to the login page are ordinary traffic and aren't.
+async function logDenied(required: string, user: { id: string; role: Role } | null, what: string): Promise<void> {
+  await auditEvent({
+    action: "access.denied",
+    severity: "warning",
+    outcome: "denied",
+    summary: user ? `${what} requires ${required}; has ${user.role}` : `${what} requires ${required}; not signed in`,
+    meta: { required, what },
+  });
+}
+
 /** Require at least the given role. Redirects unauthorized users home. */
 export async function requireRole(locale: string, min: Role) {
   const user = await getCurrentUser();
   if (!user) redirect(`/${locale}/login`);
-  if (!roleAtLeast(user.role, min)) redirect(`/${locale}`);
+  if (!roleAtLeast(user.role, min)) {
+    await logDenied(min, user, "page");
+    redirect(`/${locale}`);
+  }
   return user;
 }
 
@@ -112,7 +129,10 @@ export async function requireRole(locale: string, min: Role) {
 export async function requireAdminPanel(locale: string) {
   const user = await getCurrentUser();
   if (!user) redirect(`/${locale}/login`);
-  if (!canAccessAdminPanel(user)) redirect(`/${locale}`);
+  if (!canAccessAdminPanel(user)) {
+    await logDenied("admin panel", user, "page");
+    redirect(`/${locale}`);
+  }
   return user;
 }
 
@@ -120,10 +140,15 @@ export async function requireAdminPanel(locale: string) {
  * Server-side guard for mutating Server Actions (which are reachable via direct
  * POST, not just the UI). Returns the active user if they hold at least `min`,
  * otherwise null — the caller decides how to bail (return error / no-op).
+ * Every refusal is logged: a direct POST to an admin action without the role
+ * is exactly the kind of thing the activity log exists to catch.
  */
 export async function authorize(min: Role) {
   const user = await getCurrentUser();
-  if (!user || !roleAtLeast(user.role, min)) return null;
+  if (!user || !roleAtLeast(user.role, min)) {
+    await logDenied(min, user, "action");
+    return null;
+  }
   return user;
 }
 

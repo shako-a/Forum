@@ -3,8 +3,11 @@ import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { requireRole } from "@/lib/dal";
 import { db } from "@/lib/db";
+import Link from "next/link";
 import { AdminUserEdit } from "@/components/admin/AdminUserEdit";
 import { UserUploads } from "@/components/admin/UserUploads";
+import { ActivityTable } from "@/components/admin/ActivityTable";
+import { parseAuditFilters } from "@/lib/audit-query";
 
 export const dynamic = "force-dynamic";
 
@@ -56,7 +59,7 @@ export default async function AdminUserDetailPage({ params }: PageProps<"/[lang]
     name: lang === "ka" ? p.nameKa : p.nameEn,
     icon: p.icon,
   }));
-  const [heldPackageIds, uploads] = await Promise.all([
+  const [heldPackageIds, uploads, activity] = await Promise.all([
     db.userPackage
       .findMany({ where: { userId: id }, select: { packageId: true } })
       .then((rows) => rows.map((r) => r.packageId)),
@@ -66,7 +69,16 @@ export default async function AdminUserDetailPage({ params }: PageProps<"/[lang]
       take: 200,
       select: { id: true, url: true, contentType: true, size: true, createdAt: true },
     }),
+    // What this account did, and what was done to it — both matter when a
+    // member is under review.
+    db.auditLog.findMany({
+      where: { OR: [{ actorId: id }, { model: "User", targetId: id }] },
+      orderBy: { at: "desc" },
+      take: 15,
+    }),
   ]);
+  const ta = dict.admin.activity;
+  const activityBase = `/${lang}/admin/activity`;
 
   return (
     <>
@@ -112,6 +124,19 @@ export default async function AdminUserDetailPage({ params }: PageProps<"/[lang]
       dict={dict}
       uploads={uploads.map((u) => ({ ...u, createdAt: u.createdAt.toISOString() }))}
     />
+    <div className="admin-section">
+      <h2 className="admin-section-title">🧾 {ta.userSection}</h2>
+      <p className="account-sub" style={{ marginTop: 0 }}>{ta.userSectionSub}</p>
+      <div className="audit-links" style={{ marginBottom: 8 }}>
+        <Link href={`${activityBase}?actor=${id}`} className="admin-link">{ta.userAll} →</Link>
+        <Link href={`${activityBase}?model=User&target=${id}`} className="admin-link">{ta.userHistory} →</Link>
+      </div>
+      {activity.length === 0 ? (
+        <p className="muted-sm">{ta.none}</p>
+      ) : (
+        <ActivityTable rows={activity} dict={dict} locale={lang} filters={parseAuditFilters({})} compact />
+      )}
+    </div>
     </>
   );
 }

@@ -53,21 +53,21 @@ model User {
 
   // The "main admin" / owner — always sees real authors behind anonymous
   // content and controls whether other staff can. Typically just one user.
-  isOwner      Boolean    @default(false)
+  isOwner Boolean @default(false)
 
   // Paid "Donor" tier — orthogonal to role (any user can be a Donor). Grants
   // access to perks like the "Ask AI" feature. Admin-granted for now; will be
   // driven by Stripe subscriptions later.
-  isDonor      Boolean    @default(false)
+  isDonor Boolean @default(false)
 
   // Paid "Professional" (პრო) tier — also subscription-based. Grants the same
   // AI access as Donor, plus the ability to register a business account.
-  isPro        Boolean    @default(false)
+  isPro Boolean @default(false)
 
   // Paid "Supporter" (მხარდამჭერი) tier — the entry-level donation bracket.
   // Deliberately does NOT grant AI access; it unlocks profile and feed
   // customization only. Donor and Pro include everything it offers.
-  isSupporter  Boolean    @default(false)
+  isSupporter Boolean @default(false)
 
   // --- Appearance preferences (the Supporter "feed customization" perk) ---
   // These only change what THIS user sees; nothing here is public, so none of
@@ -86,11 +86,11 @@ model User {
 
   // Per-moderator grant: lets this moderator open the (moderation-only) admin
   // panel. Admins always have access; plain users never do, regardless of flag.
-  canAccessAdmin Boolean  @default(false)
+  canAccessAdmin Boolean @default(false)
 
   // Per-staff grant: lets this moderator/admin see the real author behind
   // anonymous content. The owner always can; others only when granted here.
-  canRevealAnon  Boolean  @default(false)
+  canRevealAnon Boolean @default(false)
 
   // Public-facing identity
   forumName String @unique // "Name on the forum"
@@ -105,51 +105,52 @@ model User {
   state String
 
   // Relations
-  posts               Post[]
-  replies             Reply[]
-  postVotes           PostVote[]
-  replyVotes          ReplyVote[]
-  moderatedCategories Category[]  @relation("CategoryModerators")
-  labels              Label[]     @relation("UserLabels")
-  savedPosts          SavedPost[]
-  businesses          Business[]       @relation("BusinessOwner")
-  managedBusinesses   BusinessManager[] @relation("BusinessManagerUser")
-  businessReviews     BusinessReview[]
-  propertyListings    PropertyListing[] @relation("ListingOwner")
-  uploads             MediaUpload[]
-  marketListings      MarketListing[]   @relation("MarketSeller")
-  marketFavorites     MarketFavorite[]
-  sellerReviews        MarketSellerReview[] @relation("SellerReviews")
-  sellerReviewsWritten MarketSellerReview[] @relation("SellerReviewsWritten")
-  reportsResolved      Report[]             @relation("ReportResolver")
+  posts                Post[]
+  replies              Reply[]
+  postVotes            PostVote[]
+  replyVotes           ReplyVote[]
+  moderatedCategories  Category[]                @relation("CategoryModerators")
+  labels               Label[]                   @relation("UserLabels")
+  savedPosts           SavedPost[]
+  businesses           Business[]                @relation("BusinessOwner")
+  managedBusinesses    BusinessManager[]         @relation("BusinessManagerUser")
+  businessReviews      BusinessReview[]
+  propertyListings     PropertyListing[]         @relation("ListingOwner")
+  uploads              MediaUpload[]
+  marketListings       MarketListing[]           @relation("MarketSeller")
+  marketFavorites      MarketFavorite[]
+  sellerReviews        MarketSellerReview[]      @relation("SellerReviews")
+  sellerReviewsWritten MarketSellerReview[]      @relation("SellerReviewsWritten")
+  reportsResolved      Report[]                  @relation("ReportResolver")
   merchOrders          MerchOrder[]
-  autoListings         AutoListing[]        @relation("AutoOwner")
-  jobPostings          JobPosting[]         @relation("JobPoster")
-  notifications       Notification[]            @relation("UserNotifications")
-  notificationsActed  Notification[]            @relation("NotificationActor")
-  conversations       ConversationParticipant[]
-  messagesSent        Message[]                 @relation("MessageSender")
-  blocksMade          Block[]                   @relation("Blocker")
-  blocksReceived      Block[]                   @relation("Blocked")
-  reportsMade         Report[]                  @relation("Reporter")
-  reportsAbout        Report[]                  @relation("ReportedUser")
+  autoListings         AutoListing[]             @relation("AutoOwner")
+  jobPostings          JobPosting[]              @relation("JobPoster")
+  notifications        Notification[]            @relation("UserNotifications")
+  notificationsActed   Notification[]            @relation("NotificationActor")
+  conversations        ConversationParticipant[]
+  messagesSent         Message[]                 @relation("MessageSender")
+  blocksMade           Block[]                   @relation("Blocker")
+  blocksReceived       Block[]                   @relation("Blocked")
+  reportsMade          Report[]                  @relation("Reporter")
+  reportsAbout         Report[]                  @relation("ReportedUser")
 
   // Moderation bookkeeping (content this user hid, when acting as mod/admin)
-  hiddenPosts   Post[]  @relation("PostHiddenBy")
-  hiddenReplies Reply[] @relation("ReplyHiddenBy")
+  hiddenPosts   Post[]         @relation("PostHiddenBy")
+  hiddenReplies Reply[]        @relation("ReplyHiddenBy")
   aiUsage       AiUsage[]
   aiBalance     AiBalance?
   subscriptions Subscription[]
   packages      UserPackage[]
   authTokens    AuthToken[]
+  auditEntries  AuditLog[]     @relation("AuditActor")
 
   // Email confirmation. New signups start false and get a verification email;
   // access is not blocked (soft nudge — a dismissible banner). Existing accounts
   // are grandfathered to true in the migration, since they predate this.
   emailVerified Boolean @default(false)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
   // Last time the user loaded a page — drives the live "online" count.
   lastSeenAt DateTime?
 
@@ -236,7 +237,7 @@ model Post {
   replies      Reply[]
   votes        PostVote[]
   savedBy      SavedPost[]
-  dmReferences Message[]  @relation("MessagePostRef")
+  dmReferences Message[]   @relation("MessagePostRef")
   reports      Report[]
 
   // Cached AI summary of the thread (regenerated when newer activity appears).
@@ -334,20 +335,20 @@ model ReplyVote {
 // ---------------------------------------------------------------------------
 
 model AdCard {
-  id        String      @id @default(cuid())
-  titleEn   String
-  titleKa   String
+  id         String      @id @default(cuid())
+  titleEn    String
+  titleKa    String
   // Hex color for the title overlaid on the card image — admin-editable so the
   // title stays legible against whatever image is used.
-  titleColor String     @default("#ffffff")
+  titleColor String      @default("#ffffff")
   // Title font size in px (admin-editable).
-  titleSize  Int        @default(16)
-  imageUrl  String?
-  videoUrl  String? // direct video file URL (mp4/webm); takes priority over image
-  linkUrl   String?
-  placement AdPlacement @default(TOP_PANEL)
-  active    Boolean     @default(true)
-  sortOrder Int         @default(0)
+  titleSize  Int         @default(16)
+  imageUrl   String?
+  videoUrl   String? // direct video file URL (mp4/webm); takes priority over image
+  linkUrl    String?
+  placement  AdPlacement @default(TOP_PANEL)
+  active     Boolean     @default(true)
+  sortOrder  Int         @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -405,9 +406,9 @@ model SavedPost {
 // ---------------------------------------------------------------------------
 
 model Business {
-  id    String @id @default(cuid())
-  slug  String @unique
-  owner User   @relation("BusinessOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  slug    String @unique
+  owner   User   @relation("BusinessOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId String
 
   name        String
@@ -440,8 +441,8 @@ model Business {
   managers BusinessManager[]
 
   // Content this business has authored while someone acted as it.
-  authoredPosts   Post[]  @relation("PostBusinessAuthor")
-  authoredReplies Reply[] @relation("ReplyBusinessAuthor")
+  authoredPosts   Post[]          @relation("PostBusinessAuthor")
+  authoredReplies Reply[]         @relation("ReplyBusinessAuthor")
   marketListings  MarketListing[] @relation("MarketSellerBusiness")
 
   createdAt DateTime @default(now())
@@ -495,8 +496,8 @@ model JobPosting {
   poster     User?     @relation("JobPoster", fields: [posterId], references: [id], onDelete: Cascade)
   posterId   String?
 
-  title       String
-  description String
+  title        String
+  description  String
   // Member postings carry the employer + contact details a business
   // profile would otherwise provide.
   companyName  String?
@@ -504,9 +505,9 @@ model JobPosting {
   pay          String? // free text, e.g. "$18/hr" or "from $60k"
   contactEmail String?
   contactPhone String?
-  city        String?
-  state       String?
-  active      Boolean @default(true)
+  city         String?
+  state        String?
+  active       Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -612,12 +613,12 @@ model MarketListing {
   photos String[] // ordered; [0] is the cover
 
   // Where the item is; how the buyer can get it.
-  city        String?
-  zip         String? // optional; powers the ZIP + radius search
-  state       String
-  localPickup Boolean @default(true)
+  city          String?
+  zip           String? // optional; powers the ZIP + radius search
+  state         String
+  localPickup   Boolean @default(true)
   localDelivery Boolean @default(false) // seller drops it off nearby
-  canShip     Boolean @default(false)
+  canShip       Boolean @default(false)
 
   // Centroid of `zip`, filled server-side on save (null = no radius match).
   lat Float?
@@ -688,16 +689,16 @@ model MarketSellerReview {
 // ---------------------------------------------------------------------------
 
 model MerchProduct {
-  id          String  @id @default(cuid())
-  slug        String  @unique
+  id          String   @id @default(cuid())
+  slug        String   @unique
   name        String
   description String
-  category    String  @default("apparel") // apparel | accessories | home | other
+  category    String   @default("apparel") // apparel | accessories | home | other
   priceCents  Int // base price; variants can add a delta
   photos      String[]
-  active      Boolean @default(true) // sellable / visible in the shop
-  featured    Boolean @default(false) // shown in the marketplace top strip
-  sortOrder   Int     @default(0)
+  active      Boolean  @default(true) // sellable / visible in the shop
+  featured    Boolean  @default(false) // shown in the marketplace top strip
+  sortOrder   Int      @default(0)
 
   variants MerchVariant[]
   items    MerchOrderItem[]
@@ -795,11 +796,11 @@ model AutoListing {
   kind String // "SALE" | "RENT"
 
   // Identity — title is derived ("2019 Toyota Camry") and stored for search.
-  year  Int
-  make  String // key from lib/auto.ts (or "other" + makeOther)
+  year      Int
+  make      String // key from lib/auto.ts (or "other" + makeOther)
   makeOther String?
-  model String
-  title String
+  model     String
+  title     String
 
   bodyType     String? // key from lib/auto.ts
   mileage      Int?
@@ -815,9 +816,9 @@ model AutoListing {
   negotiable Boolean @default(false)
 
   // Rental-only facts
-  insured        Boolean @default(false)
-  minRentalDays  Int?
-  depositAmount  Int?
+  insured       Boolean @default(false)
+  minRentalDays Int?
+  depositAmount Int?
 
   description String?
   features    String[] // keys from lib/auto.ts
@@ -969,25 +970,25 @@ model Block {
 
 // Report: a member flags another member (optionally from a DM) for staff review.
 model Report {
-  id             String  @id @default(cuid())
-  reporter       User    @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
-  reporterId     String
-  reportedUser   User?   @relation("ReportedUser", fields: [reportedUserId], references: [id], onDelete: SetNull)
-  reportedUserId String?
-  conversationId String? // context, if reported from a DM
-  post           Post?   @relation(fields: [postId], references: [id], onDelete: SetNull)
-  postId         String? // set when a post is reported
-  reply          Reply?  @relation(fields: [replyId], references: [id], onDelete: SetNull)
-  replyId        String? // set when a reply is reported
-  marketListing   MarketListing? @relation(fields: [marketListingId], references: [id], onDelete: SetNull)
-  marketListingId String? // set when a marketplace listing is reported
+  id                String           @id @default(cuid())
+  reporter          User             @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reporterId        String
+  reportedUser      User?            @relation("ReportedUser", fields: [reportedUserId], references: [id], onDelete: SetNull)
+  reportedUserId    String?
+  conversationId    String? // context, if reported from a DM
+  post              Post?            @relation(fields: [postId], references: [id], onDelete: SetNull)
+  postId            String? // set when a post is reported
+  reply             Reply?           @relation(fields: [replyId], references: [id], onDelete: SetNull)
+  replyId           String? // set when a reply is reported
+  marketListing     MarketListing?   @relation(fields: [marketListingId], references: [id], onDelete: SetNull)
+  marketListingId   String? // set when a marketplace listing is reported
   propertyListing   PropertyListing? @relation(fields: [propertyListingId], references: [id], onDelete: SetNull)
   propertyListingId String? // set when a real-estate listing is reported
-  autoListing   AutoListing? @relation(fields: [autoListingId], references: [id], onDelete: SetNull)
-  autoListingId String? // set when an auto listing is reported
-  reason         String?
-  context        String? // snapshot, e.g. the last message
-  status         String  @default("OPEN") // OPEN | RESOLVED | DISMISSED
+  autoListing       AutoListing?     @relation(fields: [autoListingId], references: [id], onDelete: SetNull)
+  autoListingId     String? // set when an auto listing is reported
+  reason            String?
+  context           String? // snapshot, e.g. the last message
+  status            String           @default("OPEN") // OPEN | RESOLVED | DISMISSED
 
   // Staff bookkeeping: who closed it, when, and a short note for the record.
   note         String?
@@ -1099,8 +1100,8 @@ model AiUsage {
   kind  String // "summary" | "ask"
   model String // resolved Claude model id
 
-  tokensIn  Int
-  tokensOut Int
+  tokensIn     Int
+  tokensOut    Int
   // Cost in micro-USD (USD × 1_000_000) computed from model pricing at call time.
   costMicroUsd Int
 
@@ -1237,15 +1238,70 @@ model Subscription {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
 
-  tier      String    // "DONOR" | "PRO"
-  status    String    @default("ACTIVE") // "ACTIVE" | "CANCELED"
+  tier       String // "DONOR" | "PRO"
+  status     String    @default("ACTIVE") // "ACTIVE" | "CANCELED"
   priceCents Int
-  startedAt DateTime  @default(now())
-  endedAt   DateTime?
+  startedAt  DateTime  @default(now())
+  endedAt    DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([status])
+}
+
+// ---------------------------------------------------------------------------
+// Activity / audit log — one row per change or security-relevant event, for
+// incident investigation. Written automatically by the Prisma extension in
+// src/lib/audit.ts for every create/update/delete on audited models (with the
+// before → after values of each changed field), plus explicit events for
+// things that aren't row changes (logins, lockouts, denied actions…).
+//
+// Append-only: the migration adds a trigger that refuses UPDATE/DELETE on this
+// table (except nulling actorId when a user row is removed), so nothing in the
+// app — including an admin — can quietly rewrite history.
+//
+// Actor identity is denormalised (name + role at the time) so an entry still
+// reads correctly after the person is renamed, demoted or deleted.
+// ---------------------------------------------------------------------------
+model AuditLog {
+  id String   @id @default(cuid())
+  at DateTime @default(now())
+
+  // Groups every row written during one request / server action.
+  requestId String?
+
+  // Who
+  actor      User?   @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  actorId    String?
+  actorName  String? // forum name at the time
+  actorRole  String? // USER | MODERATOR | ADMIN at the time; null = not signed in
+  actingAsId String? // business the actor was "acting as", if any
+
+  // What
+  action      String // "User.update" | "Post.delete" | "auth.login.failed" | "access.denied" …
+  severity    String  @default("info") // info | notice | warning
+  outcome     String  @default("ok") // ok | denied | failed
+  model       String? // Prisma model for row changes
+  targetId    String? // primary key of the affected row (composite keys joined with ":")
+  targetLabel String? // human handle at the time: title / forum name / slug …
+  summary     String // one line: `role: USER → ADMIN · status: ACTIVE → ARCHIVED`
+  changes     Json? // { field: { from, to } } — redacted, large values truncated
+  snapshot    Json? // full row on create (after) / delete (before) — redacted
+  meta        Json? // count for bulk ops, relation writes, denial reason, error code …
+
+  // Where
+  ip        String?
+  country   String? // Cloudflare's cf-ipcountry, when present
+  userAgent String?
+  path      String? // page the action was submitted from
+
+  @@index([at])
+  @@index([actorId, at])
+  @@index([model, targetId, at])
+  @@index([action, at])
+  @@index([severity, at])
+  @@index([ip, at])
+  @@index([requestId])
 }

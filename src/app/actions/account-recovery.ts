@@ -10,6 +10,7 @@ import { sendEmail } from "@/lib/email";
 import { passwordResetEmail, verificationEmail } from "@/lib/email-templates";
 import { RequestResetSchema, ResetPasswordSchema, type FormState } from "@/lib/definitions";
 import { defaultLocale, isLocale, type Locale } from "@/i18n/config";
+import { auditEvent } from "@/lib/audit";
 
 function localeFrom(formData: FormData): Locale {
   const raw = String(formData.get("locale") ?? "");
@@ -39,17 +40,32 @@ export async function requestPasswordReset(_state: FormState, formData: FormData
 
   const user = await db.user.findUnique({
     where: { email: parsed.data.email },
-    select: { id: true, status: true },
+    select: { id: true, status: true, forumName: true, role: true },
   });
 
+  let sent = false;
   if (user && user.status === "ACTIVE") {
     const raw = await issueToken(user.id, "PASSWORD_RESET"); // null if throttled
     if (raw) {
       const url = `${await origin()}/${locale}/reset?token=${raw}`;
       const { subject, html } = passwordResetEmail(locale, url);
       await sendEmail({ to: parsed.data.email, subject, html });
+      sent = true;
     }
   }
+
+  // The response never reveals whether the address exists; the log does, so a
+  // reset-spray against many addresses is visible to staff.
+  await auditEvent({
+    action: "auth.reset.requested",
+    severity: "notice",
+    actor: user ? { id: user.id, name: user.forumName, role: user.role } : { id: null },
+    model: user ? "User" : null,
+    targetId: user?.id ?? null,
+    targetLabel: user?.forumName ?? null,
+    summary: !user ? `no account for ${parsed.data.email}` : sent ? "reset link emailed" : user.status !== "ACTIVE" ? `account is ${user.status}; nothing sent` : "throttled; recent link still valid",
+    meta: { email: parsed.data.email, sent },
+  });
 
   // Generic success regardless — never reveal account existence.
   return { ok: true };
@@ -69,12 +85,33 @@ export async function resetPassword(_state: FormState, formData: FormData): Prom
   }
 
   const userId = await consumeToken(parsed.data.token, "PASSWORD_RESET");
-  if (!userId) return { message: "invalid" }; // expired or already used
+  if (!userId) {
+    await auditEvent({
+      action: "auth.reset.completed",
+      severity: "notice",
+      outcome: "failed",
+      summary: "invalid, expired or already-used reset link",
+    });
+    return { message: "invalid" }; // expired or already used
+  }
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
   // Resetting via an emailed link also proves control of the address, so treat
   // the email as verified from here on.
-  await db.user.update({ where: { id: userId }, data: { passwordHash, emailVerified: true } });
+  const updated = await db.user.update({
+    where: { id: userId },
+    data: { passwordHash, emailVerified: true },
+    select: { forumName: true, role: true },
+  });
+  await auditEvent({
+    action: "auth.reset.completed",
+    severity: "notice",
+    actor: { id: userId, name: updated.forumName, role: updated.role },
+    model: "User",
+    targetId: userId,
+    targetLabel: updated.forumName,
+    summary: "password changed via emailed reset link",
+  });
 
   redirect(`/${locale}/login?reset=1`);
 }
@@ -94,6 +131,14 @@ export async function sendVerificationEmail(
     const url = `${await origin()}/${locale}/verify?token=${raw}`;
     const { subject, html } = verificationEmail(locale, url);
     await sendEmail({ to: email, subject, html });
+    await auditEvent({
+      action: "auth.verify.sent",
+      actor: { id: userId },
+      model: "User",
+      targetId: userId,
+      summary: `verification link sent to ${email}`,
+      meta: { email },
+    });
   } catch (err) {
     console.error("[verify] send failed:", err);
   }

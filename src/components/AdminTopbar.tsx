@@ -33,6 +33,7 @@ export function AdminTopbar({
     [`${base}/jobs`, dict.business.jobs],
     [`${base}/reports`, t.reports],
     [`${base}/hidden`, t.hiddenContent],
+    [`${base}/activity`, t.activity.title],
   ];
   const title = sections.find(([href]) => pathname.startsWith(href))?.[1] ?? t.dashboard;
 

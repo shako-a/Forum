@@ -4,6 +4,7 @@ import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { db } from "@/lib/db";
 import { consumeToken } from "@/lib/auth-tokens";
+import { auditEvent } from "@/lib/audit";
 import { AuthBrand } from "@/components/AuthBrand";
 
 export const dynamic = "force-dynamic";
@@ -28,10 +29,19 @@ export default async function VerifyPage({ params, searchParams }: PageProps<"/[
     const token = typeof sp.token === "string" ? sp.token : "";
     const userId = await consumeToken(token, "EMAIL_VERIFY");
     if (userId) {
-      await db.user.update({ where: { id: userId }, data: { emailVerified: true } });
+      const u = await db.user.update({ where: { id: userId }, data: { emailVerified: true }, select: { forumName: true, role: true } });
+      await auditEvent({
+        action: "auth.verify.completed",
+        actor: { id: userId, name: u.forumName, role: u.role },
+        model: "User",
+        targetId: userId,
+        targetLabel: u.forumName,
+        summary: "email address confirmed via link",
+      });
       title = t.verifyOkTitle;
       body = t.verifyOkBody;
     } else {
+      if (token) await auditEvent({ action: "auth.verify.completed", outcome: "failed", severity: "notice", summary: "invalid or expired verification link" });
       title = t.verifyFailTitle;
       body = t.verifyFailBody;
     }

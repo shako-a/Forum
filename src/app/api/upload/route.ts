@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/dal";
 import { isSpacesConfigured, uploadToSpaces } from "@/lib/storage";
 import { recordUpload, uploadTierFor, uploadUsage } from "@/lib/media";
+import { auditEvent } from "@/lib/audit";
 
 // Accepted types → extension. The type is confirmed by sniffing the bytes, not
 // by trusting the browser's Content-Type.
@@ -36,6 +37,19 @@ function sniff(buf: Buffer): string | null {
   return null;
 }
 
+// Refused uploads go in the activity log: a member repeatedly hitting the
+// quota, or a non-admin trying to push video, is worth a line.
+async function refused(status: number, reason: string, extra?: Record<string, unknown>): Promise<NextResponse> {
+  await auditEvent({
+    action: "media.upload.denied",
+    severity: status === 403 ? "warning" : "notice",
+    outcome: "denied",
+    summary: reason,
+    meta: { status, ...extra },
+  });
+  return NextResponse.json({ error: reason }, { status });
+}
+
 // Server-side upload: browser → here → Spaces (no CORS). Logged-in users only;
 // videos are admin-only; each upload is recorded against the user and counted
 // toward a rolling 24h quota by tier.
@@ -59,7 +73,7 @@ export async function POST(req: Request) {
   const tier = uploadTierFor(user);
   const usage = await uploadUsage(user.id, tier);
   if (usage.filesLeft <= 0 || usage.bytesLeft <= 0) {
-    return NextResponse.json({ error: "Daily upload limit reached. Try again tomorrow." }, { status: 429 });
+    return refused(429, "Daily upload limit reached. Try again tomorrow.", { tier, filesLeft: usage.filesLeft, bytesLeft: usage.bytesLeft });
   }
 
   const form = await req.formData();
@@ -69,17 +83,17 @@ export async function POST(req: Request) {
   const buffer = Buffer.from(await file.arrayBuffer());
   const type = sniff(buffer);
   const ext = type ? EXT[type] : undefined;
-  if (!type || !ext) return NextResponse.json({ error: "Unsupported file type." }, { status: 415 });
+  if (!type || !ext) return refused(415, "Unsupported file type.", { declaredType: file.type, size: buffer.length });
 
   const isVideo = type.startsWith("video/");
   if (isVideo && user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Video uploads are limited to administrators." }, { status: 403 });
+    return refused(403, "Video uploads are limited to administrators.", { type, size: buffer.length });
   }
   if (buffer.length > (isVideo ? MAX_VIDEO : MAX_IMAGE)) {
-    return NextResponse.json({ error: "File is too large." }, { status: 413 });
+    return refused(413, "File is too large.", { type, size: buffer.length });
   }
   if (buffer.length > usage.bytesLeft) {
-    return NextResponse.json({ error: "Daily upload limit reached. Try again tomorrow." }, { status: 429 });
+    return refused(429, "Daily upload limit reached. Try again tomorrow.", { tier, size: buffer.length, bytesLeft: usage.bytesLeft });
   }
 
   try {

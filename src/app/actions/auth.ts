@@ -9,6 +9,8 @@ import { defaultLocale, isLocale } from "@/i18n/config";
 import { postAuthDestination } from "@/lib/redirects";
 import { sendVerificationEmail } from "@/app/actions/account-recovery";
 import { flagGaEvent } from "@/lib/ga-server";
+import { auditEvent } from "@/lib/audit";
+import { getSession } from "@/lib/session";
 
 function localeFrom(formData: FormData): string {
   const raw = String(formData.get("locale") ?? "");
@@ -54,6 +56,16 @@ export async function signup(_state: FormState, formData: FormData): Promise<For
     data: { email, forumName, passwordHash, ...rest },
     select: { id: true, role: true },
   });
+  // The row creation is logged automatically, but with no actor (there is no
+  // session yet); this names the new account as the actor of its own signup.
+  await auditEvent({
+    action: "auth.signup",
+    actor: { id: user.id, name: forumName, role: user.role },
+    model: "User",
+    targetId: user.id,
+    targetLabel: forumName,
+    summary: `account created for ${email}`,
+  });
 
   // Fire off a verification email (best-effort — a delivery hiccup must not
   // block signup, and access isn't gated on it: soft nudge only).
@@ -80,6 +92,7 @@ export async function login(_state: FormState, formData: FormData): Promise<Form
     select: {
       id: true,
       role: true,
+      forumName: true,
       passwordHash: true,
       status: true,
       failedLogins: true,
@@ -87,16 +100,40 @@ export async function login(_state: FormState, formData: FormData): Promise<Form
     },
   });
 
+  // Sign-in attempts are logged with the account they targeted (when it
+  // exists) as the actor, so a brute-force run shows up as a burst of failures
+  // against one account from one IP.
+  const asUser = user ? { id: user.id, name: user.forumName, role: user.role } : { id: null, name: null, role: null };
+
   if (!user) {
     // Burn the same bcrypt time as a real check so response timing doesn't
     // reveal whether the email is registered.
     await bcrypt.compare(parsed.data.password, DUMMY_HASH);
+    await auditEvent({
+      action: "auth.login.failed",
+      severity: "notice",
+      outcome: "failed",
+      actor: asUser,
+      summary: `no account for ${parsed.data.email}`,
+      meta: { email: parsed.data.email, reason: "unknown-email" },
+    });
     return { message: "Invalid email or password." };
   }
 
   const now = Date.now();
   if (user.lockedUntil && user.lockedUntil.getTime() > now) {
     const lockMinutes = Math.max(1, Math.ceil((user.lockedUntil.getTime() - now) / 60_000));
+    await auditEvent({
+      action: "auth.login.locked",
+      severity: "warning",
+      outcome: "denied",
+      actor: asUser,
+      model: "User",
+      targetId: user.id,
+      targetLabel: user.forumName,
+      summary: `attempt while locked (${lockMinutes} min left)`,
+      meta: { lockMinutesLeft: lockMinutes },
+    });
     return {
       code: "lockedOut",
       lockMinutes,
@@ -112,6 +149,17 @@ export async function login(_state: FormState, formData: FormData): Promise<Form
         where: { id: user.id },
         data: { failedLogins: 0, lockedUntil: new Date(now + LOCK_MINUTES * 60_000) },
       });
+      await auditEvent({
+        action: "auth.login.lockout",
+        severity: "warning",
+        outcome: "denied",
+        actor: asUser,
+        model: "User",
+        targetId: user.id,
+        targetLabel: user.forumName,
+        summary: `locked for ${LOCK_MINUTES} min after ${failed} wrong passwords`,
+        meta: { failedAttempts: failed, lockMinutes: LOCK_MINUTES },
+      });
       return {
         code: "lockedOut",
         lockMinutes: LOCK_MINUTES,
@@ -119,6 +167,17 @@ export async function login(_state: FormState, formData: FormData): Promise<Form
       };
     }
     await db.user.update({ where: { id: user.id }, data: { failedLogins: failed } });
+    await auditEvent({
+      action: "auth.login.failed",
+      severity: "notice",
+      outcome: "failed",
+      actor: asUser,
+      model: "User",
+      targetId: user.id,
+      targetLabel: user.forumName,
+      summary: `wrong password (${failed} of ${LOCK_AFTER_ATTEMPTS})`,
+      meta: { failedAttempts: failed, reason: "wrong-password" },
+    });
     if (failed >= WARN_AFTER_ATTEMPTS) {
       const attemptsLeft = LOCK_AFTER_ATTEMPTS - failed;
       return {
@@ -131,12 +190,33 @@ export async function login(_state: FormState, formData: FormData): Promise<Form
     return { message: "Invalid email or password." };
   }
 
-  if (user.status !== "ACTIVE") return { message: "Invalid email or password." };
+  if (user.status !== "ACTIVE") {
+    await auditEvent({
+      action: "auth.login.failed",
+      severity: "notice",
+      outcome: "denied",
+      actor: asUser,
+      model: "User",
+      targetId: user.id,
+      targetLabel: user.forumName,
+      summary: `correct password, but the account is ${user.status}`,
+      meta: { reason: "inactive", status: user.status },
+    });
+    return { message: "Invalid email or password." };
+  }
 
   if (user.failedLogins > 0 || user.lockedUntil) {
     await db.user.update({ where: { id: user.id }, data: { failedLogins: 0, lockedUntil: null } });
   }
   await createSession(user.id, user.role);
+  await auditEvent({
+    action: "auth.login",
+    actor: asUser,
+    model: "User",
+    targetId: user.id,
+    targetLabel: user.forumName,
+    summary: "signed in",
+  });
   redirect(postAuthDestination(nextFrom(formData), locale));
 }
 
@@ -150,7 +230,18 @@ const DUMMY_HASH = "$2b$10$4C1mFEej4Akm8XCXsEz2qOIQ4k/fEgywIkRCgxTbEFzuMw7j.3V/m
 
 export async function logout(formData: FormData): Promise<void> {
   const locale = localeFrom(formData);
+  // Read the session before it goes, so the entry names who signed out.
+  const session = await getSession();
   await deleteSession();
+  if (session?.userId) {
+    await auditEvent({
+      action: "auth.logout",
+      actor: { id: session.userId, role: session.role },
+      model: "User",
+      targetId: session.userId,
+      summary: "signed out",
+    });
+  }
   redirect(`/${locale}`);
 }
 

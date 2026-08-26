@@ -110,6 +110,7 @@ export function AdminNav({
         { href: `${base}/ai-usage`, label: t.aiUsage, icon: "✦" },
         { href: `${base}/reports`, label: t.reports, icon: "⚑" },
         { href: `${base}/hidden`, label: t.hiddenContent, icon: "🙈" },
+        { href: `${base}/activity`, label: t.activity.title, icon: "🧾" },
       ]
     : [{ href: `${base}/hidden`, label: t.hiddenContent, icon: "🙈" }];
 
