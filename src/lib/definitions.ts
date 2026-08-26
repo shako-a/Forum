@@ -349,6 +349,28 @@ const optionalDate = z
   .transform((v) => (v ? new Date(v) : undefined))
   .refine((d) => d === undefined || !Number.isNaN(d.getTime()), { error: "Invalid date." });
 
+// Event posts. The body/category/title rules match a normal post (validated in
+// the action); this covers the event-only fields. Times arrive as
+// "YYYY-MM-DDTHH:mm" from datetime-local and are parsed as wall-clock UTC.
+export const EventSchema = z
+  .object({
+    title: z.string().trim().min(3, { error: "Title must be at least 3 characters." }).max(300),
+    categoryId: z.string().min(1, { error: "Please choose a category." }),
+    startsAt: z.string().min(1, { error: "Please set a start date and time." }),
+    endsAt: z.string().trim().optional(),
+    location: z.string().trim().max(200).optional(),
+    url: z
+      .string()
+      .trim()
+      .max(500)
+      .refine((v) => !v || /^https?:\/\//i.test(v), { error: "Link must start with http:// or https://" })
+      .optional(),
+  })
+  .refine((d) => !d.endsAt || d.endsAt > d.startsAt, {
+    error: "The end time must be after the start time.",
+    path: ["endsAt"],
+  });
+
 export const PackageSchema = z
   .object({
     nameEn: z.string().min(1, { error: "English name is required." }).trim(),

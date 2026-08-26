@@ -46,6 +46,13 @@ export async function LeftSidebar({
         </svg>
         {nav.news}
       </NavLink>
+      <NavLink href={`/${locale}/events`}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 5h16v15H4z" />
+          <path d="M8 3v4M16 3v4M4 10h16" />
+        </svg>
+        {nav.events}
+      </NavLink>
       <NavLink href={`/${locale}/business`}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 9h18M5 9V5h14v4M4 9v11h16V9M9 13h6" />

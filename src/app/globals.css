@@ -6948,3 +6948,257 @@ a.mk-tag:hover {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* ---------- Events ---------- */
+/* An event card is a post card with a date rail, so it reads as one of the
+   family in a mixed feed rather than a foreign object. */
+.event-kind-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: var(--blue);
+  background: var(--blue-soft);
+  border: 1px solid color-mix(in srgb, var(--blue) 25%, var(--line));
+  white-space: nowrap;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+.post-event {
+  border-left: 3px solid var(--blue);
+}
+.post-event-past {
+  border-left-color: var(--line);
+}
+.post-event-live {
+  border-left-color: var(--green-ink);
+}
+
+.events-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.events-gate {
+  text-align: right;
+  max-width: 320px;
+}
+
+.event-card {
+  display: flex;
+  gap: 14px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.event-card-past {
+  opacity: 0.72;
+}
+.event-card-body {
+  flex: 1;
+  min-width: 0;
+}
+.event-card-foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+/* Date rail: month over day, the shape people scan a listing by. */
+.event-date-badge {
+  flex: 0 0 auto;
+  width: 58px;
+  height: 62px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--ink);
+  text-decoration: none;
+  line-height: 1.1;
+}
+.event-date-upcoming {
+  border-color: color-mix(in srgb, var(--blue) 35%, var(--line));
+  background: var(--blue-soft);
+  color: var(--blue-deep);
+}
+.event-date-live {
+  border-color: var(--green-ink);
+  background: color-mix(in srgb, var(--green-ink) 12%, transparent);
+  color: var(--green-ink);
+}
+.event-date-month {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.event-date-day {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+}
+.event-card-when {
+  font-size: 13px;
+  color: var(--ink-2);
+  margin: 4px 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.event-badge-live,
+.event-badge-past {
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.event-badge-live {
+  color: var(--green-ink);
+  background: color-mix(in srgb, var(--green-ink) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--green-ink) 40%, var(--line));
+}
+.event-badge-past {
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+
+/* Detail page: when / where panel above the description. */
+.event-panel {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--blue);
+  border-radius: var(--radius);
+  background: var(--bg);
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  display: grid;
+  gap: 8px;
+}
+.event-panel-live {
+  border-left-color: var(--green-ink);
+}
+.event-panel-past {
+  border-left-color: var(--line);
+  opacity: 0.85;
+}
+.event-panel-when,
+.event-panel-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+.event-panel-ico {
+  font-size: 15px;
+  flex: 0 0 auto;
+}
+.event-panel-date {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+}
+.event-panel-tz {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+/* RSVP row. Selected state is carried by fill + weight, not colour alone. */
+.rsvp-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+.rsvp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 15px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s, color 0.12s;
+}
+.rsvp-btn:hover:not(:disabled) {
+  border-color: var(--blue);
+  color: var(--ink);
+}
+.rsvp-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.rsvp-ico {
+  font-size: 12px;
+}
+.rsvp-count {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  padding-left: 7px;
+  margin-left: 1px;
+  border-left: 1px solid var(--line);
+  color: var(--muted);
+}
+.rsvp-btn.on .rsvp-count {
+  border-left-color: currentColor;
+  color: inherit;
+}
+.rsvp-going.on {
+  background: color-mix(in srgb, var(--green-ink) 14%, transparent);
+  border-color: var(--green-ink);
+  color: var(--green-ink);
+  font-weight: 700;
+}
+.rsvp-interested.on {
+  background: color-mix(in srgb, var(--amber-fill) 18%, transparent);
+  border-color: var(--amber);
+  color: var(--amber);
+  font-weight: 700;
+}
+.rsvp-not-going.on {
+  background: var(--red-soft);
+  border-color: var(--red);
+  color: var(--red-deep);
+  font-weight: 700;
+}
+
+/* Two dates side by side, stacking on a phone. */
+.event-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 640px) {
+  .event-form-row {
+    grid-template-columns: 1fr;
+  }
+  .event-date-badge {
+    width: 50px;
+    height: 54px;
+  }
+  .event-date-day {
+    font-size: 20px;
+  }
+}

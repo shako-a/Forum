@@ -5,7 +5,7 @@ import { pmToHtml, pmPlainText, pmFirstImage } from "@/lib/prosemirror";
 import { canModerateCategory, canRevealAnonymous, getSiteSettings } from "@/lib/dal";
 import { resolveAuthor, type DisplayAuthor } from "@/lib/anon";
 import type { Locale } from "@/i18n/config";
-import { Prisma, type Role } from "@/generated/prisma/client";
+import { Prisma, type Role, type RsvpStatus } from "@/generated/prisma/client";
 
 // Author fields needed to render an authored post/reply: the real author (for
 // forumName / anon resolution) plus the business it was posted as, if any.
@@ -43,7 +43,7 @@ export async function getHomeData(viewer: { id: string } | null, sort: FeedSort 
         include: {
           ...AUTHOR_INCLUDE,
           category: true,
-          _count: { select: { replies: true, votes: true } },
+          _count: { select: { replies: true, votes: true, rsvps: true } },
         },
       }),
       db.adCard.findMany({
@@ -136,7 +136,7 @@ export async function getFeedPage(viewer: { id: string } | null, sort: "popular"
         include: {
           ...AUTHOR_INCLUDE,
           category: true,
-          _count: { select: { replies: true, votes: true } },
+          _count: { select: { replies: true, votes: true, rsvps: true } },
         },
       }),
       db.adCard.findMany({
@@ -188,7 +188,7 @@ export type PopularTopic = {
 const POST_CARD_INCLUDE = {
   ...AUTHOR_INCLUDE,
   category: true,
-  _count: { select: { replies: true, votes: true } },
+  _count: { select: { replies: true, votes: true, rsvps: true } },
 } as const;
 
 // Posts a business has authored (for its forum profile), newest-active first,
@@ -374,6 +374,12 @@ export async function getPostView(
   });
   if (!post) return null;
 
+  // Events carry RSVP state; discussions skip the queries entirely.
+  const rsvp =
+    post.kind === "EVENT"
+      ? await loadRsvp(post.id, viewer?.id ?? null)
+      : { going: 0, interested: 0, notGoing: 0, mine: null };
+
   // Category-scoped: only a moderator of this post's category (or an admin) may
   // see hidden replies and wield moderation controls.
   const canModerate = viewer ? await canModerateCategory(viewer, post.categoryId) : false;
@@ -453,5 +459,25 @@ export async function getPostView(
   };
   sortTree(roots);
 
-  return { post, canModerate, canReveal, postMyVote, replyCount: replies.length, roots };
+  return { post, canModerate, canReveal, postMyVote, replyCount: replies.length, roots, rsvp };
+}
+
+// Counts per answer plus the viewer's own, for the RSVP row on an event.
+async function loadRsvp(postId: string, viewerId: string | null) {
+  const [grouped, mine] = await Promise.all([
+    db.eventRsvp.groupBy({ by: ["status"], where: { postId }, _count: { _all: true } }),
+    viewerId
+      ? db.eventRsvp.findUnique({
+          where: { postId_userId: { postId, userId: viewerId } },
+          select: { status: true },
+        })
+      : null,
+  ]);
+  const at = (status: RsvpStatus) => grouped.find((g) => g.status === status)?._count._all ?? 0;
+  return {
+    going: at("GOING"),
+    interested: at("INTERESTED"),
+    notGoing: at("NOT_GOING"),
+    mine: mine?.status ?? null,
+  };
 }

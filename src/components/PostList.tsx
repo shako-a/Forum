@@ -10,6 +10,8 @@ import { Vote } from "@/components/Vote";
 import { SaveButton } from "@/components/SaveButton";
 import { DeletePostButton } from "@/components/DeletePostButton";
 import { AuthorTag } from "@/components/AuthorTag";
+import { eventTiming, formatEventRange } from "@/lib/events";
+import type { PostKind } from "@/generated/prisma/client";
 
 // Shape of the posts produced by the home/category loaders.
 export type FeedPost = {
@@ -24,10 +26,14 @@ export type FeedPost = {
   authorId: string;
   anonAlias: number | null;
   quickPosted: boolean;
+  kind: PostKind;
+  eventStartsAt: Date | null;
+  eventEndsAt: Date | null;
+  eventLocation: string | null;
   author: { forumName: string };
   authorBusiness: { name: string; slug: string; logoUrl: string | null } | null;
   category: { nameEn: string; nameKa: string; slug: string };
-  _count: { replies: number; votes: number };
+  _count: { replies: number; votes: number; rsvps: number };
 };
 
 const GEORGIAN = /[Ⴀ-ჿ]/;
@@ -61,10 +67,18 @@ function PostCard({
     authorBusiness: post.authorBusiness,
   });
 
+  const isEvent = post.kind === "EVENT" && !!post.eventStartsAt;
+  const timing = isEvent ? eventTiming(post.eventStartsAt!, post.eventEndsAt) : null;
+
   return (
-    <article className="post">
+    <article className={isEvent ? `post post-event post-event-${timing}` : "post"}>
       <div className="post-body">
         <div className="post-meta">
+          {isEvent && (
+            <span className="event-kind-tag" title={dict.events.tag}>
+              🗓 {dict.events.tag}
+            </span>
+          )}
           <Link href={`/${locale}/c/${post.category.slug}`} className={chipClass}>
             <span className="dot" style={{ background: style.color }} />
             {categoryName(post.category, locale)}
@@ -82,6 +96,14 @@ function PostCard({
         <h2 className="post-title">
           <Link href={`/${locale}/p/${post.slug}`}>{post.title}</Link>
         </h2>
+        {isEvent && (
+          <div className="event-card-when">
+            🗓 {formatEventRange(post.eventStartsAt!, post.eventEndsAt, locale)}
+            {post.eventLocation && <> · 📍 {post.eventLocation}</>}
+            {timing === "live" && <span className="event-badge-live">{dict.events.happeningNow}</span>}
+            {timing === "past" && <span className="event-badge-past">{dict.events.finished}</span>}
+          </div>
+        )}
         {excerpt && (
           <p className="post-excerpt">
             {GEORGIAN.test(excerpt) ? <span className="ka">{excerpt}</span> : excerpt}
@@ -109,6 +131,11 @@ function PostCard({
             </svg>
             {post._count.replies} {dict.home.comments}
           </Link>
+          {isEvent && (
+            <Link href={`/${locale}/p/${post.slug}`} className="action">
+              ✓ {dict.events.goingCount.replace("{n}", String(post._count.rsvps))}
+            </Link>
+          )}
           <button className="action">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M4 12v7h16v-7M12 3v12M8 7l4-4 4 4" />

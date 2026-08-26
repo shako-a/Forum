@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { getCurrentUser, authorize } from "@/lib/dal";
 import { isPostingArea, isPostingMode, type PostingArea, type PostingMode } from "@/lib/posting-access";
+import { isEventMode, type EventMode } from "@/lib/events";
 
 // Owner-only: control whether other admins/moderators can de-anonymize content.
 export async function setRevealAnonymousToStaff(enabled: boolean): Promise<void> {
@@ -42,5 +43,28 @@ export async function setVisitorBaseline(value: number): Promise<void> {
     create: { id: "singleton", visitorBaseline: n },
   });
   revalidatePath("/[lang]/admin", "page");
+  revalidatePath("/[lang]", "layout");
+}
+
+// Admin: who may create Events — every member, verified members only, holders
+// of a tag, perk holders, or staff only. `labelId` is meaningful for "label"
+// and validated against a real tag so the gate can't be set to a dangling id.
+export async function setEventAccess(mode: EventMode, labelId: string | null): Promise<void> {
+  if (!(await authorize("ADMIN"))) return;
+  if (!isEventMode(mode)) return;
+
+  let label: string | null = null;
+  if (mode === "label" && labelId) {
+    const found = await db.label.findUnique({ where: { id: labelId }, select: { id: true } });
+    label = found?.id ?? null;
+  }
+
+  await db.siteSetting.upsert({
+    where: { id: "singleton" },
+    update: { eventsMode: mode, eventsLabelId: label },
+    create: { id: "singleton", eventsMode: mode, eventsLabelId: label },
+  });
+  revalidatePath("/[lang]/admin/more", "page");
+  revalidatePath("/[lang]/events", "page");
   revalidatePath("/[lang]", "layout");
 }

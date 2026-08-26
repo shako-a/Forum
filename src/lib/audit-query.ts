@@ -38,6 +38,7 @@ export const AUDITED_MODELS = [
   "Message",
   "Conversation",
   "ConversationParticipant",
+  "EventRsvp",
   "PostVote",
   "ReplyVote",
   "SavedPost",

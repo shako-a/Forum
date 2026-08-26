@@ -3,11 +3,14 @@ import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { requireRole } from "@/lib/dal";
 import { db } from "@/lib/db";
+import type { Prisma } from "@/generated/prisma/client";
 import { priceAt } from "@/lib/packages";
 import { seedPaidPackages, packagesNeedSeeding, ensureFeatureAdditions } from "@/lib/packages-seed";
 import { PackageAdmin, type AdminPackage, type AdminFeature } from "@/components/admin/PackageAdmin";
 import { PostingAccessAdmin, type PostingAreaRow } from "@/components/admin/PostingAccessAdmin";
 import { getPostingAccess, POSTING_AREAS, POSTING_PERK_KEY } from "@/lib/posting-access";
+import { EventAccessAdmin, type EventLabelOption } from "@/components/admin/EventAccessAdmin";
+import { getEventAccess, EVENT_PERK_KEY } from "@/lib/event-access";
 
 export const dynamic = "force-dynamic";
 
@@ -105,8 +108,63 @@ export default async function AdminMorePage({ params }: PageProps<"/[lang]/admin
     };
   });
 
+  // Event gate: current mode, the tags it can point at, and enough context to
+  // see the effect of a change before making it.
+  const [eventAccess, labelRows, eventCount, eventPerk] = await Promise.all([
+    getEventAccess(),
+    db.label.findMany({
+      orderBy: { sortOrder: "asc" },
+      select: { id: true, nameEn: true, nameKa: true, _count: { select: { users: true } } },
+    }),
+    db.post.count({ where: { kind: "EVENT" } }),
+    db.feature.findUnique({
+      where: { key: EVENT_PERK_KEY },
+      select: {
+        packages: {
+          where: { included: true, package: { isActive: true } },
+          select: { package: { select: { nameEn: true, nameKa: true } } },
+        },
+      },
+    }),
+  ]);
+  const eventLabels: EventLabelOption[] = labelRows.map((l) => ({
+    id: l.id,
+    name: lang === "ka" ? l.nameKa : l.nameEn,
+    holders: l._count.users,
+  }));
+  // How many members the current gate actually lets through — staff always,
+  // plus whoever the mode admits.
+  const staffWhere: Prisma.UserWhereInput = { role: { in: ["ADMIN", "MODERATOR"] } };
+  const eligible = await db.user.count({
+    where: {
+      status: "ACTIVE",
+      OR: [
+        staffWhere,
+        eventAccess.mode === "all"
+          ? {}
+          : eventAccess.mode === "verified"
+            ? { emailVerified: true }
+            : eventAccess.mode === "label"
+              ? eventAccess.labelId
+                ? { labels: { some: { id: eventAccess.labelId } } }
+                : { id: "" }
+              : eventAccess.mode === "perk"
+                ? { OR: [{ isPro: true }, { packages: { some: { package: { features: { some: { included: true, feature: { key: EVENT_PERK_KEY } } } } } } }] }
+                : { id: "" },
+      ],
+    },
+  });
+
   return (
     <>
+      <EventAccessAdmin
+        dict={dict}
+        access={eventAccess}
+        labels={eventLabels}
+        perkPackages={eventPerk ? eventPerk.packages.map((p) => (lang === "ka" ? p.package.nameKa : p.package.nameEn)) : []}
+        eventCount={eventCount}
+        eligible={eligible}
+      />
       <PostingAccessAdmin dict={dict} rows={postingRows} access={access} />
       <PackageAdmin locale={lang} dict={dict} packages={packages} features={features} />
     </>

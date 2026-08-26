@@ -23,6 +23,8 @@ import { PostModBar } from "@/components/PostModBar";
 import { ReplySort, type ReplySortKey } from "@/components/ReplySort";
 import { SummarizeButton } from "@/components/SummarizeButton";
 import { ReportButton } from "@/components/ReportButton";
+import { EventMeta } from "@/components/events/EventMeta";
+import { RsvpButtons } from "@/components/events/RsvpButtons";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +42,8 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
   const data = await getPostView(slug, viewer, sort, lang);
   if (!data) notFound();
 
-  const { post, canModerate, canReveal, postMyVote, replyCount, roots } = data;
+  const { post, canModerate, canReveal, postMyVote, replyCount, roots, rsvp } = data;
+  const isEvent = post.kind === "EVENT" && !!post.eventStartsAt;
   const postAuthor = resolveAuthor(
     lang,
     {
@@ -92,10 +95,32 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
           </div>
 
           <h1 className="post-title" style={{ fontSize: 26, marginBottom: 16 }}>
+            {isEvent && <span className="event-kind-tag">🗓 {dict.events.tag}</span>}
             {post.title}
           </h1>
 
+          {isEvent && (
+            <EventMeta
+              startsAt={post.eventStartsAt!}
+              endsAt={post.eventEndsAt}
+              location={post.eventLocation}
+              url={post.eventUrl}
+              locale={lang}
+              dict={dict}
+            />
+          )}
+
           <div className="prose" dangerouslySetInnerHTML={{ __html: html }} />
+
+          {isEvent && (
+            <RsvpButtons
+              postId={post.id}
+              initial={rsvp}
+              canRsvp={!!user}
+              loginHref={loginHref}
+              dict={dict}
+            />
+          )}
 
           {aiAccess && <SummarizeButton postId={post.id} dict={dict} />}
 
@@ -119,7 +144,7 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
             <ShareMenu title={post.title} dict={dict} />
             {canEdit && (
               <Link href={`/${lang}/p/${post.slug}/edit`} className="action">
-                ✎ {dict.post.edit}
+                ✎ {isEvent ? dict.events.editShort : dict.post.edit}
               </Link>
             )}
             {user && post.anonAlias == null && post.authorId !== user.id && (

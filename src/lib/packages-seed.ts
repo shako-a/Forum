@@ -161,6 +161,13 @@ const FEATURE_ADDITIONS: Array<{
     feature: { key: "auto", nameEn: "Post auto-market listings", nameKa: "ავტო-მარკეტზე განცხადების განთავსება" },
     addTo: [],
   },
+  // Events are gated by lib/event-access.ts, which starts at "verified".
+  // The perk exists so an admin can switch the gate to "perk" and have a
+  // package to attach it to — hence attached to nothing by default.
+  {
+    feature: { key: "events", nameEn: "Create community events", nameKa: "საზოგადოებრივი ღონისძიებების შექმნა" },
+    addTo: [],
+  },
 ];
 
 export async function ensureFeatureAdditions(): Promise<void> {

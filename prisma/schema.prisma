@@ -143,6 +143,7 @@ model User {
   packages      UserPackage[]
   authTokens    AuthToken[]
   auditEntries  AuditLog[]     @relation("AuditActor")
+  eventRsvps    EventRsvp[]
 
   // Email confirmation. New signups start false and get a verification email;
   // access is not blocked (soft nudge — a dismissible banner). Existing accounts
@@ -189,10 +190,30 @@ model Category {
 // Posts
 // ---------------------------------------------------------------------------
 
+// Discussions and Events share one table: an Event *is* a Post, so replies,
+// votes, saves, reports, moderation, anonymous posting and business authorship
+// all work on it unchanged. The event-only columns are null on a discussion.
+enum PostKind {
+  DISCUSSION
+  EVENT
+}
+
 model Post {
-  id    String @id @default(cuid())
-  slug  String @unique
+  id    String   @id @default(cuid())
+  slug  String   @unique
   title String
+  kind  PostKind @default(DISCUSSION)
+
+  // --- Events only (null on discussions) ---------------------------------
+  // Times are stored as the wall-clock the organiser typed, normalised to UTC
+  // and always rendered in UTC. An event happens at a place, so "19:00" means
+  // 19:00 at that venue for everyone reading — no silent per-viewer shifting.
+  eventStartsAt DateTime?
+  eventEndsAt   DateTime? // optional: open-ended events just have a start
+  eventLocation String? // free text: venue, address or "online"
+  eventUrl      String? // optional tickets / registration / meeting link
+
+  rsvps EventRsvp[]
 
   // Rich text body stored as JSON (editor document) so it can hold media,
   // links, lists, quotes, etc.
@@ -251,6 +272,7 @@ model Post {
   @@index([categoryId, lastActivity])
   @@index([hidden])
   @@index([featuredInBar])
+  @@index([kind, eventStartsAt])
 }
 
 // ---------------------------------------------------------------------------
@@ -388,6 +410,30 @@ model Label {
 // ---------------------------------------------------------------------------
 
 // Saved/bookmarked posts (per user).
+// One row per member per event. Three states rather than a boolean so
+// "interested" is distinguishable from "not going" and from no answer at all.
+enum RsvpStatus {
+  GOING
+  INTERESTED
+  NOT_GOING
+}
+
+model EventRsvp {
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  status RsvpStatus
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([postId, userId])
+  @@index([postId, status])
+  @@index([userId, createdAt])
+}
+
 model SavedPost {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
@@ -1025,6 +1071,13 @@ model SiteSetting {
   postingMarket String @default("all")
   postingAuto   String @default("all")
   postingJobs   String @default("all")
+
+  // Who may create Events. Starts at "verified" (a confirmed email address);
+  // an admin can widen it to every member, narrow it to staff, or tie it to a
+  // tag or a paid perk — see lib/event-access.ts. eventsLabelId names the tag
+  // when the mode is "label".
+  eventsMode    String  @default("verified")
+  eventsLabelId String?
 
   updatedAt DateTime @updatedAt
 }
