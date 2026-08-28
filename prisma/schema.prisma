@@ -196,6 +196,11 @@ model Category {
 enum PostKind {
   DISCUSSION
   EVENT
+  // The Q&A thread behind a job listing. It is a Post so questions reuse the
+  // whole reply system — nesting, votes, anonymous authors, moderation,
+  // reports, notifications — but it belongs to the job page, so it is kept out
+  // of the feed, search and the popular bar (see lib/post-kinds.ts).
+  JOB
 }
 
 model Post {
@@ -214,6 +219,9 @@ model Post {
   eventUrl      String? // optional tickets / registration / meeting link
 
   rsvps EventRsvp[]
+
+  // Set when kind = JOB: the listing this thread answers questions for.
+  jobListing JobPosting? @relation("JobDiscussion")
 
   // Rich text body stored as JSON (editor document) so it can hold media,
   // links, lists, quotes, etc.
@@ -554,6 +562,11 @@ model JobPosting {
   city         String?
   state        String?
   active       Boolean @default(true)
+
+  // The Q&A thread for this listing, created the first time its page is
+  // opened. Nullable so the jobs that existed before Q&A shipped stay valid.
+  discussion   Post?   @relation("JobDiscussion", fields: [discussionId], references: [id], onDelete: SetNull)
+  discussionId String? @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

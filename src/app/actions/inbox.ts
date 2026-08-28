@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
+import { FEED_KIND_FILTER } from "@/lib/post-kinds";
 import { getCurrentUser, authorize } from "@/lib/dal";
 import { isBlockedBetween } from "@/lib/inbox-data";
 import { pmPlainText } from "@/lib/prosemirror";
@@ -54,7 +55,7 @@ export async function searchPosts(query: string) {
   const q = query.trim();
   if (q.length < 2) return [];
   const posts = await db.post.findMany({
-    where: { hidden: false, title: { contains: q, mode: "insensitive" } },
+    where: { hidden: false, ...FEED_KIND_FILTER, title: { contains: q, mode: "insensitive" } },
     orderBy: { lastActivity: "desc" },
     take: 8,
     select: { id: true, slug: true, title: true, category: { select: { slug: true } } },
@@ -74,7 +75,7 @@ export async function sendMessage(_state: FormState, formData: FormData): Promis
   // Validate the referenced post exists (and isn't hidden).
   let validPostId: string | null = null;
   if (postId) {
-    const p = await db.post.findFirst({ where: { id: postId, hidden: false }, select: { id: true } });
+    const p = await db.post.findFirst({ where: { id: postId, hidden: false, ...FEED_KIND_FILTER }, select: { id: true } });
     validPostId = p?.id ?? null;
   }
 

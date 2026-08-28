@@ -3,6 +3,7 @@ import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { requireRole, getSiteSettings } from "@/lib/dal";
 import { db } from "@/lib/db";
+import { FEED_KIND_FILTER } from "@/lib/post-kinds";
 import { PopularAdmin, type BarPost } from "@/components/admin/PopularAdmin";
 
 export const dynamic = "force-dynamic";
@@ -45,9 +46,9 @@ export default async function AdminPopularPage({ params }: PageProps<"/[lang]/ad
 
   const { popularBarSize } = await getSiteSettings();
   const [mostVoted, mostCommented, pinnedCount] = await Promise.all([
-    db.post.findMany({ where: { hidden: false }, orderBy: { score: "desc" }, take: popularBarSize, select: POST_PICK }),
+    db.post.findMany({ where: { hidden: false, ...FEED_KIND_FILTER }, orderBy: { score: "desc" }, take: popularBarSize, select: POST_PICK }),
     db.post.findMany({
-      where: { hidden: false },
+      where: { hidden: false, ...FEED_KIND_FILTER },
       orderBy: { replies: { _count: "desc" } },
       take: popularBarSize,
       select: POST_PICK,

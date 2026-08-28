@@ -6,10 +6,12 @@ import { getCurrentUser } from "@/lib/dal";
 import { toHeaderUser } from "@/lib/header-user";
 import { db } from "@/lib/db";
 import { getJobsBoard } from "@/lib/business-data";
+import { jobQuestionCounts } from "@/lib/job-discussion";
 import { businessCategoryIcon } from "@/lib/business-categories";
 import { timeAgo } from "@/lib/format";
 import { jobTypeLabel } from "@/lib/jobs";
 import { canPostIn } from "@/lib/posting-access";
+import { ClickableCard } from "@/components/ClickableCard";
 import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
 
@@ -25,7 +27,10 @@ export default async function JobsBoardPage({ params }: PageProps<"/[lang]/jobs"
     getJobsBoard(),
   ]);
   const t = dict.business;
-  const canPost = await canPostIn("jobs", user);
+  const [canPost, questions] = await Promise.all([
+    canPostIn("jobs", user),
+    jobQuestionCounts(jobs.map((j) => j.id)),
+  ]);
 
   return (
     <>
@@ -50,11 +55,13 @@ export default async function JobsBoardPage({ params }: PageProps<"/[lang]/jobs"
             </div>
           ) : (
             jobs.map((j) => (
-              <article key={j.id} className="card card-pad biz-job-board-item">
+              <ClickableCard key={j.id} href={`/${lang}/jobs/${j.id}`} className="card card-pad biz-job-board-item">
                 <div className="biz-job-board-head">
                   <span className="biz-job-board-logo" aria-hidden="true">{j.business ? businessCategoryIcon(j.business.category) : "👤"}</span>
                   <div>
-                    <h3 className="biz-job-title">{j.title}</h3>
+                    <h3 className="biz-job-title">
+                      <Link href={`/${lang}/jobs/${j.id}`}>{j.title}</Link>
+                    </h3>
                     {j.business ? (
                       <Link href={`/${lang}/business/${j.business.slug}`} className="biz-job-company">
                         {j.business.name}{j.business.verified && <span className="biz-verified">✓</span>}
@@ -76,7 +83,7 @@ export default async function JobsBoardPage({ params }: PageProps<"/[lang]/jobs"
                     {j.pay && <span className="mk-tag">💵 {j.pay}</span>}
                   </div>
                 )}
-                <p className="biz-job-desc">{j.description}</p>
+                <p className="biz-job-desc biz-job-desc-clamp">{j.description}</p>
                 {(j.city || j.state) && (
                   <p className="biz-job-loc">📍 {[j.city, j.state].filter(Boolean).join(", ")}</p>
                 )}
@@ -87,7 +94,15 @@ export default async function JobsBoardPage({ params }: PageProps<"/[lang]/jobs"
                     {j.contactPhone && <a href={`tel:${j.contactPhone}`}>📞 {j.contactPhone}</a>}
                   </p>
                 )}
-              </article>
+                <div className="job-card-foot">
+                  <Link href={`/${lang}/jobs/${j.id}`} className="action">
+                    📄 {t.jobViewDetails}
+                  </Link>
+                  <Link href={`/${lang}/jobs/${j.id}#questions`} className="action">
+                    💬 {t.jobQuestionsCount.replace("{n}", String(questions.get(j.id) ?? 0))}
+                  </Link>
+                </div>
+              </ClickableCard>
             ))
           )}
         </main>

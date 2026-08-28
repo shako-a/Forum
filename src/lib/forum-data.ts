@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { countVisitsAllTime } from "@/lib/visitors";
 import { pmToHtml, pmPlainText, pmFirstImage } from "@/lib/prosemirror";
 import { canModerateCategory, canRevealAnonymous, getSiteSettings } from "@/lib/dal";
+import { FEED_KIND_FILTER } from "@/lib/post-kinds";
 import { resolveAuthor, type DisplayAuthor } from "@/lib/anon";
 import type { Locale } from "@/i18n/config";
 import { Prisma, type Role, type RsvpStatus } from "@/generated/prisma/client";
@@ -37,7 +38,7 @@ export async function getHomeData(viewer: { id: string } | null, sort: FeedSort 
     const [categories, posts, topAds, sidebarAds] = await Promise.all([
       db.category.findMany({ orderBy: { sortOrder: "asc" } }),
       db.post.findMany({
-        where: { hidden: false },
+        where: { hidden: false, ...FEED_KIND_FILTER },
         orderBy: feedOrderBy(sort),
         take: 20,
         include: {
@@ -72,7 +73,7 @@ export async function getHomeData(viewer: { id: string } | null, sort: FeedSort 
     // admin-configurable. Locked-category topics are marked `gated` for guests.
     const { popularBarSize } = await getSiteSettings();
     const featured = await db.post.findMany({
-      where: { featuredInBar: true, hidden: false },
+      where: { featuredInBar: true, hidden: false, ...FEED_KIND_FILTER },
       orderBy: { score: "desc" },
       take: popularBarSize,
       include: { category: true, _count: { select: { replies: true } } },
@@ -127,7 +128,7 @@ export async function getFeedPage(viewer: { id: string } | null, sort: "popular"
     const [categories, found, sidebarAds] = await Promise.all([
       db.category.findMany({ orderBy: { sortOrder: "asc" } }),
       db.post.findMany({
-        where: { hidden: false, ...(viewer ? {} : { category: { locked: false } }) },
+        where: { hidden: false, ...FEED_KIND_FILTER, ...(viewer ? {} : { category: { locked: false } }) },
         orderBy:
           sort === "popular"
             ? [{ score: "desc" }, { replies: { _count: "desc" } }, { lastActivity: "desc" }]
@@ -162,7 +163,7 @@ export async function getForumStats() {
     const onlineSince = new Date(Date.now() - 5 * 60 * 1000);
     const [members, topics, online, visitors] = await Promise.all([
       db.user.count(),
-      db.post.count(),
+      db.post.count({ where: FEED_KIND_FILTER }),
       db.user.count({ where: { lastSeenAt: { gte: onlineSince } } }),
       countVisitsAllTime(),
     ]);
@@ -196,7 +197,7 @@ const POST_CARD_INCLUDE = {
 export async function getBusinessPosts(businessId: string, viewerId: string | null) {
   try {
     const found = await db.post.findMany({
-      where: { authorBusinessId: businessId, hidden: false },
+      where: { authorBusinessId: businessId, hidden: false, ...FEED_KIND_FILTER },
       orderBy: { lastActivity: "desc" },
       take: 50,
       include: POST_CARD_INCLUDE,
@@ -248,7 +249,7 @@ export async function getCategoryPage(slug: string, viewer: { id: string } | nul
   }
 
   const found = await db.post.findMany({
-    where: { categoryId: category.id, hidden: false },
+    where: { categoryId: category.id, hidden: false, ...FEED_KIND_FILTER },
     orderBy: { lastActivity: "desc" },
     take: 50,
     include: POST_CARD_INCLUDE,
@@ -289,7 +290,7 @@ export async function getUserProfile(forumName: string, viewer: { id: string } |
   // total (including locked-category posts). The list, however, still hides
   // locked-category posts from guests — so the count can exceed the list, in
   // which case we flag it and the page shows a "members-only" note.
-  const publicWhere = { authorId: profile.id, hidden: false, anonAlias: null };
+  const publicWhere = { authorId: profile.id, hidden: false, anonAlias: null, ...FEED_KIND_FILTER };
   const listWhere = viewer ? publicWhere : { ...publicWhere, category: { locked: false } };
 
   const [found, postCount, listCount, anonCount] = await Promise.all([
@@ -302,7 +303,7 @@ export async function getUserProfile(forumName: string, viewer: { id: string } |
     db.post.count({ where: publicWhere }),
     db.post.count({ where: listWhere }),
     // Anonymous post count — for admins/owner only (kept out of the public total).
-    db.post.count({ where: { authorId: profile.id, hidden: false, anonAlias: { not: null } } }),
+    db.post.count({ where: { authorId: profile.id, hidden: false, anonAlias: { not: null }, ...FEED_KIND_FILTER } }),
   ]);
 
   const posts = await attachSaved(await attachMyVotes(found, viewer?.id ?? null), viewer?.id ?? null);
@@ -319,12 +320,12 @@ export async function getCategoriesIndex(viewerIsAuthed: boolean) {
       orderBy: { sortOrder: "asc" },
       include: {
         posts: {
-          where: { hidden: false },
+          where: { hidden: false, ...FEED_KIND_FILTER },
           orderBy: { lastActivity: "desc" },
           take: 3,
           select: { id: true, slug: true, title: true, lastActivity: true },
         },
-        _count: { select: { posts: true } },
+        _count: { select: { posts: { where: FEED_KIND_FILTER } } },
       },
     });
 

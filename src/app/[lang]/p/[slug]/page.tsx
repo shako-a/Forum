@@ -5,6 +5,7 @@ import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { getCurrentUser } from "@/lib/dal";
 import { hasAiAccess } from "@/lib/perks";
+import { db } from "@/lib/db";
 import { getPostView } from "@/lib/forum-data";
 import { startConversation } from "@/app/actions/inbox";
 import { resolveAuthor, aliasOptions } from "@/lib/anon";
@@ -43,6 +44,15 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
   if (!data) notFound();
 
   const { post, canModerate, canReveal, postMyVote, replyCount, roots, rsvp } = data;
+
+  // A JOB thread has no page of its own: it is the Q&A section of a job
+  // listing. Notification and mention links point here, so redirect rather
+  // than 404 — the reader still lands on the conversation they were sent to.
+  if (post.kind === "JOB") {
+    const job = await db.jobPosting.findFirst({ where: { discussionId: post.id }, select: { id: true } });
+    redirect(job ? `/${lang}/jobs/${job.id}` : `/${lang}/jobs`);
+  }
+
   const isEvent = post.kind === "EVENT" && !!post.eventStartsAt;
   const postAuthor = resolveAuthor(
     lang,

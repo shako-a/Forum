@@ -7209,3 +7209,89 @@ a.mk-tag:hover {
 .card-clickable {
   cursor: pointer;
 }
+
+/* ---------- Job detail + board cards ---------- */
+.job-back {
+  display: inline-block;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+.job-detail-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.3;
+  margin-bottom: 2px;
+}
+.job-detail-tags {
+  margin: 12px 0 4px;
+}
+.job-section-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  margin: 18px 0 8px;
+}
+/* Descriptions are plain text; keep the poster's line breaks. */
+.job-detail-desc {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+.job-contacts {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.job-detail-actions {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.job-closed-note {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--amber);
+  background: color-mix(in srgb, var(--amber-fill) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--amber) 40%, var(--line));
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 14px;
+}
+.job-qa {
+  margin-top: 24px;
+  scroll-margin-top: 80px;
+}
+.job-qa-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+/* Board cards: two lines of description, the rest is behind the click. */
+.biz-job-desc-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.job-card-foot {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+.biz-job-title a {
+  color: inherit;
+  text-decoration: none;
+}
+.biz-job-title a:hover {
+  text-decoration: underline;
+}

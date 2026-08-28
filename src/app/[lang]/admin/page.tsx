@@ -4,6 +4,7 @@ import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { getCurrentUser, getSiteSettings } from "@/lib/dal";
 import { db } from "@/lib/db";
+import { FEED_KIND_FILTER } from "@/lib/post-kinds";
 import { countVisitors, countVisitorsToday, countVisitsAllTime, getVisitorBaseline, VISITOR_WINDOW_DAYS } from "@/lib/visitors";
 import { VisitorBaselineForm } from "@/components/admin/VisitorBaselineForm";
 
@@ -41,8 +42,8 @@ export default async function AdminDashboard({ params }: PageProps<"/[lang]/admi
   const [users, categories, posts, hidden, ads, pinned, online, visitors30, visitorsToday, visitsAllTime, baseline, events24h, warnings7d] = await Promise.all([
     safeCount(() => db.user.count()),
     safeCount(() => db.category.count()),
-    safeCount(() => db.post.count()),
-    safeCount(() => db.post.count({ where: { hidden: true } })),
+    safeCount(() => db.post.count({ where: FEED_KIND_FILTER })),
+    safeCount(() => db.post.count({ where: { hidden: true, ...FEED_KIND_FILTER } })),
     safeCount(() => db.adCard.count()),
     safeCount(() => db.post.count({ where: { featuredInBar: true, hidden: false } })),
     safeCount(() => db.user.count({ where: { lastSeenAt: { gte: new Date(Date.now() - 5 * 60 * 1000) } } })),

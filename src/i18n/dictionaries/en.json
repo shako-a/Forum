@@ -377,7 +377,17 @@
     "jobContactHint": "At least one contact is required so people can apply.",
     "jobActive": "Job is open (shown on the board)",
     "jobPostedBy": "posted by",
-    "jobsNotInPlanSub": "Posting jobs is part of the paid plans."
+    "jobsNotInPlanSub": "Posting jobs is part of the paid plans.",
+    "jobAbout": "About this role",
+    "jobHowToApply": "How to apply",
+    "jobApplyByEmail": "Apply by email",
+    "jobViewDetails": "Full description",
+    "jobQuestions": "Questions & answers",
+    "jobQuestionsSub": "Ask the employer anything about this role — pay, hours, requirements. Answers are public, so the next applicant benefits too.",
+    "jobQuestionsCount": "{n} questions",
+    "jobAskLogin": "Log in to ask a question",
+    "jobQuestionsUnavailable": "Questions aren't available on this listing.",
+    "jobClosed": "This listing is closed. Only you and the team can still see it."
   },
   "estate": {
     "directory": "Real estate",
