@@ -10,6 +10,7 @@ import { Vote } from "@/components/Vote";
 import { SaveButton } from "@/components/SaveButton";
 import { DeletePostButton } from "@/components/DeletePostButton";
 import { AuthorTag } from "@/components/AuthorTag";
+import { ClickableCard } from "@/components/ClickableCard";
 import { eventTiming, formatEventRange } from "@/lib/events";
 import type { PostKind } from "@/generated/prisma/client";
 
@@ -70,8 +71,10 @@ function PostCard({
   const isEvent = post.kind === "EVENT" && !!post.eventStartsAt;
   const timing = isEvent ? eventTiming(post.eventStartsAt!, post.eventEndsAt) : null;
 
+  const href = `/${locale}/p/${post.slug}`;
+
   return (
-    <article className={isEvent ? `post post-event post-event-${timing}` : "post"}>
+    <ClickableCard href={href} className={isEvent ? `post post-event post-event-${timing}` : "post"}>
       <div className="post-body">
         <div className="post-meta">
           {isEvent && (
@@ -163,7 +166,7 @@ function PostCard({
           )}
         </div>
       </div>
-    </article>
+    </ClickableCard>
   );
 }
 

@@ -14,6 +14,7 @@ import { resolveAuthor } from "@/lib/anon";
 import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { AuthorTag } from "@/components/AuthorTag";
+import { ClickableCard } from "@/components/ClickableCard";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 
@@ -169,7 +170,7 @@ function EventCard({ locale, dict, event }: { locale: Locale; dict: Dictionary; 
   });
 
   return (
-    <article className={`event-card event-card-${timing}`}>
+    <ClickableCard href={`/${locale}/p/${event.slug}`} className={`event-card event-card-${timing}`}>
       {/* Decorative: the title next to it is the link, so this stays out of
           the tab order rather than being a second route to the same page. */}
       <div className={`event-date-badge event-date-${timing}`} aria-hidden="true">
@@ -200,6 +201,6 @@ function EventCard({ locale, dict, event }: { locale: Locale; dict: Dictionary; 
           💬 {event.replies} {dict.home.comments}
         </div>
       </div>
-    </article>
+    </ClickableCard>
   );
 }

@@ -7202,3 +7202,10 @@ a.mk-tag:hover {
     font-size: 20px;
   }
 }
+
+/* Whole-card click target (see components/ClickableCard.tsx). The pointer is
+   the only affordance the wrapper adds — the title inside is still the real
+   link, so nothing changes for keyboard or screen-reader users. */
+.card-clickable {
+  cursor: pointer;
+}
