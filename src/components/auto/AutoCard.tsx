@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Link";
 import { PhotoSlider } from "@/components/estate/PhotoSlider";
 import { AUTO_BODY_TYPES, AUTO_TRANSMISSIONS, AUTO_FUELS, autoIcon, autoLabel, formatMiles } from "@/lib/auto";
 import { formatPrice } from "@/lib/estate";

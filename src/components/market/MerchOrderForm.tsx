@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useActionState, useMemo, useState } from "react";
 import { placeMerchOrder } from "@/app/actions/merch";
 import { formatCents, MERCH_MAX_QTY } from "@/lib/merch";

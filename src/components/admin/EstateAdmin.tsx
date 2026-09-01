@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useTransition } from "react";
 import { setEstateFeatured, reorderEstateFeatured, setEstateActive, adminDeleteEstateListing } from "@/app/actions/admin-estate";
 import { propertyTypeLabel, formatPrice } from "@/lib/estate";

@@ -6,6 +6,7 @@ import { locales, isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { SITE_URL } from "@/lib/site";
+import { localeHref } from "@/lib/locale-url";
 import { Analytics } from "@/components/Analytics";
 import { ConsentBanner } from "@/components/ConsentBanner";
 import { GaEventFlash } from "@/components/GaEventFlash";
@@ -37,14 +38,17 @@ export async function generateMetadata({ params }: LayoutProps<"/[lang]">): Prom
     applicationName: dict.common.appName,
     title: { default: title, template: `%s · ${dict.common.appName}` },
     description,
+    // The default language has no URL prefix, so its canonical is "/" — see
+    // lib/locale-url.ts. Getting this wrong would have search engines index
+    // the pre-redirect /ka address instead of the one visitors share.
     alternates: {
-      canonical: `/${lang}`,
-      languages: Object.fromEntries(locales.map((l) => [l, `/${l}`])),
+      canonical: localeHref(`/${lang}`),
+      languages: Object.fromEntries(locales.map((l) => [l, localeHref(`/${l}`)])),
     },
     openGraph: {
       type: "website",
       siteName: dict.common.appName,
-      url: `/${lang}`,
+      url: localeHref(`/${lang}`),
       title,
       description,
       locale: lang === "ka" ? "ka_GE" : "en_US",

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useTransition } from "react";
 import { resolveReport, dismissReport } from "@/app/actions/inbox";
 import { adminRemoveMarketListing, adminRestoreMarketListing } from "@/app/actions/admin-market";

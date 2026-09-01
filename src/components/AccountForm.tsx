@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useActionState } from "react";
 import { updateProfile } from "@/app/actions/profile";
 import { StateSelect } from "@/components/StateSelect";

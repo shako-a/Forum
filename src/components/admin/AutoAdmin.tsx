@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useTransition } from "react";
 import { setAutoFeatured, reorderAutoFeatured, adminRemoveAutoListing, adminRestoreAutoListing, adminDeleteAutoListing } from "@/app/actions/admin-auto";
 import { formatPrice } from "@/lib/estate";

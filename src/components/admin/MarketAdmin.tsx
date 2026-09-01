@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useTransition } from "react";
 import { adminRemoveMarketListing, adminRestoreMarketListing, adminDeleteMarketListing } from "@/app/actions/admin-market";
 import { MARKET_CATEGORIES, labelOf } from "@/lib/market";

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { setAutoStatus, deleteAutoListing } from "@/app/actions/auto";

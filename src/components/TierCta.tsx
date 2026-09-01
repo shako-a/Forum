@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { track } from "@/lib/track";
 
 // The tier card's call-to-action. A thin client wrapper so clicking it can log a

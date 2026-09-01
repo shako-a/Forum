@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useActionState, useState } from "react";
 import { createPackage, updatePackage } from "@/app/actions/admin-packages";
 import { formatPrice } from "@/lib/tiers";

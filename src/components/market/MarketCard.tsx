@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Link";
 import { PhotoSlider } from "@/components/estate/PhotoSlider";
 import { FavoriteButton } from "@/components/market/FavoriteButton";
 import { MARKET_CATEGORIES, MARKET_CONDITIONS, iconOf, labelOf } from "@/lib/market";

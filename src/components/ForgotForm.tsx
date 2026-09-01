@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useActionState } from "react";
 import { requestPasswordReset } from "@/app/actions/account-recovery";
 import { AuthBrand } from "@/components/AuthBrand";

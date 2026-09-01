@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Link";
 import { notFound } from "next/navigation";
 import { toHeaderUser } from "@/lib/header-user";
 import { isLocale } from "@/i18n/config";

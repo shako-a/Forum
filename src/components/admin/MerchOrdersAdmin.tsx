@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useState, useTransition } from "react";
 import { setMerchOrderStatus, setMerchOrderNote } from "@/app/actions/admin-merch";
 import { MERCH_ORDER_FLOW, MERCH_ORDER_STATUSES, orderStatusLabel, type MerchOrderStatus } from "@/lib/merch";

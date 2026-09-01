@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Link";
 import type { AuditLog } from "@/generated/prisma/client";
 import { IdCell } from "@/components/admin/IdCell";
 import { auditQuery, auditTargetHref, type AuditFilters } from "@/lib/audit-query";

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useActionState, useState } from "react";
 import { reportPropertyListing } from "@/app/actions/estate";
 import { ESTATE_REPORT_REASONS } from "@/lib/estate";

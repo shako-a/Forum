@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
-import { locales, defaultLocale, isLocale } from "@/i18n/config";
+import { defaultLocale, isLocale } from "@/i18n/config";
 
 const LOCALE_COOKIE = "NEXT_LOCALE";
 const SESSION_COOKIE = "session";
@@ -9,6 +9,7 @@ const SESSION_COOKIE = "session";
 // The forum is publicly readable: guests can browse feeds, categories, threads,
 // profiles and the /more pages. Only the sections below require a login — these
 // are the first path segment after the locale, e.g. /ka/create -> "create".
+// (Clean URLs are resolved to that internal form before this runs.)
 // Everything else is open; locked/hidden content is already filtered out of the
 // read queries when there's no viewer, so guests never see private sections.
 //
@@ -43,6 +44,12 @@ function isMetadataImage(segments: string[]): boolean {
   return last.startsWith("opengraph-image") || last.startsWith("twitter-image");
 }
 
+// A path as visitors see it: the default language carries no prefix.
+function visiblePath(locale: string, rest: string): string {
+  if (locale === defaultLocale) return rest || "/";
+  return rest === "/" ? `/${locale}` : `/${locale}${rest}`;
+}
+
 // Honor the visitor's saved choice (NEXT_LOCALE cookie); otherwise default to
 // Georgian. We intentionally don't sniff Accept-Language — this is a Georgian
 // community, so new visitors start in ka and can switch (the choice sticks).
@@ -67,52 +74,70 @@ async function hasValidSession(request: NextRequest): Promise<boolean> {
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const first = pathname.split("/")[1] ?? "";
 
-  // Is a supported locale already present at the start of the path?
-  const hasLocale = locales.some(
-    (locale) => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`),
-  );
+  const preferred = negotiateLocale(request);
+  // Share-card images are assets, not pages: they're fetched by Facebook, X,
+  // Slack and Telegram with no cookies, and several of those scrapers won't
+  // follow a redirect on an og:image URL — the preview just comes out blank.
+  // So a prefixed one is served exactly as asked; an unprefixed one still gets
+  // rewritten onto the tree below, like any other path.
+  const isCard = isMetadataImage(pathname.split("/"));
 
-  if (hasLocale) {
-    const segments = pathname.split("/"); // ["", locale, sub, ...]
-    const locale = segments[1];
+  if (isLocale(first)) {
+    if (isCard) return NextResponse.next();
+    const rest = pathname.slice(first.length + 1) || "/"; // "/business", or "/"
 
-    // Share-card images are assets, not pages: they're fetched by Facebook,
-    // X, Slack and Telegram with no cookies, and several of those scrapers
-    // won't follow a redirect on an og:image URL — the preview just comes out
-    // blank. Serve the locale that was asked for and skip the negotiation.
-    if (isMetadataImage(segments)) return NextResponse.next();
-
-    // Enforce the language preference: visitors who haven't explicitly chosen a
-    // language (no NEXT_LOCALE cookie) always get the default (ka), even when
-    // they land on an /en link from history/autocomplete. Explicit choices
-    // (the switcher sets the cookie) are honored.
-    const preferred = negotiateLocale(request);
-    if (locale !== preferred) {
+    // Georgian is the default language, so it has no prefix: /ka/business is
+    // the old form of /business. Redirect permanently rather than serving both,
+    // so there is one address per page for links, history and search engines.
+    // Anything still emitting /ka/… (a plain <a>, a form action, a server
+    // redirect) lands on the right page through here.
+    if (first === defaultLocale) {
       const url = request.nextUrl.clone();
-      url.pathname = `/${preferred}${pathname.slice(locale.length + 1)}`;
+      url.pathname = rest;
+      return NextResponse.redirect(url, 308);
+    }
+
+    // Enforce the language preference: visitors who haven't explicitly chosen
+    // a language always get the default, even when they land on an /en link
+    // from history or autocomplete. Explicit choices (the switcher sets the
+    // cookie) are honored.
+    if (first !== preferred) {
+      const url = request.nextUrl.clone();
+      url.pathname = visiblePath(preferred, rest);
       return NextResponse.redirect(url);
     }
 
-    // Public by default; only the gated sections bounce guests to login.
-    if (requiresLogin(segments) && !(await hasValidSession(request))) {
+    if (requiresLogin(pathname.split("/")) && !(await hasValidSession(request))) {
       const url = request.nextUrl.clone();
-      url.pathname = `/${locale}/login`;
+      url.pathname = visiblePath(first, "/login");
       url.search = `?next=${encodeURIComponent(pathname)}`;
       return NextResponse.redirect(url);
     }
     return NextResponse.next();
   }
 
-  // Redirect e.g. /categories -> /ka/categories (the locale'd path then runs
-  // through this middleware again, where the auth gate applies).
-  const locale = negotiateLocale(request);
-  const url = request.nextUrl.clone();
-  url.pathname = `/${locale}${pathname === "/" ? "" : pathname}`;
+  // No prefix. A visitor who chose another language gets sent to its prefix;
+  // everyone else sees the default language at this clean URL.
+  if (preferred !== defaultLocale) {
+    const url = request.nextUrl.clone();
+    url.pathname = visiblePath(preferred, pathname);
+    return NextResponse.redirect(url);
+  }
 
-  const response = NextResponse.redirect(url);
-  response.cookies.set(LOCALE_COOKIE, locale, { path: "/", maxAge: 60 * 60 * 24 * 365 });
-  return response;
+  // The routes live under /[lang], so serve the default tree without showing
+  // it. A rewrite, not a redirect: the address bar keeps the clean URL.
+  const internal = `/${defaultLocale}${pathname === "/" ? "" : pathname}`;
+  if (requiresLogin(internal.split("/")) && !(await hasValidSession(request))) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.search = `?next=${encodeURIComponent(pathname)}`;
+    return NextResponse.redirect(url);
+  }
+  const url = request.nextUrl.clone();
+  url.pathname = internal;
+  return NextResponse.rewrite(url);
 }
 
 export const config = {

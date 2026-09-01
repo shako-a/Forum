@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useTransition } from "react";
 import { setJobActive, removeJob } from "@/app/actions/admin-business";
 import type { Dictionary } from "@/i18n/dictionaries";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Link from "next/link";
+import Link from "@/components/Link";
 import { setPopularBarSize, setFeaturedInBar } from "@/app/actions/admin-popular";
 import { categoryName } from "@/i18n/localize";
 import { categoryStyle } from "@/lib/category-style";

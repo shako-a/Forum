@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import Link from "@/components/Link";
 
 // Small slideable photo strip for directory cards. The image itself links to
 // the listing; the arrows/dots are overlaid siblings (never nested in the

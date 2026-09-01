@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { locales, type Locale } from "@/i18n/config";
+import { switchLocalePath } from "@/lib/locale-url";
 
 // Short labels for the compact toggle.
 const SHORT: Record<Locale, string> = { en: "EN", ka: "ქარ" };
@@ -14,10 +15,9 @@ export function LanguageSwitcher({ current }: { current: Locale }) {
 
   function switchTo(next: Locale) {
     if (next === current) return;
-    // Replace the leading /<locale> segment with the chosen one.
-    const segments = pathname.split("/");
-    segments[1] = next;
-    const target = segments.join("/") || `/${next}`;
+    // The default language has no prefix, so this is a move between visible
+    // URLs (`/business` ⇄ `/en/business`), not a segment swap.
+    const target = switchLocalePath(pathname, next);
     document.cookie = `NEXT_LOCALE=${next}; path=/; max-age=${60 * 60 * 24 * 365}`;
     startTransition(() => router.push(target));
   }

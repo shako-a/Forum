@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Link";
 import type { Locale } from "@/i18n/config";
 
 // Logo + wordmark shown at the top of auth cards.

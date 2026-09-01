@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useActionState, useState, useTransition } from "react";
 import { adminUpdateUser } from "@/app/actions/admin-users";
 import { setUserPackage } from "@/app/actions/admin-packages";

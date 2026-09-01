@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Link";
 import { PhotoSlider } from "@/components/estate/PhotoSlider";
 import { propertyTypeIcon, propertyTypeLabel, formatPrice } from "@/lib/estate";
 import { stateLabel } from "@/lib/us-states";

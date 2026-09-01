@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useActionState, useState } from "react";
 import { reportMarketListing } from "@/app/actions/market";
 import { MARKET_REPORT_REASONS } from "@/lib/market";

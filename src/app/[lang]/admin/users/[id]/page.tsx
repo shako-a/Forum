@@ -3,7 +3,7 @@ import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { requireRole } from "@/lib/dal";
 import { db } from "@/lib/db";
-import Link from "next/link";
+import Link from "@/components/Link";
 import { AdminUserEdit } from "@/components/admin/AdminUserEdit";
 import { UserUploads } from "@/components/admin/UserUploads";
 import { ActivityTable } from "@/components/admin/ActivityTable";

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Link";
 import { formatCents } from "@/lib/merch";
 import type { MerchProductCard } from "@/lib/merch-data";
 import type { Dictionary } from "@/i18n/dictionaries";

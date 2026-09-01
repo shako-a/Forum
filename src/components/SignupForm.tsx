@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useActionState } from "react";
 import { signup } from "@/app/actions/auth";
 import { AuthBrand } from "@/components/AuthBrand";

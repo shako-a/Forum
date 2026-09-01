@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Link";
 import type { DisplayAuthor } from "@/lib/anon";
 
 // Renders an author byline. Real authors link to their profile; anonymous

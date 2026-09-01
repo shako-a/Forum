@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Link";
 import { PopularScroller } from "@/components/PopularScroller";
 import { categoryName, adTitle } from "@/i18n/localize";
 import { categoryStyle } from "@/lib/category-style";

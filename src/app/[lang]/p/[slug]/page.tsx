@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { toHeaderUser } from "@/lib/header-user";
-import Link from "next/link";
+import Link from "@/components/Link";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { getCurrentUser } from "@/lib/dal";

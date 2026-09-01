@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useTransition } from "react";
 import { setMerchProductFlag } from "@/app/actions/admin-merch";
 import type { Dictionary } from "@/i18n/dictionaries";
