@@ -95,6 +95,7 @@ export default async function AdminMorePage({ params }: PageProps<"/[lang]/admin
     market: dict.market.directory,
     auto: dict.auto.directory,
     jobs: dict.business.jobsBoard,
+    business: dict.business.directory,
   };
   const postingRows: PostingAreaRow[] = POSTING_AREAS.map((area) => {
     const key = POSTING_PERK_KEY[area];

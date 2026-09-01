@@ -1080,10 +1080,13 @@ model SiteSetting {
   // "perk" = only holders of the matching perk (Pro, or a package carrying
   // the feature key — realEstate / market / auto / jobPosting). Managed from
   // Admin → pricing, so the areas can become paid without a deploy.
-  postingEstate String @default("all")
-  postingMarket String @default("all")
-  postingAuto   String @default("all")
-  postingJobs   String @default("all")
+  postingEstate   String @default("all")
+  postingMarket   String @default("all")
+  postingAuto     String @default("all")
+  postingJobs     String @default("all")
+  // The business registry uses the same modes. Default "all": any signed-in
+  // member may register one. Switch to "perk" to make it Professional-only.
+  postingBusiness String @default("all")
 
   // Who may create Events. Starts at "verified" (a confirmed email address);
   // an admin can widen it to every member, narrow it to staff, or tie it to a

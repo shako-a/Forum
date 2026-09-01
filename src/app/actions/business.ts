@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal";
 import { canManageBusiness } from "@/lib/business-manage";
-import { canRegisterBusiness } from "@/lib/perks";
+import { canPostIn } from "@/lib/posting-access";
 import { slugify } from "@/lib/slug";
 import { createNotification } from "@/lib/notify";
 import { BusinessSchema, JobSchema, ReviewSchema, zodErrors, type FormState } from "@/lib/definitions";
@@ -37,11 +37,11 @@ function parseBusiness(formData: FormData) {
   });
 }
 
-// Register a new business — Professional tier only.
+// Register a new business. Who may do so is set in Admin → More.
 export async function createBusiness(_state: FormState, formData: FormData): Promise<FormState> {
   const user = await getCurrentUser();
   if (!user) return { message: "You must be logged in." };
-  if (!canRegisterBusiness(user)) return { message: "Business accounts require the Professional tier." };
+  if (!(await canPostIn("business", user))) return { message: "Registering a business isn't included in your plan." };
 
   const parsed = parseBusiness(formData);
   if (!parsed.success) return { errors: zodErrors(parsed.error) };

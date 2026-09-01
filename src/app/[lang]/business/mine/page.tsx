@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/dal";
 import { toHeaderUser } from "@/lib/header-user";
 import { db } from "@/lib/db";
 import { getMyBusinesses, avgRating } from "@/lib/business-data";
-import { canRegisterBusiness } from "@/lib/perks";
+import { canPostIn } from "@/lib/posting-access";
 import { businessCategoryLabel } from "@/lib/business-categories";
 import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
@@ -36,7 +36,7 @@ export default async function MyBusinessesPage({ params }: PageProps<"/[lang]/bu
               <h1 className="account-title">{t.myBusinesses}</h1>
               <p className="account-sub">{t.myBusinessesSub}</p>
             </div>
-            {canRegisterBusiness(user) && (
+            {(await canPostIn("business", user)) && (
               <Link href={`/${lang}/business/new`} className="btn btn-primary">＋ {t.register}</Link>
             )}
           </div>

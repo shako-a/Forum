@@ -6,7 +6,7 @@ import { getCurrentUser } from "@/lib/dal";
 import { toHeaderUser } from "@/lib/header-user";
 import { db } from "@/lib/db";
 import { getBusinessDirectory, avgRating } from "@/lib/business-data";
-import { canRegisterBusiness } from "@/lib/perks";
+import { canPostIn } from "@/lib/posting-access";
 import {
   BUSINESS_CATEGORIES,
   businessCategoryLabel,
@@ -36,6 +36,10 @@ export default async function BusinessDirectoryPage({
     getBusinessDirectory({ q, category }),
   ]);
   const t = dict.business;
+  // Registering is open to every signed-in member (Admin → More can narrow it
+  // to perk holders). Guests don't see the button — there is nothing they
+  // could do with it.
+  const canRegister = await canPostIn("business", user);
 
   return (
     <>
@@ -48,7 +52,7 @@ export default async function BusinessDirectoryPage({
               <h1 className="account-title">{t.directory}</h1>
               <p className="account-sub">{t.directorySub}</p>
             </div>
-            {canRegisterBusiness(user) && (
+            {canRegister && (
               <Link href={`/${lang}/business/new`} className="btn btn-primary">＋ {t.register}</Link>
             )}
           </div>

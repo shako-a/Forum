@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 // admin can flip an area from "every registered member" to "perk holders
 // only" from the pricing page — no deploy, no code constant.
 
-export const POSTING_AREAS = ["estate", "market", "auto", "jobs"] as const;
+export const POSTING_AREAS = ["estate", "market", "auto", "jobs", "business"] as const;
 export type PostingArea = (typeof POSTING_AREAS)[number];
 export type PostingMode = "all" | "perk";
 export const isPostingMode = (v: unknown): v is PostingMode => v === "all" || v === "perk";
@@ -19,21 +19,28 @@ export const POSTING_PERK_KEY: Record<PostingArea, string> = {
   market: "market",
   auto: "auto",
   jobs: "jobPosting",
+  business: "business",
 };
 
 export type PostingAccess = Record<PostingArea, PostingMode>;
 
-const DEFAULTS: PostingAccess = { estate: "all", market: "all", auto: "all", jobs: "all" };
+const DEFAULTS: PostingAccess = { estate: "all", market: "all", auto: "all", jobs: "all", business: "all" };
 
 export const getPostingAccess = cache(async (): Promise<PostingAccess> => {
   try {
     const row = await db.siteSetting.findUnique({
       where: { id: "singleton" },
-      select: { postingEstate: true, postingMarket: true, postingAuto: true, postingJobs: true },
+      select: { postingEstate: true, postingMarket: true, postingAuto: true, postingJobs: true, postingBusiness: true },
     });
     if (!row) return DEFAULTS;
     const m = (v: string): PostingMode => (v === "perk" ? "perk" : "all");
-    return { estate: m(row.postingEstate), market: m(row.postingMarket), auto: m(row.postingAuto), jobs: m(row.postingJobs) };
+    return {
+      estate: m(row.postingEstate),
+      market: m(row.postingMarket),
+      auto: m(row.postingAuto),
+      jobs: m(row.postingJobs),
+      business: m(row.postingBusiness),
+    };
   } catch {
     return DEFAULTS;
   }

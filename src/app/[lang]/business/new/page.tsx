@@ -5,7 +5,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { requireUser } from "@/lib/dal";
 import { toHeaderUser } from "@/lib/header-user";
 import { db } from "@/lib/db";
-import { canRegisterBusiness } from "@/lib/perks";
+import { canPostIn } from "@/lib/posting-access";
 import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { BusinessForm } from "@/components/business/BusinessForm";
@@ -30,7 +30,7 @@ export default async function NewBusinessPage({ params }: PageProps<"/[lang]/bus
             <h1 className="account-title">{t.registerTitle}</h1>
             <p className="account-sub">{t.registerSub}</p>
           </div>
-          {canRegisterBusiness(user) ? (
+          {(await canPostIn("business", user)) ? (
             <BusinessForm locale={lang} dict={dict} mode="create" />
           ) : (
             <div className="card card-pad biz-gate">

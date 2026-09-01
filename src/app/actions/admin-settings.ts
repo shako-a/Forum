@@ -23,7 +23,7 @@ export async function setRevealAnonymousToStaff(enabled: boolean): Promise<void>
 export async function setPostingAccess(area: PostingArea, mode: PostingMode): Promise<void> {
   if (!(await authorize("ADMIN"))) return;
   if (!isPostingArea(area) || !isPostingMode(mode)) return;
-  const column = { estate: "postingEstate", market: "postingMarket", auto: "postingAuto", jobs: "postingJobs" }[area];
+  const column = { estate: "postingEstate", market: "postingMarket", auto: "postingAuto", jobs: "postingJobs", business: "postingBusiness" }[area];
   await db.siteSetting.upsert({
     where: { id: "singleton" },
     update: { [column]: mode },

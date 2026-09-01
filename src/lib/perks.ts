@@ -23,14 +23,11 @@ export function hasAiAccess(u: Viewer): boolean {
   return !!u && (u.isDonor || u.isPro || hasFeature(u, "askAi"));
 }
 
-// Registering and managing business accounts is a Professional-tier perk.
-export function canRegisterBusiness(u: Viewer): boolean {
-  return !!u && (u.isPro || hasFeature(u, "business"));
-}
-
-// Posting in the listing areas (real estate, marketplace, auto, jobs) is
-// governed by the admin-managed modes in lib/posting-access.ts (canPostIn),
-// not by fixed perk functions here.
+// Posting in the listing areas — real estate, marketplace, auto, jobs and the
+// business registry — is governed by the admin-managed modes in
+// lib/posting-access.ts (canPostIn), not by fixed perk functions here. The
+// "business" perk key still exists, so flipping that area to "perk" in
+// Admin → More restores Professional-only registration without a deploy.
 
 // Profile and feed customization: the Supporter bracket's headline perk, and
 // included in both higher tiers (paying more never gives you less).
