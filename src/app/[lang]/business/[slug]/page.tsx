@@ -14,6 +14,7 @@ import { timeAgo } from "@/lib/format";
 import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { PostList } from "@/components/PostList";
+import { Gallery } from "@/components/estate/Gallery";
 import { Stars } from "@/components/business/Stars";
 import { ReviewForm } from "@/components/business/ReviewForm";
 import { ReviewReply } from "@/components/business/ReviewReply";
@@ -76,6 +77,13 @@ export default async function BusinessProfilePage({ params }: PageProps<"/[lang]
               </Link>
             )}
           </div>
+
+          {/* Gallery — the storefront, in the owner's chosen order. */}
+          {biz.photos.length > 0 && (
+            <div className="card biz-gallery">
+              <Gallery photos={biz.photos} alt={biz.name} />
+            </div>
+          )}
 
           {/* Contact */}
           {(website || biz.email || biz.phone) && (

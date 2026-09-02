@@ -34,6 +34,7 @@ export async function getBusinessDirectory(filters: DirectoryFilters = {}) {
       tagline: true,
       category: true,
       logoUrl: true,
+      photos: true,
       city: true,
       state: true,
       verified: true,

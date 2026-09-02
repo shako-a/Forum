@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { localeHref } from "@/lib/locale-url";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal";
 import { canPostIn } from "@/lib/posting-access";
@@ -69,7 +70,7 @@ export async function createUserJob(_state: FormState, formData: FormData): Prom
   const locale = localeFrom(formData);
   revalidateJobs(locale);
   await flagGaEvent("job_posted");
-  redirect(`/${locale}/jobs/mine`);
+  redirect(localeHref(`/${locale}/jobs/mine`));
 }
 
 export async function updateUserJob(_state: FormState, formData: FormData): Promise<FormState> {

@@ -59,6 +59,7 @@ export default async function EditBusinessPage({ params }: PageProps<"/[lang]/bu
               email: biz.email ?? "",
               phone: biz.phone ?? "",
               logoUrl: biz.logoUrl ?? "",
+              photos: biz.photos,
             }}
           />
 

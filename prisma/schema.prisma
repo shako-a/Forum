@@ -471,6 +471,10 @@ model Business {
   category    String // key from the curated business-categories list
   logoUrl     String?
 
+  // Storefront gallery: ordered image URLs, photos[0] is the cover shown on the
+  // directory card. Separate from logoUrl, which stays the small square mark.
+  photos      String[]
+
   // Location — reuses the State/Country picker values (US state abbr, "US", "GE").
   city  String?
   state String

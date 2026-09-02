@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { localeHref } from "@/lib/locale-url";
 import { db } from "@/lib/db";
 import { authorize } from "@/lib/dal";
 import { slugify } from "@/lib/slug";
@@ -93,7 +94,7 @@ export async function saveMerchProduct(_state: FormState, formData: FormData): P
     });
     revalidateShop();
     const locale = String(formData.get("locale") ?? "en");
-    redirect(`/${locale}/admin/merch/${created.id}`);
+    redirect(localeHref(`/${locale}/admin/merch/${created.id}`));
   }
 
   const existing = await db.merchProduct.findUnique({
@@ -141,7 +142,7 @@ export async function deleteMerchProduct(id: string, locale: string): Promise<vo
   await db.merchProduct.delete({ where: { id } });
   await deleteUploadsByUrl(product.photos);
   revalidateShop();
-  redirect(`/${locale}/admin/merch`);
+  redirect(localeHref(`/${locale}/admin/merch`));
 }
 
 // Move an order along the pipeline (or cancel it). Cancelling returns stock;

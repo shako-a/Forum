@@ -3,6 +3,7 @@
 import bcrypt from "bcryptjs";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { localeHref } from "@/lib/locale-url";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal";
 import { issueToken, consumeToken } from "@/lib/auth-tokens";
@@ -113,7 +114,7 @@ export async function resetPassword(_state: FormState, formData: FormData): Prom
     summary: "password changed via emailed reset link",
   });
 
-  redirect(`/${locale}/login?reset=1`);
+  redirect(localeHref(`/${locale}/login?reset=1`));
 }
 
 // --- email verification ----------------------------------------------------
@@ -151,5 +152,5 @@ export async function resendVerification(formData: FormData): Promise<void> {
   if (user && !user.emailVerified) {
     await sendVerificationEmail(user.id, user.email, locale);
   }
-  redirect(`/${locale}/verify?sent=1`);
+  redirect(localeHref(`/${locale}/verify?sent=1`));
 }

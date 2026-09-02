@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { localeHref } from "@/lib/locale-url";
 import { db } from "@/lib/db";
 import { FEED_KIND_FILTER } from "@/lib/post-kinds";
 import { getCurrentUser, authorize } from "@/lib/dal";
@@ -36,7 +37,7 @@ export async function startConversation(
   // If blocked (either way), let them open an existing thread (to view history /
   // unblock) but don't start a brand-new conversation.
   if (await isBlockedBetween(user.id, other.id)) {
-    redirect(existing ? `/${locale}/inbox/${existing.id}` : `/${locale}/inbox`);
+    redirect(localeHref(existing ? `/${locale}/inbox/${existing.id}` : `/${locale}/inbox`));
   }
 
   let id = existing?.id;
@@ -47,7 +48,7 @@ export async function startConversation(
     });
     id = convo.id;
   }
-  redirect(`/${locale}/inbox/${id}${attach}`);
+  redirect(localeHref(`/${locale}/inbox/${id}${attach}`));
 }
 
 // Title search for the "attach a post" picker in the DM composer.

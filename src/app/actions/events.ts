@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { localeHref } from "@/lib/locale-url";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { Prisma, type RsvpStatus } from "@/generated/prisma/client";
@@ -58,7 +59,7 @@ function readBody(formData: FormData): { body: unknown; error?: string } {
 export async function createEvent(_state: FormState, formData: FormData): Promise<FormState> {
   const locale = localeFrom(formData);
   const user = await getCurrentUser();
-  if (!user) redirect(`/${locale}/login?next=/${locale}/events/new`);
+  if (!user) redirect(localeHref(`/${locale}/login?next=/${locale}/events/new`));
 
   // Re-checked here, not just on the page: a server action is reachable by a
   // direct POST, so the gate has to hold at the point of the write.
@@ -107,7 +108,7 @@ export async function createEvent(_state: FormState, formData: FormData): Promis
   });
 
   await flagGaEvent("event_created");
-  redirect(`/${locale}/p/${slug}`);
+  redirect(localeHref(`/${locale}/p/${slug}`));
 }
 
 export async function editEvent(_state: FormState, formData: FormData): Promise<FormState> {
@@ -157,7 +158,7 @@ export async function editEvent(_state: FormState, formData: FormData): Promise<
 
   revalidatePath(`/${locale}/p/${post.slug}`);
   revalidatePath(`/${locale}/events`);
-  redirect(`/${locale}/p/${post.slug}`);
+  redirect(localeHref(`/${locale}/p/${post.slug}`));
 }
 
 export type RsvpResult = { going: number; interested: number; notGoing: number; mine: RsvpStatus | null };

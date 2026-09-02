@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { localeHref } from "@/lib/locale-url";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal";
 import { getActingBusiness } from "@/lib/acting-as";
@@ -106,7 +107,7 @@ export async function createMarketListing(_state: FormState, formData: FormData)
   const locale = localeFrom(formData);
   revalidatePath(`/${locale}/market`, "page");
   await flagGaEvent("market_listing_created");
-  redirect(`/${locale}/market/${slug}`);
+  redirect(localeHref(`/${locale}/market/${slug}`));
 }
 
 export async function updateMarketListing(_state: FormState, formData: FormData): Promise<FormState> {
@@ -182,7 +183,7 @@ export async function deleteMarketListing(id: string, locale: string): Promise<v
   await deleteUploadsByUrl(listing.photos);
   const lang = safeLocale(locale);
   revalidatePath(`/${lang}/market`, "page");
-  redirect(`/${lang}/market/mine`);
+  redirect(localeHref(`/${lang}/market/mine`));
 }
 
 // Heart toggle. Returns the new saved state.

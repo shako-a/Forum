@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { localeHref } from "@/lib/locale-url";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal";
 import { canPostIn } from "@/lib/posting-access";
@@ -138,7 +139,7 @@ export async function createAutoListing(_state: FormState, formData: FormData): 
   const locale = localeFrom(formData);
   revalidatePath(`/${locale}/auto`, "page");
   await flagGaEvent("auto_listing_created");
-  redirect(`/${locale}/auto/${slug}`);
+  redirect(localeHref(`/${locale}/auto/${slug}`));
 }
 
 export async function updateAutoListing(_state: FormState, formData: FormData): Promise<FormState> {
@@ -180,7 +181,7 @@ export async function deleteAutoListing(id: string, locale: string): Promise<voi
   await deleteUploadsByUrl(listing.photos);
   const lang = safeLocale(locale);
   revalidatePath(`/${lang}/auto`, "page");
-  redirect(`/${lang}/auto/mine`);
+  redirect(localeHref(`/${lang}/auto/mine`));
 }
 
 export async function reportAutoListing(_state: FormState, formData: FormData): Promise<FormState> {

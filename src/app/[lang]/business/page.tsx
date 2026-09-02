@@ -15,6 +15,7 @@ import {
 import { stateLabel } from "@/lib/us-states";
 import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
+import { PhotoSlider } from "@/components/estate/PhotoSlider";
 import { Stars } from "@/components/business/Stars";
 
 export const dynamic = "force-dynamic";
@@ -75,30 +76,45 @@ export default async function BusinessDirectoryPage({
           ) : (
             <div className="biz-grid">
               {businesses.map((b) => (
-                <Link key={b.id} href={`/${lang}/business/${b.slug}`} className="biz-card">
-                  <div className="biz-card-logo" aria-hidden="true">
-                    {b.logoUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={b.logoUrl} alt="" />
-                    ) : (
-                      <span>{businessCategoryIcon(b.category)}</span>
-                    )}
-                  </div>
-                  <div className="biz-card-body">
-                    <h3 className="biz-card-name">
-                      {b.name}
-                      {b.verified && <span className="biz-verified" title={t.verified}>✓</span>}
-                      {b.featured && <span className="biz-featured">★ {t.featured}</span>}
-                    </h3>
-                    {b.tagline && <p className="biz-card-tagline">{b.tagline}</p>}
-                    <div className="biz-card-meta">
-                      <span>{businessCategoryLabel(b.category, lang)}</span>
-                      <span className="sep">·</span>
-                      <span>{[b.city, stateLabel(b.state, lang)].filter(Boolean).join(", ")}</span>
+                <div
+                  key={b.id}
+                  className={`biz-card biz-card-linked${b.photos.length > 0 ? " biz-card-cover" : ""}`}
+                >
+                  {b.photos.length > 0 && (
+                    <div className="biz-card-media">
+                      <PhotoSlider
+                        photos={b.photos}
+                        href={`/${lang}/business/${b.slug}`}
+                        alt={b.name}
+                        placeholder={businessCategoryIcon(b.category)}
+                      />
                     </div>
-                    <Stars value={avgRating(b)} count={b.ratingCount} />
-                  </div>
-                </Link>
+                  )}
+                  <Link href={`/${lang}/business/${b.slug}`} className="biz-card-main">
+                    <div className="biz-card-logo" aria-hidden="true">
+                      {b.logoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={b.logoUrl} alt="" />
+                      ) : (
+                        <span>{businessCategoryIcon(b.category)}</span>
+                      )}
+                    </div>
+                    <div className="biz-card-body">
+                      <h3 className="biz-card-name">
+                        {b.name}
+                        {b.verified && <span className="biz-verified" title={t.verified}>✓</span>}
+                        {b.featured && <span className="biz-featured">★ {t.featured}</span>}
+                      </h3>
+                      {b.tagline && <p className="biz-card-tagline">{b.tagline}</p>}
+                      <div className="biz-card-meta">
+                        <span>{businessCategoryLabel(b.category, lang)}</span>
+                        <span className="sep">·</span>
+                        <span>{[b.city, stateLabel(b.state, lang)].filter(Boolean).join(", ")}</span>
+                      </div>
+                      <Stars value={avgRating(b)} count={b.ratingCount} />
+                    </div>
+                  </Link>
+                </div>
               ))}
             </div>
           )}

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { localeHref } from "@/lib/locale-url";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal";
 import { defaultLocale, isLocale } from "@/i18n/config";
@@ -101,7 +102,7 @@ export async function placeMerchOrder(_state: FormState, formData: FormData): Pr
   const locale = localeFrom(formData);
   revalidatePath(`/${locale}/market/merch`, "layout");
   await flagGaEvent("merch_order_placed");
-  redirect(`/${locale}/market/orders/${number}`);
+  redirect(localeHref(`/${locale}/market/orders/${number}`));
 }
 
 // Buyers can cancel while the order is still NEW; stock goes back.

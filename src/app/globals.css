@@ -2997,9 +2997,33 @@ button.header-profile {
   box-shadow: var(--shadow);
   transition: box-shadow 0.15s, transform 0.15s;
 }
-a.biz-card:hover {
+.biz-card-linked:hover {
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
   transform: translateY(-1px);
+}
+/* Identity row: logo + text. Its own flex row so the card can stack a cover
+   photo above it. Without a cover, .biz-card still supplies the padding and
+   the row lays out exactly as it did when the card itself was the link. */
+.biz-card-main {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+/* With a cover, padding moves inward so the photo can go edge to edge. */
+.biz-card-cover {
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.biz-card-cover .biz-card-main {
+  padding: 14px;
+}
+/* Shallower than the 4:3 the listing grids use — a business card is mostly
+   text, so the photo is a banner rather than the main event. */
+.biz-card-media .re-slider {
+  aspect-ratio: 16 / 9;
 }
 .biz-card-logo,
 .biz-profile-logo {
@@ -3091,6 +3115,11 @@ a.biz-card:hover {
   display: flex;
   gap: 16px;
   align-items: flex-start;
+  margin-bottom: 12px;
+}
+.biz-gallery {
+  overflow: hidden;
+  padding: 0;
   margin-bottom: 12px;
 }
 .biz-profile-logo {
@@ -4017,6 +4046,15 @@ a.biz-card:hover {
 }
 .upload-field {
   flex: 0 0 auto;
+}
+.biz-logo-preview {
+  display: block;
+  margin-top: 8px;
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--line);
 }
 .ad-upload-preview {
   display: block;

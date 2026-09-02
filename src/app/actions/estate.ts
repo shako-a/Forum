@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { localeHref } from "@/lib/locale-url";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal";
 import { canPostIn } from "@/lib/posting-access";
@@ -92,7 +93,7 @@ export async function createListing(_state: FormState, formData: FormData): Prom
   const locale = String(formData.get("locale") ?? "en");
   revalidatePath(`/${locale}/realestate`, "page");
   await flagGaEvent("listing_created");
-  redirect(`/${locale}/realestate/${slug}`);
+  redirect(localeHref(`/${locale}/realestate/${slug}`));
 }
 
 // Edit a listing — owner or admin only.
@@ -157,7 +158,7 @@ export async function deleteListing(listingId: string, locale: string): Promise<
   await db.propertyListing.delete({ where: { id: listingId } });
   await deleteUploadsByUrl(listing.photos);
   revalidatePath(`/${locale}/realestate`, "page");
-  redirect(`/${locale}/realestate/mine`);
+  redirect(localeHref(`/${locale}/realestate/mine`));
 }
 
 // Report a listing to staff (scam, wrong info, discrimination, spam…).

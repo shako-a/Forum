@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { localeHref } from "@/lib/locale-url";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { Prisma } from "@/generated/prisma/client";
@@ -32,7 +33,7 @@ export async function createPost(_state: FormState, formData: FormData): Promise
 
   // Only registered, logged-in users can create a post.
   const user = await getCurrentUser();
-  if (!user) redirect(`/${locale}/login?next=/${locale}/create`);
+  if (!user) redirect(localeHref(`/${locale}/login?next=/${locale}/create`));
 
   const categoryId = String(formData.get("categoryId") ?? "");
   const title = String(formData.get("title") ?? "").trim();
@@ -82,7 +83,7 @@ export async function createPost(_state: FormState, formData: FormData): Promise
   });
 
   await flagGaEvent("post_created");
-  redirect(`/${locale}/p/${slug}`);
+  redirect(localeHref(`/${locale}/p/${slug}`));
 }
 
 // Edit a post's title, category and body. Allowed for the author, a category
@@ -134,7 +135,7 @@ export async function editPost(_state: FormState, formData: FormData): Promise<F
 
   revalidatePath(`/${locale}/p/${post.slug}`);
   revalidatePath(`/${locale}`);
-  redirect(`/${locale}/p/${post.slug}`);
+  redirect(localeHref(`/${locale}/p/${post.slug}`));
 }
 
 // Quick-post from the home composer: just typed text → a post auto-filed under

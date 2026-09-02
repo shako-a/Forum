@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { localeHref } from "@/lib/locale-url";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal";
 import { canManageBusiness } from "@/lib/business-manage";
@@ -11,6 +12,19 @@ import { createNotification } from "@/lib/notify";
 import { BusinessSchema, JobSchema, ReviewSchema, zodErrors, type FormState } from "@/lib/definitions";
 import { flagGaEvent } from "@/lib/ga-server";
 import { deleteUploadsByUrl } from "@/lib/media";
+
+const MAX_PHOTOS = 12;
+
+// The gallery arrives as ordered hidden `photos` inputs. Anything that isn't a
+// hosted https URL is dropped: the field only ever emits URLs our own uploader
+// returned, so a stray value means someone hand-edited the form.
+function parsePhotos(formData: FormData): string[] {
+  return formData
+    .getAll("photos")
+    .map(String)
+    .filter((u) => /^https:\/\//.test(u) && u.length < 500)
+    .slice(0, MAX_PHOTOS);
+}
 
 async function uniqueBusinessSlug(name: string): Promise<string> {
   const base = slugify(name) || "business";
@@ -49,13 +63,13 @@ export async function createBusiness(_state: FormState, formData: FormData): Pro
   const { name, city, ...rest } = parsed.data;
   const slug = await uniqueBusinessSlug(name);
   await db.business.create({
-    data: { ...rest, name, city: city ?? null, slug, ownerId: user.id },
+    data: { ...rest, name, city: city ?? null, slug, ownerId: user.id, photos: parsePhotos(formData) },
   });
 
   const locale = String(formData.get("locale") ?? "en");
   revalidatePath(`/${locale}/business`, "page");
   await flagGaEvent("business_created");
-  redirect(`/${locale}/business/${slug}`);
+  redirect(localeHref(`/${locale}/business/${slug}`));
 }
 
 // Edit a business — owner or admin only.
@@ -65,7 +79,7 @@ export async function updateBusiness(_state: FormState, formData: FormData): Pro
   const id = String(formData.get("businessId") ?? "");
   const biz = await db.business.findUnique({
     where: { id },
-    select: { ownerId: true, slug: true, logoUrl: true },
+    select: { ownerId: true, slug: true, logoUrl: true, photos: true },
   });
   if (!biz) return { message: "Business not found." };
   if (!(await canManageBusiness(user.id, id, user.role === "ADMIN"))) return { message: "Not allowed." };
@@ -74,8 +88,10 @@ export async function updateBusiness(_state: FormState, formData: FormData): Pro
   if (!parsed.success) return { errors: zodErrors(parsed.error) };
 
   const { name, city, ...rest } = parsed.data;
-  await db.business.update({ where: { id }, data: { ...rest, name, city: city ?? null } });
+  const photos = parsePhotos(formData);
+  await db.business.update({ where: { id }, data: { ...rest, name, city: city ?? null, photos } });
   if (biz.logoUrl && biz.logoUrl !== (rest.logoUrl ?? null)) await deleteUploadsByUrl([biz.logoUrl]);
+  await deleteUploadsByUrl(biz.photos.filter((p) => !photos.includes(p)));
 
   const locale = String(formData.get("locale") ?? "en");
   revalidatePath(`/${locale}/business/${biz.slug}`, "page");
@@ -88,11 +104,11 @@ export async function deleteBusiness(businessId: string, locale: string): Promis
   if (!user) return;
   const biz = await db.business.findUnique({
     where: { id: businessId },
-    select: { ownerId: true, logoUrl: true },
+    select: { ownerId: true, logoUrl: true, photos: true },
   });
   if (!biz || (biz.ownerId !== user.id && user.role !== "ADMIN")) return;
   await db.business.delete({ where: { id: businessId } });
-  await deleteUploadsByUrl([biz.logoUrl]);
+  await deleteUploadsByUrl([biz.logoUrl, ...biz.photos]);
   revalidatePath(`/${locale}/business`, "page");
 }
 

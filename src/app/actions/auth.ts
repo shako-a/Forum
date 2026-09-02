@@ -2,6 +2,7 @@
 
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
+import { localeHref } from "@/lib/locale-url";
 import { db } from "@/lib/db";
 import { createSession, deleteSession } from "@/lib/session";
 import { SignupFormSchema, LoginFormSchema, type FormState } from "@/lib/definitions";
@@ -242,7 +243,7 @@ export async function logout(formData: FormData): Promise<void> {
       summary: "signed out",
     });
   }
-  redirect(`/${locale}`);
+  redirect(localeHref(`/${locale}`));
 }
 
 // Small helper: turn a ZodError into { field: messages[] } without depending on
