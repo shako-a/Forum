@@ -878,6 +878,18 @@ button.header-profile {
   color: var(--muted);
   padding: 14px 12px 6px;
 }
+/* Nav group divider. A hairline inset to the pill text separates the forum
+   rows from the marketplaces and those from everything else, without adding
+   another uppercase heading to a column that already has two. */
+.nav-sep {
+  height: 1px;
+  /* Not var(--line): the column sits on the atmospheric wash, which is darker
+     than that token, so a fixed line reads as a pale streak. A tint of --ink
+     darkens the backdrop in light mode and lightens it in dark. */
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+  margin: 9px 14px;
+  flex-shrink: 0;
+}
 /* Nav rows read as buttons: each one is a full-width pill with a real
    (if barely-there) resting surface, so the column looks like a stack of
    controls rather than a list of links. The active row is lifted — brighter

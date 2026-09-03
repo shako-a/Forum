@@ -53,6 +53,7 @@ export async function LeftSidebar({
         </svg>
         {nav.events}
       </NavLink>
+      <div className="nav-sep" aria-hidden="true" />
       <NavLink href={`/${locale}/business`}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 9h18M5 9V5h14v4M4 9v11h16V9M9 13h6" />
@@ -90,6 +91,7 @@ export async function LeftSidebar({
         {nav.auto}
       </NavLink>
 
+      <div className="nav-sep" aria-hidden="true" />
       <NavLink href={`/${locale}/more`}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="9" />
