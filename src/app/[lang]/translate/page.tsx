@@ -5,6 +5,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { getCurrentUser } from "@/lib/dal";
 import { hasAiTranslate } from "@/lib/perks";
 import { defaultTarget } from "@/lib/translate";
+import { localeHref } from "@/lib/locale-url";
 import { db } from "@/lib/db";
 import { Header } from "@/components/Header";
 import { LeftSidebar } from "@/components/LeftSidebar";
@@ -22,8 +23,8 @@ export default async function TranslatePage({ params }: PageProps<"/[lang]/trans
   if (!isLocale(lang)) notFound();
 
   const user = await getCurrentUser();
-  if (!user) redirect(`/${lang}/login?next=/${lang}/translate`);
-  if (!hasAiTranslate(user)) redirect(`/${lang}/donate`);
+  if (!user) redirect(localeHref(`/${lang}/login?next=/${lang}/translate`));
+  if (!hasAiTranslate(user)) redirect(localeHref(`/${lang}/donate`));
 
   const dict = await getDictionary(lang);
   const allCategories = await db.category.findMany({ orderBy: { sortOrder: "asc" } });
