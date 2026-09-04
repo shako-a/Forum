@@ -6349,6 +6349,17 @@ a.mk-tag:hover {
   flex: 1;
   min-width: 140px;
 }
+/* Row counter in admin tables: narrow, muted, tabular so the digits line up. */
+.admin-rownum {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.admin-filter-row .muted-sm {
+  align-self: center;
+}
 .admin-toggle {
   display: flex;
   align-items: center;

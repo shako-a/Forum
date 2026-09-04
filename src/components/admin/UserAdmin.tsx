@@ -30,11 +30,13 @@ export type AdminUser = {
 
 function UserRow({
   user,
+  n,
   isSelf,
   dict,
   locale,
 }: {
   user: AdminUser;
+  n: number;
   isSelf: boolean;
   dict: Dictionary;
   locale: Locale;
@@ -45,6 +47,7 @@ function UserRow({
 
   return (
     <tr>
+      <td className="admin-rownum">{n}</td>
       <td><IdCell id={user.id} /></td>
       <td>
         <Link href={`/${locale}/admin/users/${user.id}`} className="admin-user-link">
@@ -203,14 +206,21 @@ export function UserAdmin({
   users,
   currentUserId,
   locale,
+  q,
+  total,
 }: {
   dict: Dictionary;
   users: AdminUser[];
   currentUserId: string;
   locale: Locale;
+  q: string;
+  total: number;
 }) {
   const t = dict.admin;
   const [adding, setAdding] = useState(false);
+  // Rows are numbered as displayed (newest first), so the last number is also
+  // how many accounts matched — and `total` says whether more went unshown.
+  const shown = users.length;
   return (
     <div>
       <div className="admin-list-head">
@@ -222,9 +232,26 @@ export function UserAdmin({
         )}
       </div>
       {adding && <AddUserForm dict={dict} onDone={() => setAdding(false)} />}
+
+      <form method="get" className="admin-filter-row">
+        <input className="input" name="q" placeholder={t.searchUsers} defaultValue={q} />
+        <button type="submit" className="btn btn-ghost btn-sm">{dict.business.search}</button>
+        {q && (
+          <Link href={`/${locale}/admin/users`} className="btn btn-ghost btn-sm">
+            {t.activity.reset}
+          </Link>
+        )}
+        <span className="muted-sm">
+          {shown < total
+            ? t.usersShowing.replace("{shown}", String(shown)).replace("{total}", String(total))
+            : t.usersTotal.replace("{n}", String(total))}
+        </span>
+      </form>
+
       <table className="admin-table">
         <thead>
           <tr>
+            <th className="admin-rownum">#</th>
             <th>{t.id}</th>
             <th>{dict.auth.forumName}</th>
             <th>{dict.auth.email}</th>
@@ -238,12 +265,12 @@ export function UserAdmin({
           </tr>
         </thead>
         <tbody>
-          {users.map((u) => (
-            <UserRow key={u.id} user={u} isSelf={u.id === currentUserId} dict={dict} locale={locale} />
+          {users.map((u, i) => (
+            <UserRow key={u.id} user={u} n={i + 1} isSelf={u.id === currentUserId} dict={dict} locale={locale} />
           ))}
           {users.length === 0 && (
             <tr>
-              <td colSpan={9} style={{ textAlign: "center", color: "var(--muted)", padding: 24 }}>
+              <td colSpan={11} style={{ textAlign: "center", color: "var(--muted)", padding: 24 }}>
                 {t.empty}
               </td>
             </tr>
