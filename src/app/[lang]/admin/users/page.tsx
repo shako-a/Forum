@@ -40,17 +40,34 @@ export default async function AdminUsersPage({ params, searchParams }: PageProps
       .findMany({
         where,
         orderBy: { createdAt: "desc" },
-        select: { id: true, forumName: true, email: true, role: true, status: true, isDonor: true, isPro: true, isSupporter: true, canAccessAdmin: true },
+        select: {
+          id: true, forumName: true, email: true, role: true, status: true,
+          isDonor: true, isPro: true, isSupporter: true, canAccessAdmin: true,
+          aiAsk: true, aiTranslate: true,
+          // Feature keys come from packages the user holds; the AI columns need
+          // them to tell a direct grant apart from one a plan already gives.
+          packages: { select: { package: { select: { features: { where: { included: true }, select: { feature: { select: { key: true } } } } } } } },
+        },
         take: PAGE_SIZE,
       })
       .catch(() => []),
     db.user.count({ where }).catch(() => 0),
   ]);
 
+  const rows: AdminUser[] = users.map((u) => {
+    const { packages, ...rest } = u;
+    return {
+      ...rest,
+      featureKeys: [
+        ...new Set(packages.flatMap((p) => p.package.features.map((f) => f.feature.key))),
+      ],
+    };
+  });
+
   return (
     <UserAdmin
       dict={dict}
-      users={users as AdminUser[]}
+      users={rows}
       currentUserId={me?.id ?? ""}
       locale={lang}
       q={q}

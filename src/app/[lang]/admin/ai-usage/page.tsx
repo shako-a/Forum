@@ -5,6 +5,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { requireRole } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { isAiConfigured } from "@/lib/ai";
+import { hasAiAccess, hasAiTranslate } from "@/lib/perks";
 import { billingPeriodStart } from "@/lib/subscriptions";
 import {
   getPackages,
@@ -38,7 +39,13 @@ export default async function AdminAiUsagePage({
 
   const sp = await searchParams;
   const tab =
-    sp.tab === "per-user" ? "per-user" : sp.tab === "packages" ? "packages" : "overview";
+    sp.tab === "per-user"
+      ? "per-user"
+      : sp.tab === "packages"
+        ? "packages"
+        : sp.tab === "activated"
+          ? "activated"
+          : "overview";
 
   // First visit creates the three AI packages (AI-User ships switched off).
   if (await aiPackagesNeedSeeding()) await seedAiPackages();
@@ -63,6 +70,12 @@ export default async function AdminAiUsagePage({
           {t.aiTabPerUser}
         </Link>
         <Link
+          href={`${base}/ai-usage?tab=activated`}
+          className={`admin-tab${tab === "activated" ? " active" : ""}`}
+        >
+          {t.aiTabActivated}
+        </Link>
+        <Link
           href={`${base}/ai-usage?tab=packages`}
           className={`admin-tab${tab === "packages" ? " active" : ""}`}
         >
@@ -74,6 +87,8 @@ export default async function AdminAiUsagePage({
         <Overview t={t} />
       ) : tab === "packages" ? (
         <Packages dict={dict} lang={lang} />
+      ) : tab === "activated" ? (
+        <Activated t={t} lang={lang} />
       ) : (
         <PerUser t={t} lang={lang} />
       )}
@@ -113,7 +128,8 @@ async function Overview({ t }: { t: Dictionary["admin"] }) {
     ? await db.user.findMany({ where: { id: { in: userIds } }, select: { id: true, forumName: true } })
     : [];
   const nameOf = new Map(users.map((u) => [u.id, u.forumName]));
-  const kindLabel = (k: string) => (k === "summary" ? t.aiKindSummary : k === "ask" ? t.aiKindAsk : k);
+  const kindLabel = (k: string) =>
+    k === "summary" ? t.aiKindSummary : k === "ask" ? t.aiKindAsk : k === "translate" ? t.aiKindTranslate : k;
 
   return (
     <>
@@ -200,6 +216,153 @@ async function Overview({ t }: { t: Dictionary["admin"] }) {
           </div>
         </div>
       )}
+    </>
+  );
+}
+
+// Who has ever had AI switched on — the cohort, not the spend.
+//
+// Two ways in, and the table says which: an admin switch in Admin → Users
+// (stamped on User.aiFirstGrantedAt, never cleared, so a revoked account still
+// appears here), or a tier/package that includes an AI feature. Plan holders
+// carry no stamp, so their first-on date reads "—" rather than a date invented
+// after the fact.
+async function Activated({ t, lang }: { t: Dictionary["admin"]; lang: string }) {
+  const AI_KEYS = ["askAi", "aiTranslate"];
+  const users = await db.user.findMany({
+    where: {
+      OR: [
+        { aiFirstGrantedAt: { not: null } },
+        { isDonor: true },
+        { isPro: true },
+        {
+          packages: {
+            some: {
+              package: {
+                features: { some: { included: true, feature: { key: { in: AI_KEYS } } } },
+              },
+            },
+          },
+        },
+      ],
+    },
+    orderBy: [{ aiFirstGrantedAt: "desc" }, { createdAt: "desc" }],
+    take: 500,
+    select: {
+      id: true,
+      forumName: true,
+      aiAsk: true,
+      aiTranslate: true,
+      aiFirstGrantedAt: true,
+      isDonor: true,
+      isPro: true,
+      isSupporter: true,
+      packages: {
+        select: {
+          package: {
+            select: {
+              features: {
+                where: { included: true },
+                select: { feature: { select: { key: true } } },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (users.length === 0) {
+    return <div className="card card-pad muted-sm">{t.aiNoActivated}</div>;
+  }
+
+  const usage = await db.aiUsage.groupBy({
+    by: ["userId"],
+    where: { userId: { in: users.map((u) => u.id) } },
+    _sum: { costMicroUsd: true },
+    _count: { _all: true },
+  });
+  const usageOf = new Map(usage.map((u) => [u.userId, u]));
+
+  const rows = users.map((u) => {
+    const featureKeys = [
+      ...new Set(u.packages.flatMap((p) => p.package.features.map((f) => f.feature.key))),
+    ];
+    const viewer = { ...u, featureKeys };
+    const tools = [
+      hasAiAccess(viewer) ? t.aiAsk : null,
+      hasAiTranslate(viewer) ? t.aiTranslate : null,
+    ].filter(Boolean) as string[];
+    // A direct switch is what this page is really tracking; a plan is the
+    // other way in, and only matters when there was no switch.
+    const viaGrant = !!u.aiFirstGrantedAt;
+    const use = usageOf.get(u.id);
+    return {
+      id: u.id,
+      name: u.forumName,
+      tools,
+      viaGrant,
+      firstOn: u.aiFirstGrantedAt,
+      calls: use?._count._all ?? 0,
+      cost: use?._sum.costMicroUsd ?? 0,
+    };
+  });
+
+  const currentlyOn = rows.filter((r) => r.tools.length > 0).length;
+
+  return (
+    <>
+      <p className="muted-sm" style={{ marginBottom: 12 }}>{t.aiActivatedSub}</p>
+      <div className="admin-stats" style={{ marginBottom: 20 }}>
+        <div className="admin-stat">
+          <span className="admin-stat-ico" aria-hidden="true">✦</span>
+          <span className="admin-stat-value">{num(rows.length)}</span>
+          <span className="admin-stat-label">{t.aiEverActivated}</span>
+        </div>
+        <div className="admin-stat">
+          <span className="admin-stat-ico" aria-hidden="true">🟢</span>
+          <span className="admin-stat-value">{num(currentlyOn)}</span>
+          <span className="admin-stat-label">{t.aiCurrentlyOn}</span>
+        </div>
+      </div>
+      <div className="card card-pad">
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th className="admin-rownum">#</th>
+              <th>{t.aiUser}</th>
+              <th>{t.aiTools}</th>
+              <th>{t.aiVia}</th>
+              <th>{t.aiFirstOn}</th>
+              <th>{t.aiCalls}</th>
+              <th>{t.aiCost}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={r.id}>
+                <td className="admin-rownum">{i + 1}</td>
+                <td>
+                  <Link href={`/${lang}/admin/users/${r.id}`} className="admin-user-link">
+                    {r.name}
+                  </Link>
+                </td>
+                <td>
+                  {r.tools.length > 0 ? (
+                    r.tools.join(" · ")
+                  ) : (
+                    <span className="opacity-50">— {t.aiRevoked}</span>
+                  )}
+                </td>
+                <td>{r.viaGrant ? t.aiViaGrant : t.aiViaTier}</td>
+                <td>{r.firstOn ? ymd(r.firstOn) : <span className="opacity-50">—</span>}</td>
+                <td>{num(r.calls)}</td>
+                <td>{usd(r.cost)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </>
   );
 }

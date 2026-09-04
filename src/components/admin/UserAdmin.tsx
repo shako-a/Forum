@@ -10,7 +10,10 @@ import {
   setUserPro,
   setUserSupporter,
   setUserAdminAccess,
+  setUserAiAsk,
+  setUserAiTranslate,
 } from "@/app/actions/admin-users";
+import { hasAiAccess, hasAiTranslate } from "@/lib/perks";
 import { IdCell } from "@/components/admin/IdCell";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
@@ -26,7 +29,43 @@ export type AdminUser = {
   isPro: boolean;
   isSupporter: boolean;
   canAccessAdmin: boolean;
+  aiAsk: boolean;
+  aiTranslate: boolean;
+  featureKeys: string[];
 };
+
+// One AI tool's cell. A tool the user already holds through a tier or package
+// isn't a toggle — turning it "off" here couldn't take it away, so the cell
+// says where it came from instead, the same way the admin-access column marks
+// an ADMIN as always having the panel.
+function AiCell({
+  on,
+  viaPlan,
+  label,
+  hint,
+  planLabel,
+  planHint,
+  pending,
+  onToggle,
+}: {
+  on: boolean;
+  viaPlan: boolean;
+  label: string;
+  hint: string;
+  planLabel: string;
+  planHint: string;
+  pending: boolean;
+  onToggle: () => void;
+}) {
+  if (viaPlan) {
+    return <span className="opacity-50" title={planHint}>✦ {planLabel}</span>;
+  }
+  return (
+    <button type="button" className="action" disabled={pending} title={hint} onClick={onToggle}>
+      {on ? "✦ " + label : "— " + label}
+    </button>
+  );
+}
 
 function UserRow({
   user,
@@ -108,6 +147,30 @@ function UserRow({
         >
           {user.isSupporter ? "🤍 " + t.supporter : "— " + t.supporter}
         </button>
+      </td>
+      <td>
+        <AiCell
+          on={user.aiAsk}
+          viaPlan={hasAiAccess({ ...user, aiAsk: false })}
+          label={t.aiAsk}
+          hint={t.aiAskHint}
+          planLabel={t.aiViaPlan}
+          planHint={t.aiViaPlanHint}
+          pending={pending}
+          onToggle={() => startTransition(() => void setUserAiAsk(user.id, !user.aiAsk))}
+        />
+      </td>
+      <td>
+        <AiCell
+          on={user.aiTranslate}
+          viaPlan={hasAiTranslate({ ...user, aiTranslate: false })}
+          label={t.aiTranslate}
+          hint={t.aiTranslateHint}
+          planLabel={t.aiViaPlan}
+          planHint={t.aiViaPlanHint}
+          pending={pending}
+          onToggle={() => startTransition(() => void setUserAiTranslate(user.id, !user.aiTranslate))}
+        />
       </td>
       <td>
         {user.role === "ADMIN" ? (
@@ -260,6 +323,8 @@ export function UserAdmin({
             <th>{t.donor}</th>
             <th>{t.pro}</th>
             <th>{t.supporter}</th>
+            <th>{t.aiAsk}</th>
+            <th>{t.aiTranslate}</th>
             <th>{t.adminAccess}</th>
             <th style={{ textAlign: "right" }}>{t.actions}</th>
           </tr>
@@ -270,7 +335,7 @@ export function UserAdmin({
           ))}
           {users.length === 0 && (
             <tr>
-              <td colSpan={11} style={{ textAlign: "center", color: "var(--muted)", padding: 24 }}>
+              <td colSpan={13} style={{ textAlign: "center", color: "var(--muted)", padding: 24 }}>
                 {t.empty}
               </td>
             </tr>

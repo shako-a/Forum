@@ -3,6 +3,7 @@ import type { Locale } from "@/i18n/config";
 import { categoryName } from "@/i18n/localize";
 import { categoryStyle } from "@/lib/category-style";
 import { getCurrentUser } from "@/lib/dal";
+import { hasAiTranslate } from "@/lib/perks";
 import { MobileSidebar } from "@/components/MobileSidebar";
 import { NavLink } from "@/components/NavLink";
 import { CategoryChips } from "@/components/CategoryChips";
@@ -20,7 +21,12 @@ export async function LeftSidebar({
   const nav = dict.nav;
   // Locked communities show a 🔒 to guests only; registered members can open
   // them, so the lock is hidden once signed in.
-  const authed = !!(await getCurrentUser());
+  const viewer = await getCurrentUser();
+  const authed = !!viewer;
+  // Shown only to holders, unlike the header's Ask AI, which advertises itself
+  // with a lock. No package includes the translator yet, so a locked row would
+  // send people to an upgrade page that doesn't sell it.
+  const canTranslate = hasAiTranslate(viewer);
 
   // Built once, rendered twice: as the desktop column and inside the mobile
   // drawer. (display:none at ≤1080 hides the column; the drawer overrides it.)
@@ -92,6 +98,16 @@ export async function LeftSidebar({
       </NavLink>
 
       <div className="nav-sep" aria-hidden="true" />
+      {canTranslate && (
+        <NavLink href={`/${locale}/translate`}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 5h10M9 3v2M11 5c0 4-3 8-7 9" />
+            <path d="M7 11c1.5 2.5 3.5 4 6 5" />
+            <path d="M13 21l4-10 4 10M14.5 18h5" />
+          </svg>
+          {dict.translate.nav}
+        </NavLink>
+      )}
       <NavLink href={`/${locale}/more`}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="9" />

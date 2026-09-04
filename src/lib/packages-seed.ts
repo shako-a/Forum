@@ -168,6 +168,17 @@ const FEATURE_ADDITIONS: Array<{
     feature: { key: "events", nameEn: "Create community events", nameKa: "საზოგადოებრივი ღონისძიებების შექმნა" },
     addTo: [],
   },
+  // The AI translator is entitled per tool, not per topic (lib/perks.ts). It
+  // ships attached to no package: it is handed out per user from Admin → Users
+  // while pricing is decided, and adding it to a plan here later is one edit.
+  {
+    feature: {
+      key: "aiTranslate",
+      nameEn: "AI Translator — translate posts, letters and documents",
+      nameKa: "AI თარჯიმანი — თარგმნე პოსტები, წერილები და დოკუმენტები",
+    },
+    addTo: [],
+  },
 ];
 
 export async function ensureFeatureAdditions(): Promise<void> {

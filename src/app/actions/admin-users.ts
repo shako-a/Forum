@@ -148,6 +148,44 @@ export async function setUserSupporter(userId: string, isSupporter: boolean): Pr
   revalidatePath("/[lang]/admin/users", "page");
 }
 
+// Grant/revoke an AI tool for one account.
+//
+// These are additive grants: they sit alongside whatever the user's tier or
+// packages already include, so switching one off never strips a paid plan's
+// entitlement (the admin would turn the tier off for that). Entitlement is per
+// tool rather than per topic — see the note in lib/perks.ts.
+//
+// `aiFirstGrantedAt` is stamped the first time either tool is switched on and
+// is never cleared afterwards, which is what lets the AI Usage page still
+// answer "who has ever had this turned on" once a grant is revoked.
+async function setAiGrant(userId: string, field: "aiAsk" | "aiTranslate", on: boolean): Promise<void> {
+  const actor = await authorize("ADMIN");
+  if (!actor) return;
+
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { aiFirstGrantedAt: true },
+  });
+  if (!user) return;
+
+  await db.user.update({
+    where: { id: userId },
+    data: {
+      [field]: on,
+      ...(on && !user.aiFirstGrantedAt ? { aiFirstGrantedAt: new Date() } : {}),
+    },
+  });
+  revalidatePath("/[lang]/admin/users", "page");
+}
+
+export async function setUserAiAsk(userId: string, on: boolean): Promise<void> {
+  await setAiGrant(userId, "aiAsk", on);
+}
+
+export async function setUserAiTranslate(userId: string, on: boolean): Promise<void> {
+  await setAiGrant(userId, "aiTranslate", on);
+}
+
 // Grant/revoke a moderator's access to the (moderation-only) admin panel. Only
 // meaningful for moderators — admins always have access, plain users never do.
 export async function setUserAdminAccess(userId: string, canAccessAdmin: boolean): Promise<void> {

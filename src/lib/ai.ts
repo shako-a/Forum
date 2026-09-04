@@ -38,7 +38,7 @@ export type AiResult = { text: string; tokensIn: number; tokensOut: number; cost
  */
 export async function runAi(opts: {
   modelKey: AiModelKey;
-  kind: "summary" | "ask";
+  kind: "summary" | "ask" | "translate";
   system: string;
   prompt: string;
   maxTokens?: number;

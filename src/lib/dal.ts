@@ -56,6 +56,8 @@ export const getCurrentUser = cache(async () => {
       themeDepth: true,
       canAccessAdmin: true,
       canRevealAnon: true,
+      aiAsk: true,
+      aiTranslate: true,
       isOwner: true,
       lastSeenAt: true,
     },

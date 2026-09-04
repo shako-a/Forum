@@ -51,6 +51,16 @@ model User {
   failedLogins Int       @default(0)
   lockedUntil  DateTime?
 
+  // Direct AI grants, one per tool, independent of tier and packages. These are
+  // the switches in Admin → Users; they ADD to whatever a plan already
+  // includes, so revoking one never takes away what a paid tier grants.
+  aiAsk       Boolean @default(false)
+  aiTranslate Boolean @default(false)
+  // When AI was first switched on for this account, by any route. Never
+  // cleared — it is what makes "activated at least once" answerable on the
+  // AI Usage page after the grant has been turned off again.
+  aiFirstGrantedAt DateTime?
+
   // The "main admin" / owner — always sees real authors behind anonymous
   // content and controls whether other staff can. Typically just one user.
   isOwner Boolean @default(false)
@@ -1170,7 +1180,7 @@ model AiUsage {
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
   userId String?
 
-  kind  String // "summary" | "ask"
+  kind  String // "summary" | "ask" | "translate"
   model String // resolved Claude model id
 
   tokensIn     Int
