@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { readRichDescription, RICH_TOO_LARGE } from "@/lib/rich-description";
 import { redirect } from "next/navigation";
 import { localeHref } from "@/lib/locale-url";
 import { db } from "@/lib/db";
@@ -36,10 +37,13 @@ async function uniqueSlug(title: string): Promise<string> {
   return slug;
 }
 
+// Description arrives as an editor document; the schema validates its
+// plain-text projection (see the helper this imports).
 function parseListing(formData: FormData) {
-  return MarketListingSchema.safeParse({
+  const rich = readRichDescription(formData);
+  const result = MarketListingSchema.safeParse({
     title: formData.get("title"),
-    description: formData.get("description"),
+    description: rich.plain,
     category: formData.get("category"),
     condition: formData.get("condition"),
     priceType: formData.get("priceType"),
@@ -52,6 +56,7 @@ function parseListing(formData: FormData) {
     canShip: formData.get("canShip") === "on",
     phone: formData.get("phone") || undefined,
   });
+  return { rich, result };
 }
 
 function parsePhotos(formData: FormData): string[] {
@@ -78,7 +83,8 @@ export async function createMarketListing(_state: FormState, formData: FormData)
   if (!user) return { message: "You must be logged in." };
   if (!(await canPostIn("market", user))) return { message: "Selling on the marketplace isn't included in your plan." };
 
-  const parsed = parseListing(formData);
+  const { rich, result: parsed } = parseListing(formData);
+  if (rich.tooLarge) return { errors: { description: [RICH_TOO_LARGE] } };
   if (!parsed.success) return { errors: zodErrors(parsed.error) };
 
   const { title, city, phone, priceType, price, zip, ...rest } = parsed.data;
@@ -98,6 +104,7 @@ export async function createMarketListing(_state: FormState, formData: FormData)
       lat: point?.lat ?? null,
       lng: point?.lng ?? null,
       phone: phone ?? null,
+      descriptionRich: rich.rich,
       photos: parsePhotos(formData),
       sellerId: user.id,
       sellerBusinessId: acting?.id ?? null,
@@ -116,7 +123,8 @@ export async function updateMarketListing(_state: FormState, formData: FormData)
   const listing = await ownedListing(String(formData.get("listingId") ?? ""), user);
   if (!listing) return { message: "Not allowed." };
 
-  const parsed = parseListing(formData);
+  const { rich, result: parsed } = parseListing(formData);
+  if (rich.tooLarge) return { errors: { description: [RICH_TOO_LARGE] } };
   if (!parsed.success) return { errors: zodErrors(parsed.error) };
 
   const { title, city, phone, priceType, price, zip, ...rest } = parsed.data;
@@ -134,6 +142,7 @@ export async function updateMarketListing(_state: FormState, formData: FormData)
       lat: point?.lat ?? null,
       lng: point?.lng ?? null,
       phone: phone ?? null,
+      descriptionRich: rich.rich,
       photos,
     },
   });

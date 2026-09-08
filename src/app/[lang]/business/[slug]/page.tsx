@@ -1,4 +1,5 @@
 import Link from "@/components/Link";
+import { RichText } from "@/components/RichText";
 import { notFound } from "next/navigation";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
@@ -97,7 +98,7 @@ export default async function BusinessProfilePage({ params }: PageProps<"/[lang]
           {/* Description */}
           {biz.description && (
             <div className="card card-pad biz-section">
-              <p className="biz-description">{biz.description}</p>
+              <RichText doc={biz.descriptionRich} text={biz.description} plainClassName="biz-description" />
             </div>
           )}
 
@@ -123,7 +124,7 @@ export default async function BusinessProfilePage({ params }: PageProps<"/[lang]
               {biz.jobs.map((j) => (
                 <div key={j.id} className="biz-job">
                   <h3 className="biz-job-title">{j.title}</h3>
-                  <p className="biz-job-desc">{j.description}</p>
+                  <RichText doc={j.descriptionRich} text={j.description} plainClassName="biz-job-desc" />
                   {(j.city || j.state) && (
                     <p className="biz-job-loc">📍 {[j.city, j.state].filter(Boolean).join(", ")}</p>
                   )}

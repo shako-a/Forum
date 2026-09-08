@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { RichDescriptionField } from "@/components/RichDescriptionField";
 import { createBusiness, updateBusiness } from "@/app/actions/business";
 import { StateSelect } from "@/components/StateSelect";
 import { PhotosField } from "@/components/estate/PhotosField";
@@ -15,6 +16,8 @@ export type BusinessValues = {
   category: string;
   tagline: string;
   description: string;
+  /** Stored rich document, when the row has been edited since the editor shipped. */
+  descriptionRich: unknown;
   city: string;
   state: string;
   website: string;
@@ -119,12 +122,10 @@ export function BusinessForm({
 
       <div className="field">
         <label htmlFor="description">{t.description}</label>
-        <textarea
-          id="description"
-          name="description"
-          className="input"
-          rows={5}
-          defaultValue={values?.description}
+        <RichDescriptionField
+          dict={dict}
+          doc={values?.descriptionRich}
+          text={values?.description}
         />
       </div>
 

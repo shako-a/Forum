@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { readRichDescription, RICH_TOO_LARGE } from "@/lib/rich-description";
 import { redirect } from "next/navigation";
 import { localeHref } from "@/lib/locale-url";
 import { db } from "@/lib/db";
@@ -53,7 +54,10 @@ export async function saveMerchProduct(_state: FormState, formData: FormData): P
 
   const id = String(formData.get("productId") ?? "") || null;
   const name = String(formData.get("name") ?? "").trim().slice(0, 120);
-  const description = String(formData.get("description") ?? "").trim().slice(0, 6000);
+  // Description arrives as an editor document; the checks below run on its
+  // plain-text projection (see the helper this imports).
+  const rich = readRichDescription(formData);
+  const description = rich.plain.slice(0, 6000);
   const category = String(formData.get("category") ?? "apparel");
   const price = Number(formData.get("price"));
   const active = formData.get("active") === "on";
@@ -67,7 +71,8 @@ export async function saveMerchProduct(_state: FormState, formData: FormData): P
 
   const errors: Record<string, string[]> = {};
   if (name.length < 2) errors.name = ["Name is required."];
-  if (description.length < 5) errors.description = ["Add a description."];
+  if (rich.tooLarge) errors.description = [RICH_TOO_LARGE];
+  else if (description.length < 5) errors.description = ["Add a description."];
   if (!isMerchCategory(category)) errors.category = ["Pick a category."];
   if (!Number.isFinite(price) || price <= 0) errors.price = ["Enter a price."];
   if (Object.keys(errors).length) return { errors };
@@ -82,6 +87,7 @@ export async function saveMerchProduct(_state: FormState, formData: FormData): P
         slug,
         name,
         description,
+        descriptionRich: rich.rich,
         category,
         priceCents,
         photos,
@@ -107,7 +113,7 @@ export async function saveMerchProduct(_state: FormState, formData: FormData): P
   await db.$transaction([
     db.merchProduct.update({
       where: { id },
-      data: { name, description, category, priceCents, photos, active, featured, sortOrder },
+      data: { name, description, descriptionRich: rich.rich, category, priceCents, photos, active, featured, sortOrder },
     }),
     // Variants removed in the editor are deactivated, not deleted, so past
     // order items keep their reference.

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { readRichDescription, RICH_TOO_LARGE, type RichDescription } from "@/lib/rich-description";
 import { redirect } from "next/navigation";
 import { localeHref } from "@/lib/locale-url";
 import { db } from "@/lib/db";
@@ -34,10 +35,13 @@ async function uniqueSlug(title: string): Promise<string> {
   return slug;
 }
 
+// Description arrives as an editor document; the schema validates its
+// plain-text projection (see the helper this imports).
 function parse(formData: FormData) {
+  const rich = readRichDescription(formData);
   const str = (k: string) => formData.get(k) ?? undefined;
   const opt = (k: string) => formData.get(k) || undefined;
-  return AutoListingSchema.safeParse({
+  const result = AutoListingSchema.safeParse({
     kind: str("kind"),
     year: str("year"),
     make: str("make"),
@@ -56,7 +60,7 @@ function parse(formData: FormData) {
     insured: formData.get("insured") === "on",
     minRentalDays: str("minRentalDays"),
     depositAmount: str("depositAmount"),
-    description: opt("description"),
+    description: rich.plain || undefined,
     city: opt("city"),
     zip: opt("zip"),
     state: str("state"),
@@ -64,6 +68,7 @@ function parse(formData: FormData) {
     phone: opt("phone"),
     email: opt("email"),
   });
+  return { rich, result };
 }
 
 function parseFeatures(formData: FormData): string[] {
@@ -78,7 +83,7 @@ function parsePhotos(formData: FormData): string[] {
 }
 
 // Turn parsed fields into the row shape (shared by create and update).
-function toData(d: AutoListingInput, formData: FormData) {
+function toData(d: AutoListingInput, formData: FormData, rich: RichDescription) {
   const isRent = d.kind === "RENT";
   const point = lookupZip(d.zip);
   return {
@@ -102,6 +107,7 @@ function toData(d: AutoListingInput, formData: FormData) {
     minRentalDays: isRent ? (d.minRentalDays ?? null) : null,
     depositAmount: isRent ? (d.depositAmount ?? null) : null,
     description: d.description ?? null,
+    descriptionRich: rich.rich,
     features: parseFeatures(formData),
     photos: parsePhotos(formData),
     city: d.city ?? null,
@@ -129,10 +135,11 @@ export async function createAutoListing(_state: FormState, formData: FormData): 
   const user = await getCurrentUser();
   if (!user) return { message: "You must be logged in." };
   if (!(await canPostIn("auto", user))) return { message: "Auto-market listings aren't included in your plan." };
-  const parsed = parse(formData);
+  const { rich, result: parsed } = parse(formData);
+  if (rich.tooLarge) return { errors: { description: [RICH_TOO_LARGE] } };
   if (!parsed.success) return { errors: zodErrors(parsed.error) };
 
-  const data = toData(parsed.data, formData);
+  const data = toData(parsed.data, formData, rich);
   const slug = await uniqueSlug(data.title);
   await db.autoListing.create({ data: { ...data, slug, ownerId: user.id } });
 
@@ -147,10 +154,11 @@ export async function updateAutoListing(_state: FormState, formData: FormData): 
   if (!user) return { message: "You must be logged in." };
   const listing = await owned(String(formData.get("listingId") ?? ""), user);
   if (!listing) return { message: "Not allowed." };
-  const parsed = parse(formData);
+  const { rich, result: parsed } = parse(formData);
+  if (rich.tooLarge) return { errors: { description: [RICH_TOO_LARGE] } };
   if (!parsed.success) return { errors: zodErrors(parsed.error) };
 
-  const data = toData(parsed.data, formData);
+  const data = toData(parsed.data, formData, rich);
   await db.autoListing.update({ where: { id: listing.id }, data });
   await deleteUploadsByUrl(listing.photos.filter((p) => !data.photos.includes(p)));
 

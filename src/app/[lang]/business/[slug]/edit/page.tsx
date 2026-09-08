@@ -53,6 +53,7 @@ export default async function EditBusinessPage({ params }: PageProps<"/[lang]/bu
               category: biz.category,
               tagline: biz.tagline ?? "",
               description: biz.description ?? "",
+              descriptionRich: biz.descriptionRich,
               city: biz.city ?? "",
               state: biz.state,
               website: biz.website ?? "",

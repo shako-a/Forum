@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { readRichDescription, RICH_TOO_LARGE } from "@/lib/rich-description";
 import { redirect } from "next/navigation";
 import { localeHref } from "@/lib/locale-url";
 import { db } from "@/lib/db";
@@ -36,12 +37,15 @@ async function uniqueBusinessSlug(name: string): Promise<string> {
   return slug;
 }
 
+// Description arrives as an editor document; the schema validates its
+// plain-text projection (see the helper this imports).
 function parseBusiness(formData: FormData) {
-  return BusinessSchema.safeParse({
+  const rich = readRichDescription(formData);
+  const result = BusinessSchema.safeParse({
     name: formData.get("name"),
     category: formData.get("category"),
     tagline: formData.get("tagline") || undefined,
-    description: formData.get("description") || undefined,
+    description: rich.plain || undefined,
     state: formData.get("state"),
     city: formData.get("city") || undefined,
     website: formData.get("website") || undefined,
@@ -49,6 +53,7 @@ function parseBusiness(formData: FormData) {
     phone: formData.get("phone") || undefined,
     logoUrl: formData.get("logoUrl") || undefined,
   });
+  return { rich, result };
 }
 
 // Register a new business. Who may do so is set in Admin → More.
@@ -57,13 +62,14 @@ export async function createBusiness(_state: FormState, formData: FormData): Pro
   if (!user) return { message: "You must be logged in." };
   if (!(await canPostIn("business", user))) return { message: "Registering a business isn't included in your plan." };
 
-  const parsed = parseBusiness(formData);
+  const { rich, result: parsed } = parseBusiness(formData);
+  if (rich.tooLarge) return { errors: { description: [RICH_TOO_LARGE] } };
   if (!parsed.success) return { errors: zodErrors(parsed.error) };
 
   const { name, city, ...rest } = parsed.data;
   const slug = await uniqueBusinessSlug(name);
   await db.business.create({
-    data: { ...rest, name, city: city ?? null, slug, ownerId: user.id, photos: parsePhotos(formData) },
+    data: { ...rest, name, city: city ?? null, slug, ownerId: user.id, descriptionRich: rich.rich, photos: parsePhotos(formData) },
   });
 
   const locale = String(formData.get("locale") ?? "en");
@@ -84,12 +90,13 @@ export async function updateBusiness(_state: FormState, formData: FormData): Pro
   if (!biz) return { message: "Business not found." };
   if (!(await canManageBusiness(user.id, id, user.role === "ADMIN"))) return { message: "Not allowed." };
 
-  const parsed = parseBusiness(formData);
+  const { rich, result: parsed } = parseBusiness(formData);
+  if (rich.tooLarge) return { errors: { description: [RICH_TOO_LARGE] } };
   if (!parsed.success) return { errors: zodErrors(parsed.error) };
 
   const { name, city, ...rest } = parsed.data;
   const photos = parsePhotos(formData);
-  await db.business.update({ where: { id }, data: { ...rest, name, city: city ?? null, photos } });
+  await db.business.update({ where: { id }, data: { ...rest, name, city: city ?? null, descriptionRich: rich.rich, photos } });
   if (biz.logoUrl && biz.logoUrl !== (rest.logoUrl ?? null)) await deleteUploadsByUrl([biz.logoUrl]);
   await deleteUploadsByUrl(biz.photos.filter((p) => !photos.includes(p)));
 
@@ -128,9 +135,11 @@ export async function addJob(_state: FormState, formData: FormData): Promise<For
   const biz = await ownsBusiness(businessId, user.id, user.role === "ADMIN");
   if (!biz) return { message: "Not allowed." };
 
+  const jobRich = readRichDescription(formData);
+  if (jobRich.tooLarge) return { errors: { description: [RICH_TOO_LARGE] } };
   const parsed = JobSchema.safeParse({
     title: formData.get("title"),
-    description: formData.get("description"),
+    description: jobRich.plain,
     city: formData.get("city") || undefined,
     state: formData.get("state") || undefined,
   });
@@ -138,7 +147,7 @@ export async function addJob(_state: FormState, formData: FormData): Promise<For
 
   const { title, description, city, state } = parsed.data;
   await db.jobPosting.create({
-    data: { businessId, title, description, city: city ?? null, state: state ?? null },
+    data: { businessId, title, description, descriptionRich: jobRich.rich, city: city ?? null, state: state ?? null },
   });
   const locale = String(formData.get("locale") ?? "en");
   revalidatePath(`/${locale}/business/${biz.slug}`, "page");

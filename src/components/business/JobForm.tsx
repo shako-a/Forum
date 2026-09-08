@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useRef } from "react";
+import { RichDescriptionField } from "@/components/RichDescriptionField";
 import { addJob } from "@/app/actions/business";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
@@ -26,7 +27,7 @@ export function JobForm({
 
       <input name="title" className="input" placeholder={t.jobTitle} aria-invalid={state?.errors?.title ? true : undefined} />
       {state?.errors?.title && <span className="field-error">{state.errors.title.join(" ")}</span>}
-      <textarea name="description" className="input" rows={3} placeholder={t.jobDescription} />
+      <RichDescriptionField dict={dict} placeholder={t.jobDescription} />
       {state?.errors?.description && <span className="field-error">{state.errors.description.join(" ")}</span>}
       <div className="field-row">
         <input name="city" className="input" placeholder={dict.auth.city} />

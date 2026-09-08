@@ -206,6 +206,10 @@ export function pmPlainText(doc: unknown): string {
   const walk = (n: PMNode) => {
     if (!n || typeof n !== "object") return;
     if (typeof n.text === "string") parts.push(n.text);
+    // A hard break is inline, so it isn't in BLOCK_TYPES — without this the
+    // words on either side of a line break run together ("wanted.Pay $288"),
+    // which then reaches search, card snippets and AI summaries.
+    if (n.type === "hardBreak") parts.push(" ");
     if (Array.isArray(n.content)) n.content.forEach(walk);
     if (n.type && BLOCK_TYPES.has(n.type)) parts.push(" ");
   };

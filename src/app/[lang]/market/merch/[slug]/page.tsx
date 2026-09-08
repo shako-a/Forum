@@ -1,4 +1,5 @@
 import Link from "@/components/Link";
+import { RichText } from "@/components/RichText";
 import { notFound } from "next/navigation";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
@@ -53,7 +54,7 @@ export default async function MerchProductPage({ params }: PageProps<"/[lang]/ma
               <div className="muted-sm">{labelOf(MERCH_CATEGORIES, product.category, lang)}</div>
               <h1 className="mk-detail-title">{product.name}</h1>
               <div className="mk-detail-price">{formatCents(product.priceCents)}</div>
-              <p className="biz-description merch-desc">{product.description}</p>
+              <RichText doc={product.descriptionRich} text={product.description} plainClassName="biz-description merch-desc" />
               {user?.role === "ADMIN" && (
                 <Link href={`/${lang}/admin/merch/${product.id}`} className="btn btn-ghost btn-sm">✏️ {dict.admin.edit}</Link>
               )}

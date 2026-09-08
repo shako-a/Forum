@@ -49,6 +49,7 @@ export default async function EditListingPage({ params }: PageProps<"/[lang]/rea
               propertyType: listing.propertyType,
               title: listing.title,
               description: listing.description ?? "",
+              descriptionRich: listing.descriptionRich,
               price: listing.price,
               bedrooms: listing.bedrooms ?? "",
               bathrooms: listing.bathrooms ?? "",

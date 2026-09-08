@@ -33,6 +33,7 @@ export default async function EditMerchProductPage({ params }: PageProps<"/[lang
           id: product.id,
           name: product.name,
           description: product.description,
+          descriptionRich: product.descriptionRich,
           category: product.category,
           price: product.priceCents / 100,
           photos: product.photos,

@@ -63,6 +63,7 @@ export default async function EditAutoListingPage({ params }: PageProps<"/[lang]
               minRentalDays: l.minRentalDays ?? "",
               depositAmount: l.depositAmount ?? "",
               description: l.description ?? "",
+              descriptionRich: l.descriptionRich,
               features: l.features,
               photos: l.photos,
               city: l.city ?? "",

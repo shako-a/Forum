@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { readRichDescription, RICH_TOO_LARGE } from "@/lib/rich-description";
 import { redirect } from "next/navigation";
 import { localeHref } from "@/lib/locale-url";
 import { db } from "@/lib/db";
@@ -26,12 +27,15 @@ async function uniqueListingSlug(title: string): Promise<string> {
   return slug;
 }
 
+// The description arrives as an editor document; its plain-text projection is
+// what the schema validates (lib/rich-description.ts).
 function parseListing(formData: FormData) {
-  return ListingSchema.safeParse({
+  const rich = readRichDescription(formData);
+  const result = ListingSchema.safeParse({
     kind: formData.get("kind"),
     propertyType: formData.get("propertyType"),
     title: formData.get("title"),
-    description: formData.get("description") || undefined,
+    description: rich.plain || undefined,
     price: formData.get("price"),
     bedrooms: formData.get("bedrooms") ?? undefined,
     bathrooms: formData.get("bathrooms") ?? undefined,
@@ -46,6 +50,7 @@ function parseListing(formData: FormData) {
     phone: formData.get("phone") || undefined,
     email: formData.get("email") || undefined,
   });
+  return { rich, result };
 }
 
 // Multi-value inputs: feature checkboxes and the ordered hidden photo fields.
@@ -68,7 +73,8 @@ export async function createListing(_state: FormState, formData: FormData): Prom
   if (!user) return { message: "You must be logged in." };
   if (!(await canPostIn("estate", user))) return { message: "Posting real-estate listings isn't included in your plan." };
 
-  const parsed = parseListing(formData);
+  const { rich, result: parsed } = parseListing(formData);
+  if (rich.tooLarge) return { errors: { description: [RICH_TOO_LARGE] } };
   if (!parsed.success) return { errors: zodErrors(parsed.error) };
 
   const { title, city, email, zip, ...rest } = parsed.data;
@@ -85,6 +91,7 @@ export async function createListing(_state: FormState, formData: FormData): Prom
       lat: point?.lat ?? null,
       lng: point?.lng ?? null,
       email: email || null,
+      descriptionRich: rich.rich,
       features: parseFeatures(formData),
       photos: parsePhotos(formData),
     },
@@ -108,7 +115,8 @@ export async function updateListing(_state: FormState, formData: FormData): Prom
   if (!listing) return { message: "Listing not found." };
   if (listing.ownerId !== user.id && user.role !== "ADMIN") return { message: "Not allowed." };
 
-  const parsed = parseListing(formData);
+  const { rich, result: parsed } = parseListing(formData);
+  if (rich.tooLarge) return { errors: { description: [RICH_TOO_LARGE] } };
   if (!parsed.success) return { errors: zodErrors(parsed.error) };
 
   const { title, city, email, zip, bedrooms, bathrooms, rooms, areaSqFt, yearBuilt, description, contactName, phone, ...rest } = parsed.data;
@@ -125,6 +133,7 @@ export async function updateListing(_state: FormState, formData: FormData): Prom
       lng: point?.lng ?? null,
       email: email || null,
       description: description ?? null,
+      descriptionRich: rich.rich,
       contactName: contactName ?? null,
       phone: phone ?? null,
       bedrooms: bedrooms ?? null,

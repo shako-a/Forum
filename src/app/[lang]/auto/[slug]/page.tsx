@@ -1,4 +1,5 @@
 import Link from "@/components/Link";
+import { RichText } from "@/components/RichText";
 import { notFound } from "next/navigation";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
@@ -145,7 +146,7 @@ export default async function AutoListingPage({ params }: PageProps<"/[lang]/aut
           {l.description && (
             <div className="card card-pad biz-section">
               <h2 className="biz-section-title">📝 {t.description}</h2>
-              <p className="biz-description">{l.description}</p>
+              <RichText doc={l.descriptionRich} text={l.description} plainClassName="biz-description" />
             </div>
           )}
 

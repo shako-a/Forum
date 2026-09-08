@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { readRichDescription, RICH_TOO_LARGE } from "@/lib/rich-description";
 import { redirect } from "next/navigation";
 import { localeHref } from "@/lib/locale-url";
 import { db } from "@/lib/db";
@@ -20,11 +21,15 @@ function safeLocale(locale: string): string {
   return isLocale(locale) ? locale : defaultLocale;
 }
 
+// The description now arrives as an editor document. Its plain-text projection
+// is what the schema validates, so the existing length rules keep applying to
+// prose rather than to JSON — see lib/rich-description.ts.
 function parse(formData: FormData) {
   const opt = (k: string) => formData.get(k) || undefined;
-  return UserJobSchema.safeParse({
+  const rich = readRichDescription(formData);
+  const result = UserJobSchema.safeParse({
     title: formData.get("title"),
-    description: formData.get("description"),
+    description: rich.plain,
     companyName: opt("companyName"),
     jobType: formData.get("jobType") ?? undefined,
     pay: opt("pay"),
@@ -33,6 +38,7 @@ function parse(formData: FormData) {
     contactEmail: opt("contactEmail"),
     contactPhone: opt("contactPhone"),
   });
+  return { rich, result };
 }
 
 async function ownedJob(id: string, user: { id: string; role: string }) {
@@ -50,7 +56,8 @@ export async function createUserJob(_state: FormState, formData: FormData): Prom
   const user = await getCurrentUser();
   if (!user) return { message: "You must be logged in." };
   if (!(await canPostIn("jobs", user))) return { message: "Posting jobs isn't included in your plan." };
-  const parsed = parse(formData);
+  const { rich, result: parsed } = parse(formData);
+  if (rich.tooLarge) return { errors: { description: [RICH_TOO_LARGE] } };
   if (!parsed.success) return { errors: zodErrors(parsed.error) };
   const d = parsed.data;
   await db.jobPosting.create({
@@ -58,6 +65,7 @@ export async function createUserJob(_state: FormState, formData: FormData): Prom
       posterId: user.id,
       title: d.title,
       description: d.description,
+      descriptionRich: rich.rich,
       companyName: d.companyName ?? null,
       jobType: d.jobType ?? null,
       pay: d.pay ?? null,
@@ -78,7 +86,8 @@ export async function updateUserJob(_state: FormState, formData: FormData): Prom
   if (!user) return { message: "You must be logged in." };
   const job = await ownedJob(String(formData.get("jobId") ?? ""), user);
   if (!job) return { message: "Not allowed." };
-  const parsed = parse(formData);
+  const { rich, result: parsed } = parse(formData);
+  if (rich.tooLarge) return { errors: { description: [RICH_TOO_LARGE] } };
   if (!parsed.success) return { errors: zodErrors(parsed.error) };
   const d = parsed.data;
   await db.jobPosting.update({
@@ -86,6 +95,7 @@ export async function updateUserJob(_state: FormState, formData: FormData): Prom
     data: {
       title: d.title,
       description: d.description,
+      descriptionRich: rich.rich,
       companyName: d.companyName ?? null,
       jobType: d.jobType ?? null,
       pay: d.pay ?? null,

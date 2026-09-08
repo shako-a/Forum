@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { RichDescriptionField } from "@/components/RichDescriptionField";
 import { createAutoListing, updateAutoListing } from "@/app/actions/auto";
 import { StateSelect } from "@/components/StateSelect";
 import { PhotosField } from "@/components/estate/PhotosField";
@@ -40,6 +41,8 @@ export type AutoListingValues = {
   minRentalDays: number | "";
   depositAmount: number | "";
   description: string;
+  /** Stored rich document, when the row has been edited since the editor shipped. */
+  descriptionRich: unknown;
   features: string[];
   photos: string[];
   city: string;
@@ -270,7 +273,12 @@ export function AutoListingForm({
 
       <div className="field">
         <label htmlFor="description">{t.description}</label>
-        <textarea id="description" name="description" className="input" rows={6} defaultValue={values?.description} placeholder={t.descriptionPlaceholder} maxLength={6000} />
+        <RichDescriptionField
+          dict={dict}
+          doc={values?.descriptionRich}
+          text={values?.description}
+          placeholder={t.descriptionPlaceholder}
+        />
       </div>
 
       {/* Features */}

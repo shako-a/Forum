@@ -477,7 +477,12 @@ model Business {
 
   name        String
   tagline     String? // short one-liner
-  description String? // longer plain-text blurb
+  description String? // plain-text projection of descriptionRich (see below)
+  // Rich (ProseMirror) version of the description above. `description` stays the
+  // plain-text projection: it is what search matches with `contains`, what card
+  // snippets slice, and what renders for rows written before the editor existed.
+  // Null means this row has never been edited since — render the plain text.
+  descriptionRich Json?
   category    String // key from the curated business-categories list
   logoUrl     String?
 
@@ -566,6 +571,11 @@ model JobPosting {
 
   title        String
   description  String
+  // Rich (ProseMirror) version of the description above. `description` stays the
+  // plain-text projection: it is what search matches with `contains`, what card
+  // snippets slice, and what renders for rows written before the editor existed.
+  // Null means this row has never been edited since — render the plain text.
+  descriptionRich Json?
   // Member postings carry the employer + contact details a business
   // profile would otherwise provide.
   companyName  String?
@@ -607,6 +617,11 @@ model PropertyListing {
   propertyType String // key from the curated property-types list (lib/estate.ts)
   title        String
   description  String?
+  // Rich (ProseMirror) version of the description above. `description` stays the
+  // plain-text projection: it is what search matches with `contains`, what card
+  // snippets slice, and what renders for rows written before the editor existed.
+  // Null means this row has never been edited since — render the plain text.
+  descriptionRich Json?
 
   // Whole dollars. For RENT this is the monthly rate.
   price Int
@@ -676,6 +691,11 @@ model MarketListing {
 
   title       String
   description String
+  // Rich (ProseMirror) version of the description above. `description` stays the
+  // plain-text projection: it is what search matches with `contains`, what card
+  // snippets slice, and what renders for rows written before the editor existed.
+  // Null means this row has never been edited since — render the plain text.
+  descriptionRich Json?
   category    String // key from lib/market.ts
   condition   String // NEW | LIKE_NEW | GOOD | FAIR | PARTS
 
@@ -766,6 +786,11 @@ model MerchProduct {
   slug        String   @unique
   name        String
   description String
+  // Rich (ProseMirror) version of the description above. `description` stays the
+  // plain-text projection: it is what search matches with `contains`, what card
+  // snippets slice, and what renders for rows written before the editor existed.
+  // Null means this row has never been edited since — render the plain text.
+  descriptionRich Json?
   category    String   @default("apparel") // apparel | accessories | home | other
   priceCents  Int // base price; variants can add a delta
   photos      String[]
@@ -894,6 +919,11 @@ model AutoListing {
   depositAmount Int?
 
   description String?
+  // Rich (ProseMirror) version of the description above. `description` stays the
+  // plain-text projection: it is what search matches with `contains`, what card
+  // snippets slice, and what renders for rows written before the editor existed.
+  // Null means this row has never been edited since — render the plain text.
+  descriptionRich Json?
   features    String[] // keys from lib/auto.ts
   photos      String[] // ordered; [0] is the cover
 

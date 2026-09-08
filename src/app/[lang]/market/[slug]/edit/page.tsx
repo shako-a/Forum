@@ -57,6 +57,7 @@ export default async function EditMarketListingPage({ params }: PageProps<"/[lan
               id: listing.id,
               title: listing.title,
               description: listing.description,
+              descriptionRich: listing.descriptionRich,
               category: listing.category,
               condition: listing.condition,
               priceType: listing.priceType,

@@ -1,4 +1,5 @@
 import Link from "@/components/Link";
+import { RichText } from "@/components/RichText";
 import { notFound, redirect } from "next/navigation";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
@@ -110,7 +111,7 @@ export default async function JobDetailPage({ params, searchParams }: PageProps<
             {/* Descriptions are plain text typed into a textarea, so newlines
                 are the only formatting to preserve — rendering them as HTML
                 would let a poster inject markup. */}
-            <p className="job-detail-desc">{job.description}</p>
+            <RichText doc={job.descriptionRich} text={job.description} plainClassName="job-detail-desc" />
 
             {(job.contactEmail || job.contactPhone) && (
               <>

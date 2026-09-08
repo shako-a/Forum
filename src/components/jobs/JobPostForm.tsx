@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { RichDescriptionField } from "@/components/RichDescriptionField";
 import { createUserJob, updateUserJob } from "@/app/actions/jobs";
 import { StateSelect } from "@/components/StateSelect";
 import { JOB_TYPES } from "@/lib/jobs";
@@ -11,6 +12,8 @@ export type JobPostValues = {
   id: string;
   title: string;
   description: string;
+  /** Stored rich document, when the row has been edited since the editor shipped. */
+  descriptionRich: unknown;
   companyName: string;
   jobType: string;
   pay: string;
@@ -71,7 +74,12 @@ export function JobPostForm({
       </div>
       <div className="field">
         <label htmlFor="description">{t.jobDescription}<span className="req">*</span></label>
-        <textarea id="description" name="description" className="input" rows={7} defaultValue={values?.description} required maxLength={6000} placeholder={t.jobDescriptionPlaceholder} aria-invalid={err?.description ? true : undefined} />
+        <RichDescriptionField
+          dict={dict}
+          doc={values?.descriptionRich}
+          text={values?.description}
+          placeholder={t.jobDescriptionPlaceholder}
+        />
         {err?.description && <span className="field-error">{err.description.join(" ")}</span>}
       </div>
       <div className="field-row">

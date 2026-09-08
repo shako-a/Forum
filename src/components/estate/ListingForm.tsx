@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { RichDescriptionField } from "@/components/RichDescriptionField";
 import { createListing, updateListing } from "@/app/actions/estate";
 import { StateSelect } from "@/components/StateSelect";
 import { PhotosField } from "@/components/estate/PhotosField";
@@ -14,6 +15,8 @@ export type ListingValues = {
   propertyType: string;
   title: string;
   description: string;
+  /** Stored rich document, when the row has been edited since the editor shipped. */
+  descriptionRich: unknown;
   price: number | "";
   bedrooms: number | "";
   bathrooms: number | "";
@@ -187,12 +190,10 @@ export function ListingForm({
 
       <div className="field">
         <label htmlFor="description">{t.description}</label>
-        <textarea
-          id="description"
-          name="description"
-          className="input"
-          rows={6}
-          defaultValue={values?.description}
+        <RichDescriptionField
+          dict={dict}
+          doc={values?.descriptionRich}
+          text={values?.description}
           placeholder={t.descriptionPlaceholder}
         />
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { RichDescriptionField } from "@/components/RichDescriptionField";
 import { createMarketListing, updateMarketListing } from "@/app/actions/market";
 import { StateSelect } from "@/components/StateSelect";
 import { PhotosField } from "@/components/estate/PhotosField";
@@ -12,6 +13,8 @@ export type MarketListingValues = {
   id: string;
   title: string;
   description: string;
+  /** Stored rich document, when the row has been edited since the editor shipped. */
+  descriptionRich: unknown;
   category: string;
   condition: string;
   priceType: string;
@@ -183,15 +186,11 @@ export function MarketListingForm({
           {t.description}
           <span className="req">*</span>
         </label>
-        <textarea
-          id="description"
-          name="description"
-          className="input"
-          rows={7}
-          defaultValue={values?.description}
+        <RichDescriptionField
+          dict={dict}
+          doc={values?.descriptionRich}
+          text={values?.description}
           placeholder={t.descriptionPlaceholder}
-          maxLength={6000}
-          aria-invalid={err?.description ? true : undefined}
         />
         {err?.description && <span className="field-error">{err.description.join(" ")}</span>}
       </div>

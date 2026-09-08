@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { RichDescriptionField } from "@/components/RichDescriptionField";
 import { saveMerchProduct, deleteMerchProduct } from "@/app/actions/admin-merch";
 import { PhotosField } from "@/components/estate/PhotosField";
 import { ConfirmButton } from "@/components/business/ConfirmButton";
@@ -13,6 +14,8 @@ export type MerchProductValues = {
   id: string;
   name: string;
   description: string;
+  /** Stored rich document, when the row has been edited since the editor shipped. */
+  descriptionRich: unknown;
   category: string;
   price: number; // dollars
   photos: string[];
@@ -69,7 +72,11 @@ export function MerchProductForm({
       </div>
       <div className="field">
         <label htmlFor="description">{t.merchDescription}<span className="req">*</span></label>
-        <textarea id="description" name="description" className="input" rows={6} defaultValue={values?.description} required />
+        <RichDescriptionField
+          dict={dict}
+          doc={values?.descriptionRich}
+          text={values?.description}
+        />
         {err?.description && <span className="field-error">{err.description.join(" ")}</span>}
       </div>
       <div className="field">
