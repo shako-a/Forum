@@ -2398,7 +2398,9 @@ button.header-profile {
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--paper);
-  overflow: hidden;
+  /* Deliberately not overflow:hidden — that clipped the emoji popover to the
+     editor box, cutting off the bottom rows. The toolbar rounds its own top
+     corners instead, which is all the clipping was for. */
 }
 .rte:focus-within {
   border-color: var(--blue);
@@ -2411,6 +2413,8 @@ button.header-profile {
   padding: 8px;
   border-bottom: 1px solid var(--line);
   background: var(--bg);
+  /* 1px inside the container's 12px so the fill doesn't peek past the border. */
+  border-radius: 11px 11px 0 0;
 }
 .rte-btn {
   border: none;
@@ -2464,8 +2468,11 @@ button.header-profile {
   top: calc(100% + 6px);
   left: 0;
   width: 268px;
-  max-height: 220px;
+  /* Tall enough for the whole set — the scroll is a fallback for when the list
+     grows, not something a reader should have to discover. */
+  max-height: min(340px, 60vh);
   overflow-y: auto;
+  overscroll-behavior: contain;
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -2505,6 +2512,13 @@ button.header-profile {
   min-height: 220px;
   padding: 14px 16px;
   outline: none;
+  /* Draggable from the bottom-right corner, like the textarea this replaced.
+     Vertical only: the editor is as wide as its form column, and letting it
+     grow sideways would push the column out of shape. `resize` needs a
+     non-visible overflow to render the handle. */
+  resize: vertical;
+  overflow: auto;
+  border-radius: 0 0 11px 11px;
 }
 .ProseMirror:focus {
   outline: none;
