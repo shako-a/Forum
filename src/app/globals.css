@@ -7778,7 +7778,11 @@ a.mk-tag:hover {
   font-weight: 700;
   box-shadow: var(--shadow);
 }
+/* .btn leaves display alone, so as an <a> this is inline: width and margin
+   would be ignored and the padding would paint over the map. */
 .listing-directions {
+  display: flex;
+  align-items: center;
   width: 100%;
   justify-content: center;
   margin-top: 10px;
@@ -7797,6 +7801,8 @@ a.mk-tag:hover {
   margin: 0;
 }
 .msg-login {
+  display: flex;
+  align-items: center;
   width: 100%;
   justify-content: center;
 }
