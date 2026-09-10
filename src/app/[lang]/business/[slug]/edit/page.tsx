@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { parseDetails } from "@/lib/business-social";
 import Link from "@/components/Link";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
@@ -61,6 +62,18 @@ export default async function EditBusinessPage({ params }: PageProps<"/[lang]/bu
               phone: biz.phone ?? "",
               logoUrl: biz.logoUrl ?? "",
               photos: biz.photos,
+              address: biz.address ?? "",
+              zip: biz.zip ?? "",
+              whatsapp: biz.whatsapp ?? "",
+              bookingUrl: biz.bookingUrl ?? "",
+              socialFacebook: biz.socialFacebook ?? "",
+              socialInstagram: biz.socialInstagram ?? "",
+              socialTiktok: biz.socialTiktok ?? "",
+              socialYoutube: biz.socialYoutube ?? "",
+              socialTelegram: biz.socialTelegram ?? "",
+              languages: biz.languages,
+              paymentMethods: biz.paymentMethods,
+              details: parseDetails(biz.details),
             }}
           />
 

@@ -6,19 +6,34 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { getCurrentUser } from "@/lib/dal";
 import { toHeaderUser } from "@/lib/header-user";
 import { db } from "@/lib/db";
+import { localeHref } from "@/lib/locale-url";
 import { getPostView } from "@/lib/forum-data";
 import { ensureJobDiscussion } from "@/lib/job-discussion";
-import { businessCategoryIcon } from "@/lib/business-categories";
+import { businessCategoryIcon, businessCategoryLabel } from "@/lib/business-categories";
 import { jobTypeLabel } from "@/lib/jobs";
+import { stateLabel } from "@/lib/us-states";
 import { timeAgo } from "@/lib/format";
 import { aliasOptions } from "@/lib/anon";
 import { getActingBusiness } from "@/lib/acting-as";
-import { Header } from "@/components/Header";
-import { LeftSidebar } from "@/components/LeftSidebar";
+import { mapsDirectionsUrl } from "@/lib/maps";
+import { socialLinks, whatsappUrl } from "@/lib/business-social";
+import { getFeaturedCards, getSimilarJobs } from "@/lib/featured";
+import type { ContactTarget } from "@/lib/modules";
 import { ReplyComposer } from "@/components/ReplyComposer";
 import { ReplyThread } from "@/components/ReplyThread";
 import { ReplySort, type ReplySortKey } from "@/components/ReplySort";
 import { ShareMenu } from "@/components/ShareMenu";
+import { ListingPage } from "@/components/listing/ListingPage";
+import { ListingHero } from "@/components/listing/ListingHero";
+import { ListingActions, type ListingAction } from "@/components/listing/ListingActions";
+import { Section } from "@/components/listing/Section";
+import { SpecTable } from "@/components/listing/SpecTable";
+import { ContactCard } from "@/components/listing/ContactCard";
+import { SocialCard } from "@/components/listing/SocialCard";
+import { LocationCard } from "@/components/listing/LocationCard";
+import { MessageForm } from "@/components/listing/MessageForm";
+import { SimilarGrid } from "@/components/listing/SimilarGrid";
+import { FeaturedBar } from "@/components/listing/FeaturedBar";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +51,13 @@ export default async function JobDetailPage({ params, searchParams }: PageProps<
     db.jobPosting.findUnique({
       where: { id },
       include: {
-        business: { select: { slug: true, name: true, logoUrl: true, verified: true, category: true } },
+        business: {
+          select: {
+            id: true, slug: true, name: true, logoUrl: true, verified: true, category: true, ownerId: true,
+            phone: true, email: true, website: true, whatsapp: true, address: true, city: true, state: true, zip: true,
+            socialFacebook: true, socialInstagram: true, socialTiktok: true, socialYoutube: true, socialTelegram: true,
+          },
+        },
         poster: { select: { id: true, forumName: true } },
       },
     }),
@@ -44,113 +65,126 @@ export default async function JobDetailPage({ params, searchParams }: PageProps<
   if (!job) notFound();
 
   const t = dict.business;
-  const isOwner = !!user && (job.posterId === user.id || user.role === "ADMIN");
-  // A closed listing stays readable for whoever posted it (and staff), so they
-  // can reopen it — everyone else is sent back to the board.
-  if (!job.active && !isOwner) redirect(`/${lang}/jobs`);
+  const L = dict.listing;
+  const isOwner = !!user && (job.posterId === user.id || (!!job.business && job.business.ownerId === user.id));
+  const canManage = isOwner || user?.role === "ADMIN";
+  // A closed listing stays readable for whoever posted it (and staff); everyone else goes back to the board.
+  if (!job.active && !canManage) redirect(localeHref(`/${lang}/jobs`));
 
-  // The Q&A thread, created on first view. Everything below reuses the forum's
-  // own reply machinery through it.
-  const discussion = await ensureJobDiscussion(job.id);
-  const viewer = user
-    ? { id: user.id, role: user.role, isOwner: user.isOwner, canRevealAnon: user.canRevealAnon }
-    : null;
+  const [discussion, similar, featured, acting] = await Promise.all([
+    ensureJobDiscussion(job.id),
+    getSimilarJobs(job),
+    getFeaturedCards("jobs", lang),
+    user ? getActingBusiness() : Promise.resolve(null),
+  ]);
+  const viewer = user ? { id: user.id, role: user.role, isOwner: user.isOwner, canRevealAnon: user.canRevealAnon } : null;
   const thread = discussion ? await getPostView(discussion.slug, viewer, sort, lang) : null;
 
-  const acting = user ? await getActingBusiness() : null;
-  const loginHref = `/${lang}/login?next=/${lang}/jobs/${job.id}`;
-  const location = [job.city, job.state].filter(Boolean).join(", ");
+  const href = `/${lang}/jobs/${job.id}`;
+  const loginHref = `/${lang}/login?next=${encodeURIComponent(href)}`;
+  const target: ContactTarget = { module: "jobs", listingId: job.id };
+  const location = [job.city, job.state ? stateLabel(job.state, lang) : null].filter(Boolean).join(", ");
+  const biz = job.business;
+  // Contact channels: the posting's own, falling back to the business profile's.
+  const email = job.contactEmail || biz?.email || null;
+  const phone = job.contactPhone || biz?.phone || null;
+  const wa = whatsappUrl(biz?.whatsapp);
+  const bizAddress = biz ? [biz.address, biz.city, stateLabel(biz.state, lang), biz.zip].filter(Boolean).join(", ") : "";
+  const mapQuery = bizAddress || location;
   const canModerate = thread?.canModerate ?? false;
   const canReply = !!user && (!thread?.post.repliesLocked || canModerate);
+  const dateStr = new Date(job.createdAt).toLocaleDateString(lang === "ka" ? "ka-GE" : "en-US", { year: "numeric", month: "long", day: "numeric" });
+  const canMessage = !!(job.posterId || biz?.ownerId);
+
+  const actions = [
+    email && { kind: "email", href: `mailto:${email}`, label: L.applyEmail, icon: "✉️", primary: true },
+    phone && { kind: "call", href: `tel:${phone}`, label: L.call, icon: "📞" },
+    wa && { kind: "whatsapp", href: wa, label: L.whatsapp, icon: "💬", external: true, className: "la-whatsapp" },
+    biz?.website && { kind: "website", href: biz.website, label: L.website, icon: "🌐", external: true },
+    mapQuery && { kind: "directions", href: mapsDirectionsUrl(mapQuery), label: L.directions, icon: "📍", external: true },
+  ].filter(Boolean) as ListingAction[];
+
+  const specs: Array<[string, string]> = [];
+  if (job.jobType) specs.push([dict.business.jobType, jobTypeLabel(job.jobType, lang)]);
+  if (job.pay) specs.push([dict.business.jobPay, job.pay]);
+  if (location) specs.push([L.location, location]);
+  specs.push([L.employer, biz?.name ?? job.companyName ?? job.poster?.forumName ?? "—"]);
 
   return (
-    <>
-      <Header locale={lang} dict={dict} user={toHeaderUser(user)} />
-      <div className="shell">
-        <LeftSidebar locale={lang} dict={dict} categories={allCategories} />
-        <main className="feed">
-          <Link href={`/${lang}/jobs`} className="admin-link job-back">← {t.jobsBoard}</Link>
-
-          <article className="card card-pad job-detail">
-            {!job.active && <p className="job-closed-note">🔒 {t.jobClosed}</p>}
-
-            <div className="biz-job-board-head">
-              <span className="biz-job-board-logo" aria-hidden="true">
-                {job.business ? businessCategoryIcon(job.business.category) : "👤"}
-              </span>
-              <div>
-                <h1 className="job-detail-title">{job.title}</h1>
-                {job.business ? (
-                  <Link href={`/${lang}/business/${job.business.slug}`} className="biz-job-company">
-                    {job.business.name}
-                    {job.business.verified && <span className="biz-verified">✓</span>}
-                  </Link>
-                ) : (
-                  <span className="biz-job-company">
-                    {job.companyName && <>{job.companyName} · </>}
-                    {job.poster && (
-                      <Link href={`/${lang}/u/${encodeURIComponent(job.poster.forumName)}`}>
-                        {t.jobPostedBy} {job.poster.forumName}
-                      </Link>
-                    )}
-                  </span>
-                )}
-              </div>
-              <span className="biz-job-board-time">{timeAgo(new Date(job.createdAt), lang)}</span>
-            </div>
-
-            {(job.jobType || job.pay || location) && (
-              <div className="mk-detail-tags job-detail-tags">
-                {job.jobType && <span className="mk-tag">{jobTypeLabel(job.jobType, lang)}</span>}
-                {job.pay && <span className="mk-tag">💵 {job.pay}</span>}
-                {location && <span className="mk-tag">📍 {location}</span>}
-              </div>
-            )}
-
-            <h2 className="job-section-title">{t.jobAbout}</h2>
-            {/* Descriptions are plain text typed into a textarea, so newlines
-                are the only formatting to preserve — rendering them as HTML
-                would let a poster inject markup. */}
-            <RichText doc={job.descriptionRich} text={job.description} plainClassName="job-detail-desc" />
-
-            {(job.contactEmail || job.contactPhone) && (
-              <>
-                <h2 className="job-section-title">{t.jobHowToApply}</h2>
-                <div className="job-contacts">
-                  {job.contactEmail && (
-                    <a href={`mailto:${job.contactEmail}`} className="btn btn-primary btn-sm">
-                      ✉ {t.jobApplyByEmail}
-                    </a>
-                  )}
-                  {job.contactPhone && (
-                    <a href={`tel:${job.contactPhone}`} className="btn btn-ghost btn-sm">
-                      📞 {job.contactPhone}
-                    </a>
-                  )}
-                </div>
-              </>
-            )}
-
-            <div className="post-actions job-detail-actions">
-              <ShareMenu title={job.title} dict={dict} />
-              {isOwner && job.posterId && (
-                <Link href={`/${lang}/jobs/${job.id}/edit`} className="action">
-                  ✎ {dict.admin.edit}
-                </Link>
+    <ListingPage
+      locale={lang}
+      dict={dict}
+      user={toHeaderUser(user)}
+      categories={allCategories}
+      back={{ href: `/${lang}/jobs`, label: t.jobsBoard }}
+      banners={!job.active ? <p className="job-closed-note">🔒 {t.jobClosed}</p> : null}
+      title={job.title}
+      meta={[
+        { icon: "📅", node: dateStr },
+        {
+          icon: "👤",
+          node: biz ? (
+            <Link href={`/${lang}/business/${biz.slug}`}>{biz.name}{biz.verified && " ✓"}</Link>
+          ) : job.poster ? (
+            <Link href={`/${lang}/u/${encodeURIComponent(job.poster.forumName)}`}>{job.poster.forumName}</Link>
+          ) : (
+            job.companyName ?? "—"
+          ),
+        },
+        { icon: "💬", node: <a href="#questions">{L.questions.replace("{n}", String(thread?.replyCount ?? 0))}</a> },
+      ]}
+      hero={
+        <ListingHero
+          media={
+            <div className="listing-hero-placeholder" aria-hidden="true">
+              {biz?.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={biz.logoUrl} alt="" />
+              ) : (
+                <span>{biz ? businessCategoryIcon(biz.category) : "💼"}</span>
               )}
             </div>
-          </article>
-
-          {/* Questions & answers — the forum's reply system, on this listing. */}
-          <section id="questions" className="job-qa">
-            <div className="job-qa-head">
-              <h2 className="job-section-title" style={{ margin: 0 }}>
-                💬 {t.jobQuestions} · {thread?.replyCount ?? 0}
-              </h2>
-              {(thread?.replyCount ?? 0) > 1 && <ReplySort current={sort} dict={dict} />}
+          }
+          badge={job.featured ? "TOP" : null}
+          manage={canManage && job.posterId ? <Link href={`${href}/edit`} className="btn btn-ghost btn-sm">✎ {dict.admin.edit}</Link> : null}
+          category={
+            <>
+              {biz && <Link href={`/${lang}/business?category=${biz.category}`}>{businessCategoryLabel(biz.category, lang)}</Link>}
+              {biz && location && " · "}
+              {location}
+            </>
+          }
+          blurb={
+            <div className="listing-tags">
+              {job.jobType && <span className="mk-tag">{jobTypeLabel(job.jobType, lang)}</span>}
+              {job.pay && <span className="mk-tag">💵 {job.pay}</span>}
+              <span className="mk-tag">{timeAgo(new Date(job.createdAt), lang)}</span>
             </div>
-            <p className="account-sub" style={{ marginTop: 0 }}>{t.jobQuestionsSub}</p>
+          }
+          actions={
+            <ListingActions
+              target={target}
+              actions={actions}
+              messageHref={!isOwner && canMessage ? "#message" : undefined}
+              messageLabel={L.message}
+              share={<ShareMenu title={job.title} dict={dict} />}
+            />
+          }
+        />
+      }
+      main={
+        <>
+          <Section title={t.jobAbout} icon="📝">
+            <RichText doc={job.descriptionRich} text={job.description} plainClassName="job-detail-desc" />
+          </Section>
 
+          <Section title={L.details} icon="ℹ️">
+            <SpecTable rows={specs} />
+          </Section>
+
+          <Section id="questions" title={`${t.jobQuestions} · ${thread?.replyCount ?? 0}`} icon="💬" plain className="job-qa">
+            <p className="account-sub" style={{ marginTop: 0 }}>{t.jobQuestionsSub}</p>
+            {(thread?.replyCount ?? 0) > 1 && <ReplySort current={sort} dict={dict} />}
             {!thread ? (
               <p className="muted-sm">{t.jobQuestionsUnavailable}</p>
             ) : (
@@ -174,7 +208,6 @@ export default async function JobDetailPage({ params, searchParams }: PageProps<
                     />
                   </div>
                 )}
-
                 <ReplyThread
                   roots={thread.roots}
                   locale={lang}
@@ -193,9 +226,64 @@ export default async function JobDetailPage({ params, searchParams }: PageProps<
                 />
               </>
             )}
-          </section>
-        </main>
-      </div>
-    </>
+          </Section>
+        </>
+      }
+      rail={
+        <>
+          <ContactCard
+            title={L.apply}
+            target={target}
+            rows={[
+              { icon: "✉️", label: L.email, value: email, href: email ? `mailto:${email}` : undefined, kind: "email" },
+              { icon: "📞", label: L.phone, value: phone, href: phone ? `tel:${phone}` : undefined, kind: "call" },
+              { icon: "💬", label: L.whatsapp, value: biz?.whatsapp ?? null, href: wa ?? undefined, kind: "whatsapp", external: true },
+              { icon: "🌐", label: L.website, value: biz?.website ? biz.website.replace(/^https?:\/\//, "") : null, href: biz?.website ?? undefined, kind: "website", external: true },
+              { icon: "📍", label: L.address, value: bizAddress || location || null },
+            ]}
+          />
+          {biz && <SocialCard title={L.social} target={target} links={socialLinks(biz)} />}
+          <LocationCard
+            title={L.location}
+            query={mapQuery}
+            address={bizAddress || undefined}
+            mapTitle={dict.estate.mapTitle}
+            openLabel={L.openInMaps}
+            directionsLabel={L.directions}
+            target={target}
+          />
+          <Section id="message" title={L.messagePoster} icon="✉️">
+            <MessageForm target={target} locale={lang} dict={dict} loggedIn={!!user} isOwner={isOwner} canMessage={canMessage} loginHref={loginHref} />
+          </Section>
+        </>
+      }
+      after={
+        <>
+          {similar.length > 0 && (
+            <SimilarGrid title={L.similarJobs}>
+              {similar.map((j) => (
+                <Link key={j.id} href={`/${lang}/jobs/${j.id}`} className="card card-pad biz-job-board-card">
+                  <div className="biz-job-board-head">
+                    <span className="biz-job-board-logo" aria-hidden="true">
+                      {j.business ? businessCategoryIcon(j.business.category) : "👤"}
+                    </span>
+                    <div>
+                      <h3 className="biz-job-board-title">{j.title}</h3>
+                      <span className="biz-job-company">{j.business?.name ?? j.companyName ?? ""}</span>
+                    </div>
+                  </div>
+                  <div className="biz-card-meta">
+                    {j.jobType && <span>{jobTypeLabel(j.jobType, lang)}</span>}
+                    {j.pay && <><span className="sep">·</span><span>💵 {j.pay}</span></>}
+                    {(j.city || j.state) && <><span className="sep">·</span><span>📍 {[j.city, j.state].filter(Boolean).join(", ")}</span></>}
+                  </div>
+                </Link>
+              ))}
+            </SimilarGrid>
+          )}
+          <FeaturedBar cards={featured} eyebrow={L.featuredEyebrow} title={L.featuredTitle} viewAllHref={`/${lang}/jobs`} viewAllLabel={L.viewAll} locale={lang} />
+        </>
+      }
+    />
   );
 }

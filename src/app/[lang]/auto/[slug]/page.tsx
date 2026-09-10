@@ -7,27 +7,28 @@ import { getCurrentUser } from "@/lib/dal";
 import { toHeaderUser } from "@/lib/header-user";
 import { db } from "@/lib/db";
 import { getAutoListing, getSimilarAuto, countAutoView } from "@/lib/auto-data";
-import {
-  AUTO_BODY_TYPES,
-  AUTO_TRANSMISSIONS,
-  AUTO_FUELS,
-  AUTO_DRIVETRAINS,
-  AUTO_CONDITIONS,
-  AUTO_FEATURES,
-  autoIcon,
-  autoLabel,
-  formatMiles,
-} from "@/lib/auto";
+import { AUTO_BODY_TYPES, AUTO_TRANSMISSIONS, AUTO_FUELS, AUTO_DRIVETRAINS, AUTO_CONDITIONS, AUTO_FEATURES, autoIcon, autoLabel, formatMiles } from "@/lib/auto";
 import { formatPrice } from "@/lib/estate";
 import { stateLabel } from "@/lib/us-states";
 import { timeAgo } from "@/lib/format";
-import { startConversation } from "@/app/actions/inbox";
-import { Header } from "@/components/Header";
-import { LeftSidebar } from "@/components/LeftSidebar";
+import { mapsDirectionsUrl } from "@/lib/maps";
+import { getFeaturedCards } from "@/lib/featured";
+import type { ContactTarget } from "@/lib/modules";
 import { Gallery } from "@/components/estate/Gallery";
 import { AutoCard } from "@/components/auto/AutoCard";
 import { AutoOwnerControls } from "@/components/auto/AutoOwnerControls";
 import { ReportAutoButton } from "@/components/auto/ReportAutoButton";
+import { ShareMenu } from "@/components/ShareMenu";
+import { ListingPage } from "@/components/listing/ListingPage";
+import { ListingHero } from "@/components/listing/ListingHero";
+import { ListingActions, type ListingAction } from "@/components/listing/ListingActions";
+import { Section } from "@/components/listing/Section";
+import { SpecTable } from "@/components/listing/SpecTable";
+import { ContactCard } from "@/components/listing/ContactCard";
+import { LocationCard } from "@/components/listing/LocationCard";
+import { MessageForm } from "@/components/listing/MessageForm";
+import { SimilarGrid } from "@/components/listing/SimilarGrid";
+import { FeaturedBar } from "@/components/listing/FeaturedBar";
 
 export const dynamic = "force-dynamic";
 
@@ -43,25 +44,32 @@ export default async function AutoListingPage({ params }: PageProps<"/[lang]/aut
   if (!listing) notFound();
   const t = dict.auto;
   const m = dict.market;
+  const L = dict.listing;
   const l = listing;
   const isOwner = !!user && user.id === l.ownerId;
   const canManage = isOwner || user?.role === "ADMIN";
   if ((l.status === "PAUSED" || l.status === "REMOVED") && !canManage) notFound();
   if (!isOwner) countAutoView(l.id);
 
-  const similar = await getSimilarAuto(l);
+  const [similar, featured] = await Promise.all([getSimilarAuto(l), getFeaturedCards("auto", lang)]);
   const isRent = l.kind === "RENT";
   const location = [l.city, stateLabel(l.state, lang)].filter(Boolean).join(", ");
   const href = `/${lang}/auto/${l.slug}`;
+  const loginHref = `/${lang}/login?next=${encodeURIComponent(href)}`;
+  const target: ContactTarget = { module: "auto", listingId: l.id };
   const features = AUTO_FEATURES.filter((f) => l.features.includes(f.key));
+  const dateStr = new Date(l.createdAt).toLocaleDateString(lang === "ka" ? "ka-GE" : "en-US", { year: "numeric", month: "long", day: "numeric" });
 
-  async function messageSeller() {
-    "use server";
-    await startConversation(l!.ownerId, lang);
-  }
+  const actions = [
+    l.phone && { kind: "call", href: `tel:${l.phone}`, label: L.call, icon: "📞", primary: true },
+    l.email && { kind: "email", href: `mailto:${l.email}`, label: L.email, icon: "✉️" },
+    location && { kind: "directions", href: mapsDirectionsUrl(location), label: L.directions, icon: "📍", external: true },
+  ].filter(Boolean) as ListingAction[];
 
   const specs: Array<[string, string]> = [];
+  specs.push([t.kind, isRent ? t.forRent : t.forSale]);
   if (l.bodyType) specs.push([t.bodyType, `${autoIcon(AUTO_BODY_TYPES, l.bodyType)} ${autoLabel(AUTO_BODY_TYPES, l.bodyType, lang)}`]);
+  specs.push([t.year, String(l.year)]);
   if (l.mileage != null) specs.push([t.mileage, formatMiles(l.mileage)]);
   if (l.transmission) specs.push([t.transmission, autoLabel(AUTO_TRANSMISSIONS, l.transmission, lang)]);
   if (l.fuel) specs.push([t.fuel, autoLabel(AUTO_FUELS, l.fuel, lang)]);
@@ -75,124 +83,127 @@ export default async function AutoListingPage({ params }: PageProps<"/[lang]/aut
     if (l.depositAmount != null) specs.push([t.deposit, formatPrice(l.depositAmount)]);
   }
 
-  return (
+  const banners = (
     <>
-      <Header locale={lang} dict={dict} user={toHeaderUser(user)} />
-      <div className="shell">
-        <LeftSidebar locale={lang} dict={dict} categories={allCategories} />
-        <main className="feed">
-          <Link href={`/${lang}/auto`} className="btn btn-ghost btn-sm biz-back">‹ {t.directory}</Link>
+      {l.status === "SOLD" && <div className="mk-status-banner mk-status-sold">✓ {isRent ? t.rentedBanner : t.soldBanner}</div>}
+      {l.status === "PAUSED" && <div className="mk-status-banner">⏸ {m.pausedBanner}</div>}
+      {l.status === "REMOVED" && <div className="mk-status-banner mk-status-sold">🚫 {m.removedBanner}{l.removedReason ? ` — ${l.removedReason}` : ""}</div>}
+    </>
+  );
 
-          {l.status === "SOLD" && <div className="mk-status-banner mk-status-sold">✓ {isRent ? t.rentedBanner : t.soldBanner}</div>}
-          {l.status === "PAUSED" && <div className="mk-status-banner">⏸ {m.pausedBanner}</div>}
-          {l.status === "REMOVED" && (
-            <div className="mk-status-banner mk-status-sold">🚫 {m.removedBanner}{l.removedReason ? ` — ${l.removedReason}` : ""}</div>
-          )}
-
-          {l.photos.length > 0 && <Gallery photos={l.photos} alt={l.title} />}
-
-          <div className="card card-pad mk-detail-head">
-            <div className="mk-detail-main">
-              <div className="mk-detail-price">
+  return (
+    <ListingPage
+      locale={lang}
+      dict={dict}
+      user={toHeaderUser(user)}
+      categories={allCategories}
+      back={{ href: `/${lang}/auto`, label: t.directory }}
+      banners={banners}
+      title={l.title}
+      meta={[
+        { icon: "📅", node: dateStr },
+        { icon: "👤", node: <Link href={`/${lang}/u/${encodeURIComponent(l.owner.forumName)}`}>{l.contactName || l.owner.forumName}</Link> },
+        ...(isOwner ? [{ icon: "👁", node: m.views.replace("{n}", String(l.views)) }] : []),
+      ]}
+      hero={
+        <ListingHero
+          media={l.photos.length > 0 ? <Gallery photos={l.photos} alt={l.title} /> : <div className="listing-hero-placeholder" aria-hidden="true"><span>{autoIcon(AUTO_BODY_TYPES, l.bodyType)}</span></div>}
+          badge={l.featured ? "TOP" : null}
+          category={
+            <>
+              <span className={`re-kind-badge ${isRent ? "re-kind-rent" : "re-kind-sale"}`}>{isRent ? t.forRent : t.forSale}</span>
+              {l.bodyType && <> · {autoIcon(AUTO_BODY_TYPES, l.bodyType)} {autoLabel(AUTO_BODY_TYPES, l.bodyType, lang)}</>}
+              {location && <> · {location}</>}
+            </>
+          }
+          blurb={
+            <>
+              <div className="listing-price">
                 {formatPrice(l.price)}
-                {isRent && <span className="re-card-permo">{t.perDay}</span>}
-                {l.negotiable && <span className="mk-card-obo">{m.negotiable}</span>}
+                {isRent && <small>{t.perDay}</small>}
+                {l.negotiable && <small>{m.negotiable}</small>}
               </div>
-              <h1 className="mk-detail-title">{l.title}</h1>
-              <div className="mk-detail-tags">
-                <span className={`re-kind-badge ${isRent ? "re-kind-rent" : "re-kind-sale"}`}>{isRent ? t.forRent : t.forSale}</span>
-                {l.bodyType && <span className="mk-tag">{autoIcon(AUTO_BODY_TYPES, l.bodyType)} {autoLabel(AUTO_BODY_TYPES, l.bodyType, lang)}</span>}
+              <div className="listing-tags">
                 {l.mileage != null && <span className="mk-tag">🛣 {formatMiles(l.mileage)}</span>}
+                {l.transmission && <span className="mk-tag">{autoLabel(AUTO_TRANSMISSIONS, l.transmission, lang)}</span>}
+                {l.fuel && <span className="mk-tag">{autoLabel(AUTO_FUELS, l.fuel, lang)}</span>}
                 {isRent && l.insured && <span className="mk-tag auto-insured">🛡️ {t.insuredShort}</span>}
-                {location && <span className="mk-tag">📍 {location}</span>}
-                {l.featured && <span className="mk-tag">★ {dict.estate.featured}</span>}
+                <span className="mk-tag">{m.listed} {timeAgo(l.createdAt, lang)}</span>
               </div>
-              <div className="biz-card-meta">
-                <span>{m.listed} {timeAgo(l.createdAt, lang)}</span>
-                {isOwner && <><span className="sep">·</span><span>👁 {m.views.replace("{n}", String(l.views))}</span></>}
-              </div>
-            </div>
-          </div>
-
+            </>
+          }
+          actions={
+            <ListingActions
+              target={target}
+              actions={actions}
+              messageHref={!isOwner ? "#message" : undefined}
+              messageLabel={L.message}
+              share={<ShareMenu title={l.title} dict={dict} />}
+            />
+          }
+        />
+      }
+      main={
+        <>
           {canManage && l.status !== "REMOVED" && (
             <div className="card card-pad mk-owner-card">
               <AutoOwnerControls locale={lang} dict={dict} listingId={l.id} slug={l.slug} kind={l.kind} status={l.status} />
             </div>
           )}
-
-          <div className="card card-pad biz-section">
-            <h2 className="biz-section-title">🔧 {t.specs}</h2>
-            <dl className="mk-details">
-              {specs.map(([k, v]) => (
-                <span key={k} style={{ display: "contents" }}>
-                  <dt>{k}</dt>
-                  <dd>{v}</dd>
-                </span>
-              ))}
-            </dl>
-          </div>
-
+          <Section title={t.specs} icon="🔧">
+            <SpecTable rows={specs} />
+          </Section>
           {features.length > 0 && (
-            <div className="card card-pad biz-section">
-              <h2 className="biz-section-title">✨ {t.features}</h2>
+            <Section title={t.features} icon="✨">
               <div className="re-feature-list">
                 {features.map((f) => (
                   <span key={f.key} className="re-feature-chip">{f.icon} {lang === "ka" ? f.ka : f.en}</span>
                 ))}
               </div>
-            </div>
+            </Section>
           )}
-
           {l.description && (
-            <div className="card card-pad biz-section">
-              <h2 className="biz-section-title">📝 {t.description}</h2>
+            <Section title={t.description} icon="📝">
               <RichText doc={l.descriptionRich} text={l.description} plainClassName="biz-description" />
-            </div>
+            </Section>
           )}
-
-          <div className="card card-pad biz-section">
-            <h2 className="biz-section-title">☎️ {dict.estate.contact}</h2>
-            <div className="mk-seller">
-              <div className="mk-seller-id">
-                <Link href={`/${lang}/u/${encodeURIComponent(l.owner.forumName)}`} className="mk-seller-name">
-                  {l.contactName || l.owner.forumName}
-                </Link>
-                <div className="muted-sm">
-                  {l.contactName && <>{dict.estate.postedBy} {l.owner.forumName} · </>}
-                  {m.memberSince} {new Date(l.owner.createdAt).getFullYear()} · {m.activeListings.replace("{n}", String(l.owner._count.autoListings))}
-                </div>
-              </div>
-              {!isOwner && (
-                <div className="mk-seller-actions">
-                  {user ? (
-                    <form action={messageSeller}>
-                      <button type="submit" className="btn btn-primary">💬 {m.messageSeller}</button>
-                    </form>
-                  ) : (
-                    <Link href={`/${lang}/login?next=${encodeURIComponent(href)}`} className="btn btn-primary">💬 {m.messageSeller}</Link>
-                  )}
-                  {l.phone && <a href={`tel:${l.phone}`} className="btn btn-ghost">📞 {l.phone}</a>}
-                  {l.email && <a href={`mailto:${l.email}`} className="btn btn-ghost">✉ {l.email}</a>}
-                </div>
-              )}
-            </div>
+        </>
+      }
+      rail={
+        <>
+          <ContactCard
+            title={dict.estate.contact}
+            target={target}
+            rows={[
+              { icon: "👤", label: L.postedBy, value: <>{l.contactName || l.owner.forumName} <span className="muted-sm">· {m.memberSince} {new Date(l.owner.createdAt).getFullYear()}</span></>, href: `/${lang}/u/${encodeURIComponent(l.owner.forumName)}` },
+              { icon: "📞", label: L.phone, value: l.phone, href: l.phone ? `tel:${l.phone}` : undefined, kind: "call" },
+              { icon: "✉️", label: L.email, value: l.email, href: l.email ? `mailto:${l.email}` : undefined, kind: "email" },
+              { icon: "📍", label: L.address, value: location || null },
+            ]}
+          />
+          <LocationCard title={L.location} query={location} mapTitle={dict.estate.mapTitle} openLabel={L.openInMaps} directionsLabel={L.directions} target={target} />
+          <Section id="message" title={L.messageSeller} icon="✉️">
+            <MessageForm target={target} locale={lang} dict={dict} loggedIn={!!user} isOwner={isOwner} canMessage loginHref={loginHref} />
             {!isOwner && (
               <div className="mk-report-row">
-                <ReportAutoButton locale={lang} dict={dict} listingId={l.id} loggedIn={!!user} loginHref={`/${lang}/login?next=${encodeURIComponent(href)}`} />
+                <ReportAutoButton locale={lang} dict={dict} listingId={l.id} loggedIn={!!user} loginHref={loginHref} />
               </div>
             )}
-          </div>
-
+          </Section>
+        </>
+      }
+      after={
+        <>
           {similar.length > 0 && (
-            <div className="biz-section">
-              <h2 className="biz-section-title" style={{ padding: "0 4px 8px" }}>🔎 {t.similar}</h2>
-              <div className="mk-grid">
-                {similar.map((s) => <AutoCard key={s.id} locale={lang} dict={dict} listing={s} />)}
-              </div>
-            </div>
+            <SimilarGrid title={t.similar}>
+              {similar.map((s) => (
+                <AutoCard key={s.id} locale={lang} dict={dict} listing={s} />
+              ))}
+            </SimilarGrid>
           )}
-        </main>
-      </div>
-    </>
+          <FeaturedBar cards={featured} eyebrow={L.featuredEyebrow} title={L.featuredTitle} viewAllHref={`/${lang}/auto`} viewAllLabel={L.viewAll} locale={lang} />
+        </>
+      }
+    />
   );
 }

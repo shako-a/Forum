@@ -7,6 +7,8 @@ import { StateSelect } from "@/components/StateSelect";
 import { PhotosField } from "@/components/estate/PhotosField";
 import { CroppedUploadField } from "@/components/CroppedUploadField";
 import { BUSINESS_CATEGORIES } from "@/lib/business-categories";
+import { DetailsField } from "@/components/business/DetailsField";
+import { SOCIAL_PLATFORMS, LANGUAGES, PAYMENT_METHODS, type DetailRow } from "@/lib/business-social";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 
@@ -25,6 +27,19 @@ export type BusinessValues = {
   phone: string;
   logoUrl: string;
   photos: string[];
+  // Storefront: location, extra channels, social, sidebar details.
+  address: string;
+  zip: string;
+  whatsapp: string;
+  bookingUrl: string;
+  socialFacebook: string;
+  socialInstagram: string;
+  socialTiktok: string;
+  socialYoutube: string;
+  socialTelegram: string;
+  languages: string[];
+  paymentMethods: string[];
+  details: DetailRow[];
 };
 
 function Field({
@@ -142,10 +157,67 @@ export function BusinessForm({
         />
       </div>
 
+      <div className="field-row">
+        <Field name="address" label={t.address} defaultValue={values?.address} placeholder={t.addressPlaceholder} errors={err?.address} />
+        <Field name="zip" label={t.zip} defaultValue={values?.zip} placeholder="11214" errors={err?.zip} />
+      </div>
+
       <Field name="website" label={t.website} defaultValue={values?.website} placeholder="example.com" errors={err?.website} />
       <div className="field-row">
         <Field name="email" label={t.email} type="email" defaultValue={values?.email} errors={err?.email} />
         <Field name="phone" label={t.phone} type="tel" defaultValue={values?.phone} errors={err?.phone} />
+      </div>
+      <div className="field-row">
+        <Field name="whatsapp" label={t.whatsapp} type="tel" defaultValue={values?.whatsapp} placeholder={t.whatsappPlaceholder} errors={err?.whatsapp} />
+        <Field name="bookingUrl" label={t.bookingUrl} defaultValue={values?.bookingUrl} placeholder="https://…" errors={err?.bookingUrl} />
+      </div>
+
+      {/* Social — a handle or a link per network; either renders as a button on the profile. */}
+      <div className="field">
+        <label>{t.socialTitle}</label>
+        <p className="muted-sm" style={{ margin: "0 0 6px" }}>{t.socialHint}</p>
+        <div className="field-row">
+          {SOCIAL_PLATFORMS.slice(0, 2).map((p) => (
+            <Field key={p.key} name={p.field} label={`${p.icon} ${p.label}`} defaultValue={values?.[p.field]} placeholder={p.placeholder} errors={err?.[p.field]} />
+          ))}
+        </div>
+        <div className="field-row">
+          {SOCIAL_PLATFORMS.slice(2, 4).map((p) => (
+            <Field key={p.key} name={p.field} label={`${p.icon} ${p.label}`} defaultValue={values?.[p.field]} placeholder={p.placeholder} errors={err?.[p.field]} />
+          ))}
+        </div>
+        {SOCIAL_PLATFORMS.slice(4).map((p) => (
+          <Field key={p.key} name={p.field} label={`${p.icon} ${p.label}`} defaultValue={values?.[p.field]} placeholder={p.placeholder} errors={err?.[p.field]} />
+        ))}
+      </div>
+
+      <div className="field">
+        <label>{t.languagesLabel}</label>
+        <div className="check-grid">
+          {LANGUAGES.map((l) => (
+            <label key={l.key}>
+              <input type="checkbox" name="languages" value={l.key} defaultChecked={values?.languages?.includes(l.key)} />
+              {locale === "ka" ? l.ka : l.en}
+            </label>
+          ))}
+        </div>
+      </div>
+      <div className="field">
+        <label>{t.paymentsLabel}</label>
+        <div className="check-grid">
+          {PAYMENT_METHODS.map((p) => (
+            <label key={p.key}>
+              <input type="checkbox" name="paymentMethods" value={p.key} defaultChecked={values?.paymentMethods?.includes(p.key)} />
+              {locale === "ka" ? p.ka : p.en}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="field">
+        <label>{t.detailsTitle}</label>
+        <p className="muted-sm" style={{ margin: "0 0 6px" }}>{t.detailsHint}</p>
+        <DetailsField initial={values?.details ?? []} labels={{ label: t.detailLabel, value: t.detailValue, add: t.addDetail, remove: dict.admin.delete }} />
       </div>
       {/* Logo — a small square mark, shown on the directory card and profile. */}
       <div className="field">

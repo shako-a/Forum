@@ -54,8 +54,8 @@ model User {
   // Direct AI grants, one per tool, independent of tier and packages. These are
   // the switches in Admin → Users; they ADD to whatever a plan already
   // includes, so revoking one never takes away what a paid tier grants.
-  aiAsk       Boolean @default(false)
-  aiTranslate Boolean @default(false)
+  aiAsk            Boolean   @default(false)
+  aiTranslate      Boolean   @default(false)
   // When AI was first switched on for this account, by any route. Never
   // cleared — it is what makes "activated at least once" answerable on the
   // AI Usage page after the grant has been turned off again.
@@ -135,6 +135,8 @@ model User {
   merchOrders          MerchOrder[]
   autoListings         AutoListing[]             @relation("AutoOwner")
   jobPostings          JobPosting[]              @relation("JobPoster")
+  interactionsSent     ListingInteraction[]      @relation("InteractionSender")
+  interactionsReceived ListingInteraction[]      @relation("InteractionRecipient")
   notifications        Notification[]            @relation("UserNotifications")
   notificationsActed   Notification[]            @relation("NotificationActor")
   conversations        ConversationParticipant[]
@@ -475,33 +477,59 @@ model Business {
   owner   User   @relation("BusinessOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId String
 
-  name        String
-  tagline     String? // short one-liner
-  description String? // plain-text projection of descriptionRich (see below)
+  name            String
+  tagline         String? // short one-liner
+  description     String? // plain-text projection of descriptionRich (see below)
   // Rich (ProseMirror) version of the description above. `description` stays the
   // plain-text projection: it is what search matches with `contains`, what card
   // snippets slice, and what renders for rows written before the editor existed.
   // Null means this row has never been edited since — render the plain text.
   descriptionRich Json?
-  category    String // key from the curated business-categories list
-  logoUrl     String?
+  category        String // key from the curated business-categories list
+  logoUrl         String?
 
   // Storefront gallery: ordered image URLs, photos[0] is the cover shown on the
   // directory card. Separate from logoUrl, which stays the small square mark.
-  photos      String[]
+  photos String[]
 
   // Location — reuses the State/Country picker values (US state abbr, "US", "GE").
-  city  String?
-  state String
+  // The street address feeds the map and the Directions button; ZIP fills
+  // lat/lng server-side (lib/geo.ts) so businesses can join radius searches.
+  address String?
+  city    String?
+  zip     String?
+  state   String
+  lat     Float?
+  lng     Float?
 
   // Contact
-  website String?
-  email   String?
-  phone   String?
+  website    String?
+  email      String?
+  phone      String?
+  whatsapp   String? // number in international form; renders as a wa.me link
+  bookingUrl String? // reservations / appointments page, if the business has one
+
+  // Social — stored as handles or full URLs; lib/business-social.ts normalises
+  // either into a link. One column per platform so the form is plain inputs.
+  socialFacebook  String?
+  socialInstagram String?
+  socialTiktok    String?
+  socialYoutube   String?
+  socialTelegram  String?
+
+  // Storefront details shown in the sidebar: keys from lib/business-social.ts.
+  languages      String[]
+  paymentMethods String[]
+  // Free-form specification rows ([{label, value}]) — "Delivery: yes",
+  // "Cuisine: Georgian". Owner-authored, so there is no per-category schema
+  // to maintain; validated to a bounded list of short strings on write.
+  details        Json?
 
   // Admin-controlled flags
-  verified Boolean @default(false) // admin-verified authentic business
-  featured Boolean @default(false) // promoted: pinned to top of the directory
+  verified      Boolean @default(false) // admin-verified authentic business
+  featured      Boolean @default(false) // promoted: pinned to top of the directory
+  featuredOrder Int     @default(0) // position in the featured bar (Admin → Featured)
+  views         Int     @default(0)
 
   // Denormalized rating aggregate (kept in sync on review writes).
   ratingCount Int @default(0)
@@ -518,12 +546,16 @@ model Business {
   authoredReplies Reply[]         @relation("ReplyBusinessAuthor")
   marketListings  MarketListing[] @relation("MarketSellerBusiness")
 
+  // Contact actions taken on this business or its listings (calls, messages…).
+  interactions ListingInteraction[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([category])
   @@index([state])
-  @@index([featured])
+  @@index([featured, featuredOrder])
+  @@index([lat, lng])
 }
 
 // Delegated management: forum users (besides the owner) allowed to act as and
@@ -569,8 +601,8 @@ model JobPosting {
   poster     User?     @relation("JobPoster", fields: [posterId], references: [id], onDelete: Cascade)
   posterId   String?
 
-  title        String
-  description  String
+  title           String
+  description     String
   // Rich (ProseMirror) version of the description above. `description` stays the
   // plain-text projection: it is what search matches with `contains`, what card
   // snippets slice, and what renders for rows written before the editor existed.
@@ -578,14 +610,18 @@ model JobPosting {
   descriptionRich Json?
   // Member postings carry the employer + contact details a business
   // profile would otherwise provide.
-  companyName  String?
-  jobType      String? // FULL_TIME | PART_TIME | CONTRACT | TEMPORARY | GIG
-  pay          String? // free text, e.g. "$18/hr" or "from $60k"
-  contactEmail String?
-  contactPhone String?
-  city         String?
-  state        String?
-  active       Boolean @default(true)
+  companyName     String?
+  jobType         String? // FULL_TIME | PART_TIME | CONTRACT | TEMPORARY | GIG
+  pay             String? // free text, e.g. "$18/hr" or "from $60k"
+  contactEmail    String?
+  contactPhone    String?
+  city            String?
+  state           String?
+  active          Boolean @default(true)
+
+  // Admin-curated featured bar (Admin → Featured), in featuredOrder.
+  featured      Boolean @default(false)
+  featuredOrder Int     @default(0)
 
   // The Q&A thread for this listing, created the first time its page is
   // opened. Nullable so the jobs that existed before Q&A shipped stay valid.
@@ -613,10 +649,10 @@ model PropertyListing {
   owner   User   @relation("ListingOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId String
 
-  kind         String // "SALE" | "RENT"
-  propertyType String // key from the curated property-types list (lib/estate.ts)
-  title        String
-  description  String?
+  kind            String // "SALE" | "RENT"
+  propertyType    String // key from the curated property-types list (lib/estate.ts)
+  title           String
+  description     String?
   // Rich (ProseMirror) version of the description above. `description` stays the
   // plain-text projection: it is what search matches with `contains`, what card
   // snippets slice, and what renders for rows written before the editor existed.
@@ -689,15 +725,15 @@ model MarketListing {
   sellerBusiness   Business? @relation("MarketSellerBusiness", fields: [sellerBusinessId], references: [id], onDelete: SetNull)
   sellerBusinessId String?
 
-  title       String
-  description String
+  title           String
+  description     String
   // Rich (ProseMirror) version of the description above. `description` stays the
   // plain-text projection: it is what search matches with `contains`, what card
   // snippets slice, and what renders for rows written before the editor existed.
   // Null means this row has never been edited since — render the plain text.
   descriptionRich Json?
-  category    String // key from lib/market.ts
-  condition   String // NEW | LIKE_NEW | GOOD | FAIR | PARTS
+  category        String // key from lib/market.ts
+  condition       String // NEW | LIKE_NEW | GOOD | FAIR | PARTS
 
   // Whole dollars. 0 when priceType is FREE.
   price     Int
@@ -730,6 +766,10 @@ model MarketListing {
   favorites     MarketFavorite[]
   reports       Report[]
   sellerReviews MarketSellerReview[]
+
+  // Admin-curated featured bar (Admin → Featured), in featuredOrder.
+  featured      Boolean @default(false)
+  featuredOrder Int     @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -782,21 +822,21 @@ model MarketSellerReview {
 // ---------------------------------------------------------------------------
 
 model MerchProduct {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  name        String
-  description String
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  name            String
+  description     String
   // Rich (ProseMirror) version of the description above. `description` stays the
   // plain-text projection: it is what search matches with `contains`, what card
   // snippets slice, and what renders for rows written before the editor existed.
   // Null means this row has never been edited since — render the plain text.
   descriptionRich Json?
-  category    String   @default("apparel") // apparel | accessories | home | other
-  priceCents  Int // base price; variants can add a delta
-  photos      String[]
-  active      Boolean  @default(true) // sellable / visible in the shop
-  featured    Boolean  @default(false) // shown in the marketplace top strip
-  sortOrder   Int      @default(0)
+  category        String   @default("apparel") // apparel | accessories | home | other
+  priceCents      Int // base price; variants can add a delta
+  photos          String[]
+  active          Boolean  @default(true) // sellable / visible in the shop
+  featured        Boolean  @default(false) // shown in the marketplace top strip
+  sortOrder       Int      @default(0)
 
   variants MerchVariant[]
   items    MerchOrderItem[]
@@ -918,14 +958,14 @@ model AutoListing {
   minRentalDays Int?
   depositAmount Int?
 
-  description String?
+  description     String?
   // Rich (ProseMirror) version of the description above. `description` stays the
   // plain-text projection: it is what search matches with `contains`, what card
   // snippets slice, and what renders for rows written before the editor existed.
   // Null means this row has never been edited since — render the plain text.
   descriptionRich Json?
-  features    String[] // keys from lib/auto.ts
-  photos      String[] // ordered; [0] is the cover
+  features        String[] // keys from lib/auto.ts
+  photos          String[] // ordered; [0] is the cover
 
   // Location — ZIP is optional but powers the radius search.
   city  String?
@@ -1017,6 +1057,52 @@ model Notification {
   createdAt DateTime @default(now())
 
   @@index([userId, read, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Listing interactions — every contact action a visitor takes on a listing in
+// one of the marketplace modules: pressing Call / WhatsApp / Email / Website /
+// Directions / Booking, sharing, or sending a message through the forum.
+//
+// Polymorphic on purpose: `module` + `listingId` name the row in whichever
+// module table it lives in, and the title/slug are snapshotted so the admin
+// page can list and link them without five joins (and so a deleted listing
+// still shows what was contacted). `businessId` is set when the listing is a
+// business or is attributed to one, which is what "which businesses are being
+// approached" groups on.
+// ---------------------------------------------------------------------------
+
+model ListingInteraction {
+  id String @id @default(cuid())
+
+  module       String // business | jobs | estate | market | auto (lib/modules.ts)
+  listingId    String
+  listingTitle String
+  listingSlug  String // the id for jobs, which have no slug
+
+  business   Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  businessId String?
+
+  // Who was contacted (the listing's owner / seller) and who acted. Sender is
+  // null for a signed-out visitor pressing an outbound button.
+  recipient   User?   @relation("InteractionRecipient", fields: [recipientId], references: [id], onDelete: SetNull)
+  recipientId String?
+  sender      User?   @relation("InteractionSender", fields: [senderId], references: [id], onDelete: SetNull)
+  senderId    String?
+
+  kind String // call | whatsapp | email | website | booking | directions | share | message
+
+  // For kind = "message": the forum conversation it landed in, and a snippet.
+  conversationId String?
+  body           String?
+
+  createdAt DateTime @default(now())
+
+  @@index([businessId, createdAt])
+  @@index([module, listingId, createdAt])
+  @@index([recipientId, createdAt])
+  @@index([kind, createdAt])
+  @@index([createdAt])
 }
 
 model Conversation {

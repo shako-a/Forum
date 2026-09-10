@@ -88,6 +88,15 @@ export function AdminNav({
         { href: `${base}/labels`, label: t.labels, icon: "🏷" },
         { href: `${base}/users`, label: t.users, icon: "👥" },
         {
+          // The five marketplace modules share these two surfaces.
+          group: t.modulesGroup,
+          icon: "🧩",
+          children: [
+            { href: `${base}/featured`, label: t.featuredAdmin, icon: "★" },
+            { href: `${base}/enquiries`, label: t.enquiries, icon: "📨" },
+          ],
+        },
+        {
           group: t.businessGroup,
           icon: "💼",
           children: [

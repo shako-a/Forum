@@ -184,6 +184,16 @@ export const BusinessSchema = z.object({
   email: z.email({ error: "Enter a valid email." }).or(z.literal("")).optional(),
   phone: z.string().trim().optional(),
   logoUrl: optionalUrl,
+  address: z.string().trim().max(160).optional(),
+  zip: z.string().trim().max(10).optional(),
+  whatsapp: z.string().trim().max(24).optional(),
+  bookingUrl: optionalUrl,
+  // Handles or URLs; lib/business-social.ts turns either into a link.
+  socialFacebook: z.string().trim().max(300).optional(),
+  socialInstagram: z.string().trim().max(300).optional(),
+  socialTiktok: z.string().trim().max(300).optional(),
+  socialYoutube: z.string().trim().max(300).optional(),
+  socialTelegram: z.string().trim().max(300).optional(),
 });
 
 export const JobSchema = z.object({

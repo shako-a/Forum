@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { lookupZip } from "@/lib/geo";
+import { LANGUAGES, PAYMENT_METHODS, detailsFromForm, pickKeys } from "@/lib/business-social";
 import { readRichDescription, RICH_TOO_LARGE } from "@/lib/rich-description";
 import { redirect } from "next/navigation";
 import { localeHref } from "@/lib/locale-url";
@@ -52,8 +54,31 @@ function parseBusiness(formData: FormData) {
     email: formData.get("email") || undefined,
     phone: formData.get("phone") || undefined,
     logoUrl: formData.get("logoUrl") || undefined,
+    address: formData.get("address") || undefined,
+    zip: formData.get("zip") || undefined,
+    whatsapp: formData.get("whatsapp") || undefined,
+    bookingUrl: formData.get("bookingUrl") || undefined,
+    socialFacebook: formData.get("socialFacebook") || undefined,
+    socialInstagram: formData.get("socialInstagram") || undefined,
+    socialTiktok: formData.get("socialTiktok") || undefined,
+    socialYoutube: formData.get("socialYoutube") || undefined,
+    socialTelegram: formData.get("socialTelegram") || undefined,
   });
   return { rich, result };
+}
+
+// Multi-value storefront fields, validated against their catalogues, plus the
+// ZIP centroid so a business can join radius searches like the listings do.
+function storefrontData(formData: FormData) {
+  const zip = String(formData.get("zip") ?? "").trim() || null;
+  const point = lookupZip(zip);
+  return {
+    languages: pickKeys(LANGUAGES, formData.getAll("languages").map(String)),
+    paymentMethods: pickKeys(PAYMENT_METHODS, formData.getAll("paymentMethods").map(String)),
+    details: detailsFromForm(formData.getAll("detailLabel").map(String), formData.getAll("detailValue").map(String)),
+    lat: point?.lat ?? null,
+    lng: point?.lng ?? null,
+  };
 }
 
 // Register a new business. Who may do so is set in Admin → More.
@@ -69,7 +94,7 @@ export async function createBusiness(_state: FormState, formData: FormData): Pro
   const { name, city, ...rest } = parsed.data;
   const slug = await uniqueBusinessSlug(name);
   await db.business.create({
-    data: { ...rest, name, city: city ?? null, slug, ownerId: user.id, descriptionRich: rich.rich, photos: parsePhotos(formData) },
+    data: { ...rest, name, city: city ?? null, slug, ownerId: user.id, descriptionRich: rich.rich, photos: parsePhotos(formData), ...storefrontData(formData) },
   });
 
   const locale = String(formData.get("locale") ?? "en");
@@ -96,7 +121,7 @@ export async function updateBusiness(_state: FormState, formData: FormData): Pro
 
   const { name, city, ...rest } = parsed.data;
   const photos = parsePhotos(formData);
-  await db.business.update({ where: { id }, data: { ...rest, name, city: city ?? null, descriptionRich: rich.rich, photos } });
+  await db.business.update({ where: { id }, data: { ...rest, name, city: city ?? null, descriptionRich: rich.rich, photos, ...storefrontData(formData) } });
   if (biz.logoUrl && biz.logoUrl !== (rest.logoUrl ?? null)) await deleteUploadsByUrl([biz.logoUrl]);
   await deleteUploadsByUrl(biz.photos.filter((p) => !photos.includes(p)));
 

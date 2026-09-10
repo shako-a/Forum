@@ -194,7 +194,14 @@ export async function getMarketListing(slug: string) {
           _count: { select: { marketListings: { where: liveWhere() } } },
         },
       },
-      sellerBusiness: { select: { name: true, slug: true, logoUrl: true, verified: true } },
+      sellerBusiness: {
+        select: {
+          id: true, name: true, slug: true, logoUrl: true, verified: true,
+          phone: true, email: true, website: true, whatsapp: true, bookingUrl: true,
+          address: true, city: true, state: true,
+          socialFacebook: true, socialInstagram: true, socialTiktok: true, socialYoutube: true, socialTelegram: true,
+        },
+      },
       _count: { select: { favorites: true } },
     },
   });
