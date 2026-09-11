@@ -48,9 +48,9 @@ export default async function JobsBoardPage({ params, searchParams }: PageProps<
   return (
     <>
       <Header locale={lang} dict={dict} user={toHeaderUser(user)} />
-      <div className="shell">
+      <div className="shell shell-modules">
         <LeftSidebar locale={lang} dict={dict} categories={allCategories} />
-        <main className="feed">
+        <main className="feed jobs-feed">
           <div className="biz-dir-head">
             <div>
               <h1 className="account-title">💼 {t.jobsBoard}</h1>
@@ -102,21 +102,18 @@ export default async function JobsBoardPage({ params, searchParams }: PageProps<
                   <span className="biz-job-board-time">{timeAgo(new Date(j.createdAt), lang)}</span>
                 </div>
                 {(j.category || j.jobType || j.pay) && (
-                  <div className="mk-detail-tags" style={{ marginBottom: 8 }}>
+                  <div className="mk-detail-tags">
                     {j.category && <span className="mk-tag">{jobCategoryLabel(j.category, lang)}</span>}
                     {j.jobType && <span className="mk-tag">{jobTypeLabel(j.jobType, lang)}</span>}
                     {j.pay && <span className="mk-tag">💵 {j.pay}</span>}
                   </div>
                 )}
                 <p className="biz-job-desc biz-job-desc-clamp">{j.description}</p>
-                {(j.city || j.state) && (
-                  <p className="biz-job-loc">📍 {[j.city, j.state].filter(Boolean).join(", ")}</p>
-                )}
-                {(j.contactEmail || j.contactPhone) && (
-                  <p className="biz-job-loc">
-                    {j.contactEmail && <a href={`mailto:${j.contactEmail}`}>✉ {j.contactEmail}</a>}
-                    {j.contactEmail && j.contactPhone && " · "}
+                {(j.city || j.state || j.contactEmail || j.contactPhone) && (
+                  <p className="biz-job-meta">
+                    {(j.city || j.state) && <span>📍 {[j.city, j.state].filter(Boolean).join(", ")}</span>}
                     {j.contactPhone && <a href={`tel:${j.contactPhone}`}>📞 {j.contactPhone}</a>}
+                    {j.contactEmail && <a href={`mailto:${j.contactEmail}`}>✉ {j.contactEmail}</a>}
                   </p>
                 )}
                 <div className="job-card-foot">

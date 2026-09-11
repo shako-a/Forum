@@ -117,7 +117,7 @@ export default async function AutoMarketPage({ params, searchParams }: PageProps
   return (
     <>
       <Header locale={lang} dict={dict} user={toHeaderUser(user)} />
-      <div className="shell">
+      <div className="shell shell-modules">
         <LeftSidebar locale={lang} dict={dict} categories={allCategories} />
         <main className="feed">
           <div className="biz-dir-head">

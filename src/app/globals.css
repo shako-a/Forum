@@ -3002,10 +3002,13 @@ button.header-profile {
 }
 .biz-filters .input {
   flex: 1;
+  min-width: 0;
 }
 .biz-filters select.input {
   flex: 0 0 auto;
+  width: auto;
   min-width: 160px;
+  max-width: 40%;
 }
 
 .biz-grid {
@@ -7961,4 +7964,75 @@ a.mk-tag:hover {
   font-weight: 700;
   opacity: 0.7;
   padding-left: 2px;
+}
+
+/* Module directories (Businesses, Jobs, Real Estate, Market, Auto) have no
+   right rail, so the three-column shell left a 300px hole. Two columns on a
+   slightly wider page — a bit narrower than the listing pages' shell-wide. */
+.shell-modules {
+  max-width: 1140px;
+  grid-template-columns: 230px minmax(0, 1fr);
+}
+@media (max-width: 1080px) {
+  .shell-modules {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Jobs board: compact rows — tighter padding, smaller tags, one meta line. */
+.jobs-feed {
+  --feed-gap: 8px;
+}
+.jobs-feed .biz-job-board-item {
+  margin-bottom: 0;
+  padding: 11px 14px 8px;
+}
+.jobs-feed .biz-job-board-head {
+  gap: 8px;
+}
+.jobs-feed .biz-job-board-logo {
+  font-size: 18px;
+}
+.jobs-feed .biz-job-title {
+  font-size: 14px;
+  line-height: 1.25;
+}
+.jobs-feed .biz-job-company {
+  font-size: 12.5px;
+}
+.jobs-feed .mk-detail-tags {
+  gap: 4px;
+  margin: 5px 0 0;
+}
+.jobs-feed .mk-tag {
+  padding: 2px 8px;
+  font-size: 12px;
+}
+.jobs-feed .biz-job-desc {
+  font-size: 13px;
+  line-height: 1.4;
+  margin: 5px 0 0;
+}
+.biz-job-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.biz-job-meta a {
+  color: var(--blue);
+  text-decoration: none;
+}
+.biz-job-meta a:hover {
+  text-decoration: underline;
+}
+.jobs-feed .job-card-foot {
+  margin-top: 6px;
+  padding-top: 4px;
+}
+.jobs-feed .job-card-foot .action {
+  font-size: 12.5px;
+  padding: 3px 6px;
 }
