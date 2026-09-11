@@ -9,7 +9,7 @@ import { getJobsBoard } from "@/lib/business-data";
 import { jobQuestionCounts } from "@/lib/job-discussion";
 import { businessCategoryIcon } from "@/lib/business-categories";
 import { timeAgo } from "@/lib/format";
-import { jobTypeLabel } from "@/lib/jobs";
+import { jobTypeLabel, jobCategoryLabel, JOB_CATEGORIES } from "@/lib/jobs";
 import { canPostIn } from "@/lib/posting-access";
 import { ClickableCard } from "@/components/ClickableCard";
 import { Header } from "@/components/Header";
@@ -17,20 +17,33 @@ import { LeftSidebar } from "@/components/LeftSidebar";
 
 export const dynamic = "force-dynamic";
 
-export default async function JobsBoardPage({ params }: PageProps<"/[lang]/jobs">) {
+export default async function JobsBoardPage({ params, searchParams }: PageProps<"/[lang]/jobs">) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
-  const [dict, user, allCategories, jobs] = await Promise.all([
+  const sp = await searchParams;
+  const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
+  const category = JOB_CATEGORIES.some((c) => c.key === one(sp.category)) ? one(sp.category) : undefined;
+  const page = Math.max(1, Number.parseInt(one(sp.page), 10) || 1);
+  const [dict, user, allCategories, board] = await Promise.all([
     getDictionary(lang),
     getCurrentUser(),
     db.category.findMany({ orderBy: { sortOrder: "asc" } }),
-    getJobsBoard(),
+    getJobsBoard(category, page),
   ]);
+  const { jobs } = board;
   const t = dict.business;
   const [canPost, questions] = await Promise.all([
     canPostIn("jobs", user),
     jobQuestionCounts(jobs.map((j) => j.id)),
   ]);
+  const link = (next: { category?: string; page?: number }) => {
+    const q = new URLSearchParams();
+    const c = "category" in next ? next.category : category;
+    if (c) q.set("category", c);
+    if (next.page && next.page > 1) q.set("page", String(next.page));
+    const qs = q.toString();
+    return `/${lang}/jobs${qs ? `?${qs}` : ""}`;
+  };
 
   return (
     <>
@@ -48,6 +61,17 @@ export default async function JobsBoardPage({ params }: PageProps<"/[lang]/jobs"
               <Link href={canPost ? `/${lang}/jobs/new` : `/${lang}/login?next=/${lang}/jobs/new`} className="btn btn-primary">＋ {t.postJob}</Link>
             </div>
           </div>
+
+          <nav className="cat-chips jobs-cat-chips" aria-label={t.jobCategory}>
+            <Link href={link({ category: undefined })} className={`cat-chip${!category ? " active" : ""}`}>
+              {t.jobAllCategories} <span className="cat-chip-n">{board.totalAll}</span>
+            </Link>
+            {JOB_CATEGORIES.filter((c) => (board.counts.get(c.key) ?? 0) > 0).map((c) => (
+              <Link key={c.key} href={link({ category: c.key })} className={`cat-chip${category === c.key ? " active" : ""}`}>
+                {c.icon} {lang === "ka" ? c.ka : c.en} <span className="cat-chip-n">{board.counts.get(c.key)}</span>
+              </Link>
+            ))}
+          </nav>
 
           {jobs.length === 0 ? (
             <div className="card card-pad" style={{ textAlign: "center", color: "var(--muted)", padding: 40 }}>
@@ -77,8 +101,9 @@ export default async function JobsBoardPage({ params }: PageProps<"/[lang]/jobs"
                   </div>
                   <span className="biz-job-board-time">{timeAgo(new Date(j.createdAt), lang)}</span>
                 </div>
-                {(j.jobType || j.pay) && (
+                {(j.category || j.jobType || j.pay) && (
                   <div className="mk-detail-tags" style={{ marginBottom: 8 }}>
+                    {j.category && <span className="mk-tag">{jobCategoryLabel(j.category, lang)}</span>}
                     {j.jobType && <span className="mk-tag">{jobTypeLabel(j.jobType, lang)}</span>}
                     {j.pay && <span className="mk-tag">💵 {j.pay}</span>}
                   </div>
@@ -104,6 +129,17 @@ export default async function JobsBoardPage({ params }: PageProps<"/[lang]/jobs"
                 </div>
               </ClickableCard>
             ))
+          )}
+          {board.pages > 1 && (
+            <nav className="mk-pagination" aria-label="Pagination">
+              {page > 1 ? (
+                <Link href={link({ page: page - 1 })} className="btn btn-ghost btn-sm">‹ {dict.market.prev}</Link>
+              ) : <span />}
+              <span className="muted-sm">{dict.market.pageOf.replace("{p}", String(page)).replace("{n}", String(board.pages))}</span>
+              {page < board.pages ? (
+                <Link href={link({ page: page + 1 })} className="btn btn-ghost btn-sm">{dict.market.next} ›</Link>
+              ) : <span />}
+            </nav>
           )}
         </main>
       </div>

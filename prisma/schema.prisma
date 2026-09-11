@@ -612,6 +612,9 @@ model JobPosting {
   // profile would otherwise provide.
   companyName     String?
   jobType         String? // FULL_TIME | PART_TIME | CONTRACT | TEMPORARY | GIG
+  // Line of work, one of JOB_CATEGORIES in lib/jobs.ts (driver, restaurant, office…).
+  // Independent of jobType, which is the employment arrangement.
+  category        String?
   pay             String? // free text, e.g. "$18/hr" or "from $60k"
   contactEmail    String?
   contactPhone    String?
@@ -632,6 +635,7 @@ model JobPosting {
   updatedAt DateTime @updatedAt
 
   @@index([active, createdAt])
+  @@index([category, active])
   @@index([businessId])
   @@index([posterId])
 }

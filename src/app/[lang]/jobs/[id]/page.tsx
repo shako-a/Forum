@@ -10,7 +10,7 @@ import { localeHref } from "@/lib/locale-url";
 import { getPostView } from "@/lib/forum-data";
 import { ensureJobDiscussion } from "@/lib/job-discussion";
 import { businessCategoryIcon, businessCategoryLabel } from "@/lib/business-categories";
-import { jobTypeLabel } from "@/lib/jobs";
+import { jobTypeLabel, jobCategoryLabel, jobCategoryIcon } from "@/lib/jobs";
 import { stateLabel } from "@/lib/us-states";
 import { timeAgo } from "@/lib/format";
 import { aliasOptions } from "@/lib/anon";
@@ -105,6 +105,7 @@ export default async function JobDetailPage({ params, searchParams }: PageProps<
   ].filter(Boolean) as ListingAction[];
 
   const specs: Array<[string, string]> = [];
+  if (job.category) specs.push([dict.business.jobCategory, jobCategoryLabel(job.category, lang)]);
   if (job.jobType) specs.push([dict.business.jobType, jobTypeLabel(job.jobType, lang)]);
   if (job.pay) specs.push([dict.business.jobPay, job.pay]);
   if (location) specs.push([L.location, location]);
@@ -141,7 +142,7 @@ export default async function JobDetailPage({ params, searchParams }: PageProps<
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={biz.logoUrl} alt="" />
               ) : (
-                <span>{biz ? businessCategoryIcon(biz.category) : "💼"}</span>
+                <span>{biz ? businessCategoryIcon(biz.category) : jobCategoryIcon(job.category)}</span>
               )}
             </div>
           }
@@ -156,6 +157,7 @@ export default async function JobDetailPage({ params, searchParams }: PageProps<
           }
           blurb={
             <div className="listing-tags">
+              {job.category && <Link href={`/${lang}/jobs?category=${job.category}`} className="mk-tag">{jobCategoryLabel(job.category, lang)}</Link>}
               {job.jobType && <span className="mk-tag">{jobTypeLabel(job.jobType, lang)}</span>}
               {job.pay && <span className="mk-tag">💵 {job.pay}</span>}
               <span className="mk-tag">{timeAgo(new Date(job.createdAt), lang)}</span>

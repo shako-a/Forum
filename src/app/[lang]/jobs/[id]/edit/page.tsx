@@ -42,6 +42,7 @@ export default async function EditJobPage({ params }: PageProps<"/[lang]/jobs/[i
               descriptionRich: job.descriptionRich,
               companyName: job.companyName ?? "",
               jobType: job.jobType ?? "",
+              category: job.category ?? "",
               pay: job.pay ?? "",
               city: job.city ?? "",
               state: job.state ?? "",

@@ -165,14 +165,15 @@ export async function addJob(_state: FormState, formData: FormData): Promise<For
   const parsed = JobSchema.safeParse({
     title: formData.get("title"),
     description: jobRich.plain,
+    category: formData.get("category") ?? undefined,
     city: formData.get("city") || undefined,
     state: formData.get("state") || undefined,
   });
   if (!parsed.success) return { errors: zodErrors(parsed.error) };
 
-  const { title, description, city, state } = parsed.data;
+  const { title, description, category, city, state } = parsed.data;
   await db.jobPosting.create({
-    data: { businessId, title, description, descriptionRich: jobRich.rich, city: city ?? null, state: state ?? null },
+    data: { businessId, title, description, descriptionRich: jobRich.rich, category: category ?? null, city: city ?? null, state: state ?? null },
   });
   const locale = String(formData.get("locale") ?? "en");
   revalidatePath(`/${locale}/business/${biz.slug}`, "page");

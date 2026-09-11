@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { RichDescriptionField } from "@/components/RichDescriptionField";
 import { createUserJob, updateUserJob } from "@/app/actions/jobs";
 import { StateSelect } from "@/components/StateSelect";
-import { JOB_TYPES } from "@/lib/jobs";
+import { JOB_TYPES, JOB_CATEGORIES } from "@/lib/jobs";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 
@@ -16,6 +16,7 @@ export type JobPostValues = {
   descriptionRich: unknown;
   companyName: string;
   jobType: string;
+  category: string;
   pay: string;
   city: string;
   state: string;
@@ -68,9 +69,20 @@ export function JobPostForm({
           </select>
         </div>
       </div>
-      <div className="field">
-        <label htmlFor="pay">{t.jobPay}</label>
-        <input id="pay" name="pay" className="input" defaultValue={values?.pay} maxLength={60} placeholder={t.jobPayPlaceholder} />
+      <div className="field-row">
+        <div className="field">
+          <label htmlFor="category">{t.jobCategory}</label>
+          <select id="category" name="category" className="input" defaultValue={values?.category ?? ""}>
+            <option value="">—</option>
+            {JOB_CATEGORIES.map((c) => (
+              <option key={c.key} value={c.key}>{c.icon} {locale === "ka" ? c.ka : c.en}</option>
+            ))}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="pay">{t.jobPay}</label>
+          <input id="pay" name="pay" className="input" defaultValue={values?.pay} maxLength={60} placeholder={t.jobPayPlaceholder} />
+        </div>
       </div>
       <div className="field">
         <label htmlFor="description">{t.jobDescription}<span className="req">*</span></label>

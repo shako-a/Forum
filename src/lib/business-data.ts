@@ -86,16 +86,29 @@ export async function getMyBusinesses(ownerId: string) {
 }
 
 // Cross-business jobs board: all active postings, newest first.
-export async function getJobsBoard() {
-  return db.jobPosting.findMany({
-    where: { active: true },
-    orderBy: { createdAt: "desc" },
-    take: 100,
-    include: {
-      business: { select: { slug: true, name: true, logoUrl: true, verified: true, category: true } },
-      poster: { select: { id: true, forumName: true } },
-    },
-  });
+export const JOBS_PAGE_SIZE = 30;
+
+// One page of the board, newest first, optionally narrowed to a category.
+// Also returns per-category counts so the filter chips can show them.
+export async function getJobsBoard(category?: string, page = 1) {
+  const where = { active: true, ...(category ? { category } : {}) };
+  const [jobs, total, byCategory] = await Promise.all([
+    db.jobPosting.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * JOBS_PAGE_SIZE,
+      take: JOBS_PAGE_SIZE,
+      include: {
+        business: { select: { slug: true, name: true, logoUrl: true, verified: true, category: true } },
+        poster: { select: { id: true, forumName: true } },
+      },
+    }),
+    db.jobPosting.count({ where }),
+    db.jobPosting.groupBy({ by: ["category"], where: { active: true }, _count: { _all: true } }),
+  ]);
+  const counts = new Map<string | null, number>(byCategory.map((r) => [r.category, r._count._all]));
+  const totalAll = byCategory.reduce((n, r) => n + r._count._all, 0);
+  return { jobs, total, totalAll, counts, pages: Math.max(1, Math.ceil(total / JOBS_PAGE_SIZE)) };
 }
 
 // A member's own job postings (not the business ones they manage).

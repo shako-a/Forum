@@ -134,7 +134,7 @@ export async function getSimilarBusinesses(biz: { id: string; category: string }
   });
 }
 
-export async function getSimilarJobs(job: { id: string; businessId: string | null; jobType: string | null; state: string | null }, take = 4) {
+export async function getSimilarJobs(job: { id: string; businessId: string | null; category: string | null; jobType: string | null; state: string | null }, take = 4) {
   const include = { business: { select: { slug: true, name: true, logoUrl: true, verified: true, category: true } } };
   // Same employer first; otherwise the same kind of work nearby.
   const own = job.businessId
@@ -145,7 +145,11 @@ export async function getSimilarJobs(job: { id: string; businessId: string | nul
     where: {
       active: true,
       id: { notIn: [job.id, ...own.map((j) => j.id)] },
-      OR: [...(job.jobType ? [{ jobType: job.jobType }] : []), ...(job.state ? [{ state: job.state }] : [])],
+      OR: [
+        ...(job.category ? [{ category: job.category }] : []),
+        ...(job.jobType ? [{ jobType: job.jobType }] : []),
+        ...(job.state ? [{ state: job.state }] : []),
+      ],
     },
     orderBy: { createdAt: "desc" },
     take: take - own.length,

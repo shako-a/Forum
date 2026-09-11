@@ -7951,3 +7951,14 @@ a.mk-tag:hover {
     font-size: 22px;
   }
 }
+
+/* Jobs board: category filter row (reuses the forum's category chips) */
+.jobs-cat-chips {
+  margin-bottom: 14px;
+}
+.cat-chip-n {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.7;
+  padding-left: 2px;
+}

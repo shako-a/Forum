@@ -3,6 +3,7 @@ import { isBusinessCategory } from "@/lib/business-categories";
 import { isPropertyType } from "@/lib/estate";
 import { isMarketCategory, isMarketCondition, isMarketPriceType } from "@/lib/market";
 import { isAutoMake, AUTO_MIN_YEAR, AUTO_MAX_YEAR } from "@/lib/auto";
+import { JOB_CATEGORY_KEYS } from "@/lib/jobs";
 
 // Sign-up: mirrors the required profile fields from the spec.
 // First/last name + forum name + phone + email + state are mandatory; city optional.
@@ -196,9 +197,16 @@ export const BusinessSchema = z.object({
   socialTelegram: z.string().trim().max(300).optional(),
 });
 
+// Optional line of work; blank means "not stated".
+const jobCategory = z
+  .union([z.literal(""), z.enum(JOB_CATEGORY_KEYS)])
+  .optional()
+  .transform((v) => (v ? v : undefined));
+
 export const JobSchema = z.object({
   title: z.string().min(1, { error: "Job title is required." }).trim(),
   description: z.string().min(1, { error: "Job description is required." }).trim().max(4000),
+  category: jobCategory,
   city: z.string().trim().optional(),
   state: z.string().trim().optional(),
 });
@@ -213,6 +221,7 @@ export const UserJobSchema = z
       .union([z.literal(""), z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "TEMPORARY", "GIG"])])
       .optional()
       .transform((v) => (v ? v : undefined)),
+    category: jobCategory,
     pay: z.string().trim().max(60).optional(),
     city: z.string().trim().max(80).optional(),
     state: z.string().trim().max(40).optional(),

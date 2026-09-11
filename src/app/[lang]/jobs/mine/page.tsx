@@ -7,7 +7,7 @@ import { toHeaderUser } from "@/lib/header-user";
 import { db } from "@/lib/db";
 import { getMyJobs } from "@/lib/business-data";
 import { canPostIn } from "@/lib/posting-access";
-import { jobTypeLabel } from "@/lib/jobs";
+import { jobTypeLabel, jobCategoryLabel } from "@/lib/jobs";
 import { timeAgo } from "@/lib/format";
 import { setUserJobActive, deleteUserJob } from "@/app/actions/jobs";
 import { Header } from "@/components/Header";
@@ -51,7 +51,7 @@ export default async function MyJobsPage({ params }: PageProps<"/[lang]/jobs/min
                     <strong>{j.title}</strong>
                     {j.companyName && <span className="muted-sm"> · {j.companyName}</span>}
                     <div className="muted-sm">
-                      {[jobTypeLabel(j.jobType, lang), j.pay, [j.city, j.state].filter(Boolean).join(", "), timeAgo(j.createdAt, lang)].filter(Boolean).join(" · ")}
+                      {[jobCategoryLabel(j.category, lang), jobTypeLabel(j.jobType, lang), j.pay, [j.city, j.state].filter(Boolean).join(", "), timeAgo(j.createdAt, lang)].filter(Boolean).join(" · ")}
                       {!j.active && <> · <strong>{dict.market.paused}</strong></>}
                     </div>
                   </div>
