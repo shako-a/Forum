@@ -1424,6 +1424,16 @@
     "profile": "Profile",
     "create": "Create post"
   },
+  "search": {
+      "title": "Search",
+      "placeholder": "Search posts, businesses, jobs, housing, cars…",
+      "results": "{n} results for “{q}”",
+      "noResults": "Nothing matches “{q}”. Try another word or a shorter one.",
+      "threads": "Threads",
+      "members": "Members",
+      "tooShort": "Type at least two characters.",
+      "submit": "Search"
+  },
   "tiers": {
     "pageTitle": "More",
     "pageSubtitle": "Paid tiers that keep GeoGlobally running. Pick the one that fits — every tier is optional, and the forum stays free without one.",

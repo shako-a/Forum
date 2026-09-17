@@ -211,7 +211,7 @@ export async function getBusinessPosts(businessId: string, viewerId: string | nu
 
 // Attach the viewer's own vote (-1/0/1) to each post so list cards can render
 // interactive, stateful vote controls.
-async function attachMyVotes<T extends { id: string }>(
+export async function attachMyVotes<T extends { id: string }>(
   posts: T[],
   userId: string | null,
 ): Promise<(T & { myVote: number })[]> {
@@ -225,7 +225,7 @@ async function attachMyVotes<T extends { id: string }>(
 }
 
 // Attach whether the viewer has saved (bookmarked) each post.
-async function attachSaved<T extends { id: string }>(
+export async function attachSaved<T extends { id: string }>(
   posts: T[],
   userId: string | null,
 ): Promise<(T & { saved: boolean })[]> {

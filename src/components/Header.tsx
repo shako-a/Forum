@@ -13,15 +13,19 @@ import { getInboxUnread } from "@/lib/inbox-data";
 import { getManageableBusinesses } from "@/lib/business-manage";
 import { recordVisit } from "@/lib/visitors";
 import { getActingBusiness } from "@/lib/acting-as";
+import { localeHref } from "@/lib/locale-url";
 
 export async function Header({
   locale,
   dict,
   user,
+  searchQuery = "",
 }: {
   locale: Locale;
   dict: Dictionary;
   user: HeaderUser;
+  /** Pre-filled query (the search results page passes the current one). */
+  searchQuery?: string;
 }) {
   // Every user-facing page renders the header, so this is where the
   // cookieless visitor counter ticks (deduplicated per visitor per day).
@@ -83,7 +87,7 @@ export async function Header({
       </Link>
 
       {/* Search */}
-      <div className="search" role="search">
+      <form className="search" role="search" method="get" action={localeHref(`/${locale}/search`)}>
         <svg
           width="15"
           height="15"
@@ -96,8 +100,8 @@ export async function Header({
           <circle cx="11" cy="11" r="7" />
           <path d="M20 20l-3.5-3.5" />
         </svg>
-        <input type="text" placeholder={t.search} />
-      </div>
+        <input type="search" name="q" placeholder={t.search} defaultValue={searchQuery} maxLength={100} aria-label={t.search} />
+      </form>
 
       <HeaderActions menuLabel={t.menu} closeLabel={t.cancel}>
         <Link
