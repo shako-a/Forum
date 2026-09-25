@@ -2,7 +2,7 @@ import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import { categoryName } from "@/i18n/localize";
 import { categoryStyle } from "@/lib/category-style";
-import { getCurrentUser } from "@/lib/dal";
+import { canReadLocked, getCurrentUser } from "@/lib/dal";
 import { hasAiTranslate } from "@/lib/perks";
 import { MobileSidebar } from "@/components/MobileSidebar";
 import { NavLink } from "@/components/NavLink";
@@ -20,9 +20,10 @@ export async function LeftSidebar({
 }) {
   const nav = dict.nav;
   // Locked communities show a 🔒 to guests only; registered members can open
-  // them, so the lock is hidden once signed in.
+  // them, so the lock is hidden once signed in — as it is for everyone while
+  // the forum is open to guests.
   const viewer = await getCurrentUser();
-  const authed = !!viewer;
+  const canSeeLocked = await canReadLocked(viewer);
   // Shown only to holders, unlike the header's Ask AI, which advertises itself
   // with a lock. No package includes the translator yet, so a locked row would
   // send people to an upgrade page that doesn't sell it.
@@ -126,7 +127,7 @@ export async function LeftSidebar({
           slug: c.slug,
           name: categoryName(c, locale),
           color: categoryStyle(c.slug).color,
-          showLock: c.locked && !authed,
+          showLock: c.locked && !canSeeLocked,
         }))}
       />
 

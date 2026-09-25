@@ -4,6 +4,7 @@ import type { Locale } from "@/i18n/config";
 import { categoryName, adTitle } from "@/i18n/localize";
 import { categoryStyle } from "@/lib/category-style";
 import { getForumStats } from "@/lib/forum-data";
+import { canReadLocked } from "@/lib/dal";
 import { pickRotatingAd } from "@/lib/ad-rotation";
 import { SidebarAdImage } from "@/components/SidebarAdImage";
 import type { Category, AdCard } from "@/generated/prisma/client";
@@ -52,6 +53,9 @@ export async function RightSidebar({
   ads: AdCard[];
 }) {
   const stats = await getForumStats();
+  // Locks are hidden from members, and from everyone while the forum is open
+  // to guests.
+  const canSeeLocked = await canReadLocked(user);
   // An ad with neither an image nor a video would render as a blank card, so
   // only rotate through ads that actually have media; the rest fall through to
   // the popular-communities card below.
@@ -97,7 +101,7 @@ export async function RightSidebar({
                   <span>
                     <span className="comm-name">{categoryName(c, locale)}</span>
                   </span>
-                  {c.locked && !user && <span className="lock">🔒</span>}
+                  {c.locked && !canSeeLocked && <span className="lock">🔒</span>}
                 </Link>
               );
             })}

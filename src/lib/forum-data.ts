@@ -2,7 +2,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { countVisitsAllTime } from "@/lib/visitors";
 import { pmToHtml, pmPlainText, pmFirstImage } from "@/lib/prosemirror";
-import { canModerateCategory, canRevealAnonymous, getSiteSettings } from "@/lib/dal";
+import { canModerateCategory, canReadLocked, canRevealAnonymous, getSiteSettings } from "@/lib/dal";
 import { FEED_KIND_FILTER } from "@/lib/post-kinds";
 import { resolveAuthor, type DisplayAuthor } from "@/lib/anon";
 import type { Locale } from "@/i18n/config";
@@ -33,7 +33,9 @@ function feedOrderBy(
 export type HomeData = Awaited<ReturnType<typeof getHomeData>>;
 
 export async function getHomeData(viewer: { id: string } | null, sort: FeedSort = "hot") {
-  const viewerIsAuthed = !!viewer;
+  // Members always see locked topics; guests do too while the forum is open
+  // to guests (Admin → More).
+  const canSeeLocked = await canReadLocked(viewer);
   try {
     const [categories, posts, topAds, sidebarAds] = await Promise.all([
       db.category.findMany({ orderBy: { sortOrder: "asc" } }),
@@ -60,9 +62,7 @@ export async function getHomeData(viewer: { id: string } | null, sort: FeedSort 
     // Guests can see locked categories' names but not their posts; filtering of
     // gated post bodies happens at the category/post level. Home feed only shows
     // posts from unlocked categories to guests.
-    const visiblePosts = viewerIsAuthed
-      ? posts
-      : posts.filter((p) => !p.category.locked);
+    const visiblePosts = canSeeLocked ? posts : posts.filter((p) => !p.category.locked);
     const postsWithVotes = await attachSaved(
       await attachMyVotes(visiblePosts, viewer?.id ?? null),
       viewer?.id ?? null,
@@ -94,7 +94,7 @@ export async function getHomeData(viewer: { id: string } | null, sort: FeedSort 
         locked: p.category.locked,
       },
       _count: { replies: p._count.replies },
-      gated: !viewerIsAuthed && p.category.locked,
+      gated: !canSeeLocked && p.category.locked,
     }));
 
     return {
@@ -124,11 +124,12 @@ export async function getHomeData(viewer: { id: string } | null, sort: FeedSort 
 // everything the page shell needs. Guests (shouldn't reach here while the forum
 // is gated) only see unlocked categories.
 export async function getFeedPage(viewer: { id: string } | null, sort: "popular" | "new") {
+  const canSeeLocked = await canReadLocked(viewer);
   try {
     const [categories, found, sidebarAds] = await Promise.all([
       db.category.findMany({ orderBy: { sortOrder: "asc" } }),
       db.post.findMany({
-        where: { hidden: false, ...FEED_KIND_FILTER, ...(viewer ? {} : { category: { locked: false } }) },
+        where: { hidden: false, ...FEED_KIND_FILTER, ...(canSeeLocked ? {} : { category: { locked: false } }) },
         orderBy:
           sort === "popular"
             ? [{ score: "desc" }, { replies: { _count: "desc" } }, { lastActivity: "desc" }]
@@ -244,7 +245,7 @@ export async function getCategoryPage(slug: string, viewer: { id: string } | nul
   const category = await db.category.findUnique({ where: { slug } });
   if (!category) return null;
 
-  if (category.locked && !viewer) {
+  if (category.locked && !(await canReadLocked(viewer))) {
     return { category, posts: [], gated: true };
   }
 
@@ -291,7 +292,9 @@ export async function getUserProfile(forumName: string, viewer: { id: string } |
   // locked-category posts from guests — so the count can exceed the list, in
   // which case we flag it and the page shows a "members-only" note.
   const publicWhere = { authorId: profile.id, hidden: false, anonAlias: null, ...FEED_KIND_FILTER };
-  const listWhere = viewer ? publicWhere : { ...publicWhere, category: { locked: false } };
+  const listWhere = (await canReadLocked(viewer))
+    ? publicWhere
+    : { ...publicWhere, category: { locked: false } };
 
   const [found, postCount, listCount, anonCount] = await Promise.all([
     db.post.findMany({
@@ -315,6 +318,7 @@ export async function getUserProfile(forumName: string, viewer: { id: string } |
 // The categories overview: every category with its 3 most recently discussed
 // posts. Locked categories show no posts to guests (names stay visible).
 export async function getCategoriesIndex(viewerIsAuthed: boolean) {
+  const canSeeLocked = await canReadLocked(viewerIsAuthed || null);
   try {
     const categories = await db.category.findMany({
       orderBy: { sortOrder: "asc" },
@@ -331,7 +335,7 @@ export async function getCategoriesIndex(viewerIsAuthed: boolean) {
 
     return categories.map((c) => ({
       ...c,
-      posts: c.locked && !viewerIsAuthed ? [] : c.posts,
+      posts: c.locked && !canSeeLocked ? [] : c.posts,
     }));
   } catch (error) {
     console.error("getCategoriesIndex failed:", error);

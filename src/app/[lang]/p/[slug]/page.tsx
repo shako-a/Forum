@@ -3,7 +3,7 @@ import { toHeaderUser } from "@/lib/header-user";
 import Link from "@/components/Link";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
-import { getCurrentUser } from "@/lib/dal";
+import { getCurrentUser, canReadLocked } from "@/lib/dal";
 import { hasAiAccess } from "@/lib/perks";
 import { db } from "@/lib/db";
 import { getPostView } from "@/lib/forum-data";
@@ -71,8 +71,10 @@ export default async function PostPage({ params, searchParams }: PageProps<"/[la
 
   // Hidden posts: only moderators of this category (or admins) may view them.
   if (post.hidden && !canModerate) notFound();
-  // Locked category: gated for guests.
-  if (post.category.locked && !user) redirect(`/${lang}/login?next=/${lang}/p/${slug}`);
+  // Locked topic: gated for guests, unless the forum is open to guests.
+  if (post.category.locked && !(await canReadLocked(user))) {
+    redirect(`/${lang}/login?next=/${lang}/p/${slug}`);
+  }
 
   const style = categoryStyle(post.category.slug);
   const html = pmToHtml(post.body);

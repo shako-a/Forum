@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
-import { requireRole } from "@/lib/dal";
+import { requireRole, getSiteSettings } from "@/lib/dal";
 import { db } from "@/lib/db";
 import type { Prisma } from "@/generated/prisma/client";
 import { priceAt } from "@/lib/packages";
@@ -10,6 +10,7 @@ import { PackageAdmin, type AdminPackage, type AdminFeature } from "@/components
 import { PostingAccessAdmin, type PostingAreaRow } from "@/components/admin/PostingAccessAdmin";
 import { getPostingAccess, POSTING_AREAS, POSTING_PERK_KEY } from "@/lib/posting-access";
 import { EventAccessAdmin, type EventLabelOption } from "@/components/admin/EventAccessAdmin";
+import { OpenHouseToggle } from "@/components/admin/OpenHouseToggle";
 import { getEventAccess, EVENT_PERK_KEY } from "@/lib/event-access";
 
 export const dynamic = "force-dynamic";
@@ -156,8 +157,14 @@ export default async function AdminMorePage({ params }: PageProps<"/[lang]/admin
     },
   });
 
+  const [{ openToGuests }, lockedCount] = await Promise.all([
+    getSiteSettings(),
+    db.category.count({ where: { locked: true } }),
+  ]);
+
   return (
     <>
+      <OpenHouseToggle enabled={openToGuests} lockedCount={lockedCount} dict={dict} />
       <EventAccessAdmin
         dict={dict}
         access={eventAccess}

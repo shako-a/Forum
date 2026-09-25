@@ -177,11 +177,21 @@ export async function canModerateCategory(
 export const getSiteSettings = cache(async () => {
   try {
     const row = await db.siteSetting.findUnique({ where: { id: "singleton" } });
-    return { popularBarSize: row?.popularBarSize ?? 6 };
+    return { popularBarSize: row?.popularBarSize ?? 6, openToGuests: row?.openToGuests ?? false };
   } catch {
-    return { popularBarSize: 6 };
+    return { popularBarSize: 6, openToGuests: false };
   }
 });
+
+/**
+ * May this viewer read locked topics? Members always can. Guests can while the
+ * forum is in open-house mode (Admin → More), which is the one switch that
+ * opens every locked topic to everyone without editing the topics themselves.
+ */
+export async function canReadLocked(viewer: unknown | null): Promise<boolean> {
+  if (viewer) return true;
+  return (await getSiteSettings()).openToGuests;
+}
 
 /**
  * Whether a viewer may see the real author behind anonymous content: the owner

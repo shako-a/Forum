@@ -19,6 +19,20 @@ export async function setRevealAnonymousToStaff(enabled: boolean): Promise<void>
   revalidatePath("/[lang]/admin", "page");
 }
 
+// Admin: open house — guests read locked topics too. Meant to be switched on
+// for a season and off again; it leaves each topic's own `locked` flag alone,
+// so turning it off restores exactly the previous visibility.
+export async function setOpenToGuests(enabled: boolean): Promise<void> {
+  if (!(await authorize("ADMIN"))) return;
+  await db.siteSetting.upsert({
+    where: { id: "singleton" },
+    update: { openToGuests: enabled },
+    create: { id: "singleton", openToGuests: enabled },
+  });
+  revalidatePath("/[lang]/admin/more", "page");
+  revalidatePath("/[lang]", "layout");
+}
+
 // Admin: who may post in a listing area — every member, or perk holders only.
 export async function setPostingAccess(area: PostingArea, mode: PostingMode): Promise<void> {
   if (!(await authorize("ADMIN"))) return;

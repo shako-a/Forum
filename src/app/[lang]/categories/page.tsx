@@ -3,7 +3,7 @@ import { toHeaderUser } from "@/lib/header-user";
 import Link from "@/components/Link";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
-import { getCurrentUser } from "@/lib/dal";
+import { getCurrentUser, canReadLocked } from "@/lib/dal";
 import { getCategoriesIndex } from "@/lib/forum-data";
 import { categoryName } from "@/i18n/localize";
 import { categoryStyle } from "@/lib/category-style";
@@ -20,6 +20,9 @@ export default async function CategoriesPage({ params }: PageProps<"/[lang]/cate
   const [dict, user] = await Promise.all([getDictionary(lang), getCurrentUser()]);
   const headerUser = toHeaderUser(user);
   const categories = await getCategoriesIndex(Boolean(user));
+  // Locks (and the gated previews below) hide from members, and from everyone
+  // while the forum is open to guests.
+  const canSeeLocked = await canReadLocked(user);
 
   return (
     <>
@@ -34,7 +37,7 @@ export default async function CategoriesPage({ params }: PageProps<"/[lang]/cate
 
           {categories.map((c) => {
             const style = categoryStyle(c.slug);
-            const gated = c.locked && !user;
+            const gated = c.locked && !canSeeLocked;
             return (
               <div key={c.id} className="card card-pad">
                 {/* Category header row */}
@@ -51,7 +54,7 @@ export default async function CategoriesPage({ params }: PageProps<"/[lang]/cate
                   >
                     {categoryName(c, lang)}
                   </Link>
-                  {c.locked && !user && <span className="lock">🔒</span>}
+                  {c.locked && !canSeeLocked && <span className="lock">🔒</span>}
                   <Link href={`/${lang}/c/${c.slug}`} style={{ marginLeft: "auto", fontSize: 12.5, fontWeight: 600 }}>
                     {dict.common.seeAll}
                   </Link>

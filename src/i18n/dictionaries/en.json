@@ -1191,6 +1191,11 @@
     "autoByMake": "By make",
     "autoByBody": "By body type",
     "typeAuto": "Auto",
+    "openHouse": "Open house",
+    "openHouseSub": "Let unregistered visitors read the whole forum. Posting, voting, messaging and the paid tools still need an account, and each topic keeps its own lock — this only decides whether guests are let past it.",
+    "openHouseLabel": "Open the forum to everyone, including guests",
+    "openHouseOn": "On: guests can read all {n} locked topics right now. Switch it off to put the locks back.",
+    "openHouseOff": "Off: {n} locked topics ask guests to sign in.",
     "postingAccess": "Posting access",
     "postingAccessSub": "Who may post in each listing area. Everything is open to every registered member today; switch an area to perk holders to make it part of the paid plans — Pro always keeps it, plus any package carrying the perk key.",
     "postingArea": "Area",
@@ -1425,14 +1430,14 @@
     "create": "Create post"
   },
   "search": {
-      "title": "Search",
-      "placeholder": "Search posts, businesses, jobs, housing, cars…",
-      "results": "{n} results for “{q}”",
-      "noResults": "Nothing matches “{q}”. Try another word or a shorter one.",
-      "threads": "Threads",
-      "members": "Members",
-      "tooShort": "Type at least two characters.",
-      "submit": "Search"
+    "title": "Search",
+    "placeholder": "Search posts, businesses, jobs, housing, cars…",
+    "results": "{n} results for “{q}”",
+    "noResults": "Nothing matches “{q}”. Try another word or a shorter one.",
+    "threads": "Threads",
+    "members": "Members",
+    "tooShort": "Type at least two characters.",
+    "submit": "Search"
   },
   "tiers": {
     "pageTitle": "More",

@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
+import { canReadLocked } from "@/lib/dal";
 import { attachMyVotes, attachSaved } from "@/lib/forum-data";
 import { FEED_KIND_FILTER } from "@/lib/post-kinds";
 import { marketExpiryCutoff } from "@/lib/market";
@@ -44,12 +45,14 @@ function place(city: string | null | undefined, state: string | null | undefined
  * Site-wide search. Threads by title, members by forum name, and every
  * marketplace module by its title-like fields — the same `contains` matches
  * the module directories already use, so a search that finds something here
- * finds it there too. Guests don't see locked-category posts.
+ * finds it there too. Guests don't see locked-topic posts unless the forum
+ * is open to guests.
  */
 export async function searchAll(query: string, viewer: { id: string } | null): Promise<SearchResults> {
   const q = query.trim();
   if (q.length < 2) return EMPTY;
   const ci = { contains: q, mode: "insensitive" as const };
+  const canSeeLocked = await canReadLocked(viewer);
 
   const [found, members, businesses, jobs, estate, market, auto] = await Promise.all([
     db.post.findMany({
@@ -57,7 +60,7 @@ export async function searchAll(query: string, viewer: { id: string } | null): P
         hidden: false,
         ...FEED_KIND_FILTER,
         title: ci,
-        ...(viewer ? {} : { category: { locked: false } }),
+        ...(canSeeLocked ? {} : { category: { locked: false } }),
       },
       orderBy: [{ score: "desc" }, { lastActivity: "desc" }],
       take: 30,

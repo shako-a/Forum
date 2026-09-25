@@ -2,7 +2,7 @@ import Link from "@/components/Link";
 import { notFound } from "next/navigation";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
-import { getCurrentUser } from "@/lib/dal";
+import { getCurrentUser, canReadLocked } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { toHeaderUser } from "@/lib/header-user";
 import { canCreateEvents, eventGateReason } from "@/lib/event-access";
@@ -49,7 +49,7 @@ export default async function EventsPage({ params, searchParams }: PageProps<"/[
   const base = {
     kind: "EVENT" as const,
     hidden: false,
-    ...(user ? {} : { category: { locked: false } }),
+    ...((await canReadLocked(user)) ? {} : { category: { locked: false } }),
   };
 
   const [categories, rows, upcomingCount, canPost, gate] = await Promise.all([
